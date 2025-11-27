@@ -9,7 +9,6 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Editor } from '@/components/editor/Editor'
 import {
     Select,
@@ -66,8 +65,8 @@ export function AddFindingDialog({ open, onOpenChange, onFindingAdded }: AddFind
         onOpenChange(false)
     }
 
-    // Input style to match EditFindingModal
-    const inputStyle = "h-9 bg-zinc-900/30 border-zinc-800 text-zinc-300 text-sm focus:ring-1 focus:ring-zinc-600 focus:border-zinc-500 placeholder:text-zinc-600"
+    // Refined Input styles - Technical Look
+    const inputStyle = "h-9 bg-zinc-900/50 border-zinc-800 text-zinc-300 text-sm focus-visible:ring-1 focus-visible:ring-zinc-600 focus-visible:border-zinc-500 placeholder:text-zinc-600 focus-visible:ring-offset-0"
     const labelStyle = "text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5 block"
 
     return (
@@ -161,8 +160,8 @@ export function AddFindingDialog({ open, onOpenChange, onFindingAdded }: AddFind
                     </div>
                 </div>
                 
-                {/* Content Area - Scrollable */}
-                <div className="flex-1 overflow-y-auto px-8 py-8 bg-zinc-950/50">
+                {/* Content Area - Scrollable with Custom Scrollbar */}
+                <div className="flex-1 overflow-y-auto px-8 py-8 bg-zinc-950/50 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:bg-zinc-800 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent">
                     <div className="max-w-3xl mx-auto space-y-10">
                         {/* Description */}
                         <section className="space-y-3">
@@ -173,7 +172,7 @@ export function AddFindingDialog({ open, onOpenChange, onFindingAdded }: AddFind
                                 content={formData.description}
                                 onChange={(html) => setFormData({ ...formData, description: html })}
                                 placeholder="Detailed description of the vulnerability..."
-                                className="min-h-[200px] border-zinc-800/50 focus-within:border-zinc-700"
+                                className="min-h-[200px] bg-transparent border-zinc-800/50"
                             />
                         </section>
 
@@ -186,7 +185,7 @@ export function AddFindingDialog({ open, onOpenChange, onFindingAdded }: AddFind
                                 content={formData.remediation}
                                 onChange={(html) => setFormData({ ...formData, remediation: html })}
                                 placeholder="Steps to fix or mitigate the issue..."
-                                className="min-h-[150px] border-zinc-800/50 focus-within:border-zinc-700"
+                                className="min-h-[150px] bg-transparent border-zinc-800/50"
                             />
                         </section>
 
@@ -201,12 +200,9 @@ export function AddFindingDialog({ open, onOpenChange, onFindingAdded }: AddFind
                                 onChange={(html) => setFormData({ ...formData, evidence: html })}
                                 placeholder="Proof of concept..."
                                 variant="evidence"
-                                className="min-h-[200px] border-zinc-800/50 focus-within:border-zinc-700"
+                                className="min-h-[200px] bg-transparent border-zinc-800/50"
                             />
                         </section>
-
-                        {/* References (Optional - using Editor for consistency) */}
-                        {/* You could add another section here if needed */}
                     </div>
                 </div>
 
