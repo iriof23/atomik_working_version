@@ -42,6 +42,7 @@ import ProjectDetailModal from '@/components/ProjectDetailModal'
 import { cn } from '@/lib/utils'
 import { StatCard } from '@/components/StatCard'
 import { FilterDialog, FilterConfig, ActiveFilters } from '@/components/FilterDialog'
+import { useToast } from '@/components/ui/use-toast'
 import {
     AlertDialog,
     AlertDialogAction,
@@ -343,11 +344,12 @@ const getPriorityColor = (priority: Project['priority']) => {
 }
 
 export default function Projects() {
-    const [viewMode, setViewMode] = useState<ViewMode>('card')
+    const [viewMode, setViewMode] = useState<ViewMode>('table')
     const [searchQuery, setSearchQuery] = useState('')
     const [isLoading] = useState(false)
     const [activeFilters, setActiveFilters] = useState<Array<{ id: string, label: string, value: string }>>([])
     const navigate = useNavigate()
+    const { toast } = useToast()
     const [projects, setProjects] = useState<Project[]>(() => {
         const saved = localStorage.getItem('projects')
         if (saved) {
@@ -481,6 +483,102 @@ export default function Projects() {
 
     const openFilterDialog = () => {
         setFilterDialogOpen(true)
+    }
+
+    const handleExportProjects = () => {
+        // Get the projects to export (use filtered projects if filters are active, otherwise all)
+        const projectsToExport = filteredProjects.length > 0 ? filteredProjects : projects
+        
+        if (projectsToExport.length === 0) {
+            toast({
+                title: "No Projects to Export",
+                description: "There are no projects to export.",
+                variant: "destructive",
+            })
+            return
+        }
+
+        // Define CSV headers
+        const headers = [
+            'Project Name',
+            'Client Name',
+            'Type',
+            'Status',
+            'Priority',
+            'Progress (%)',
+            'Start Date',
+            'End Date',
+            'Findings Count',
+            'Critical Findings',
+            'High Findings',
+            'Medium Findings',
+            'Low Findings',
+            'Lead Tester',
+            'Team Members',
+            'Methodology',
+            'Compliance Frameworks',
+            'Scope',
+            'Description',
+            'Last Activity'
+        ]
+
+        // Convert projects to CSV rows
+        const csvRows = [
+            headers.join(','),
+            ...projectsToExport.map(project => {
+                const findingsData = projectFindingsData[project.id] || { count: 0, severity: { critical: 0, high: 0, medium: 0, low: 0 } }
+                const teamMembers = project.teamMembers?.map(m => m.name).join('; ') || ''
+                const complianceFrameworks = project.complianceFrameworks?.join('; ') || ''
+                const scope = project.scope?.join('; ') || ''
+                
+                // Escape commas and quotes in CSV values
+                const escapeCSV = (value: any) => {
+                    if (value === null || value === undefined) return ''
+                    const str = String(value)
+                    if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+                        return `"${str.replace(/"/g, '""')}"`
+                    }
+                    return str
+                }
+
+                return [
+                    escapeCSV(project.name),
+                    escapeCSV(project.clientName),
+                    escapeCSV(project.type),
+                    escapeCSV(project.status),
+                    escapeCSV(project.priority),
+                    escapeCSV(project.progress),
+                    escapeCSV(project.startDate.toLocaleDateString()),
+                    escapeCSV(project.endDate.toLocaleDateString()),
+                    escapeCSV(findingsData.count),
+                    escapeCSV(findingsData.severity.critical),
+                    escapeCSV(findingsData.severity.high),
+                    escapeCSV(findingsData.severity.medium),
+                    escapeCSV(findingsData.severity.low),
+                    escapeCSV(project.leadTester),
+                    escapeCSV(teamMembers),
+                    escapeCSV(project.methodology),
+                    escapeCSV(complianceFrameworks),
+                    escapeCSV(scope),
+                    escapeCSV(project.description),
+                    escapeCSV(project.lastActivity)
+                ].join(',')
+            })
+        ]
+
+        // Create CSV content
+        const csvContent = csvRows.join('\n')
+
+        // Create blob and download
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+        const link = document.createElement('a')
+        const url = URL.createObjectURL(blob)
+        link.setAttribute('href', url)
+        link.setAttribute('download', `projects_export_${new Date().toISOString().split('T')[0]}.csv`)
+        link.style.visibility = 'hidden'
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
     }
 
     const projectFilterConfig: FilterConfig = {
@@ -674,7 +772,7 @@ export default function Projects() {
                             )}
                         </Button>
 
-                        <Button variant="outline" size="sm">
+                        <Button variant="outline" size="sm" onClick={handleExportProjects}>
                             <Download className="w-4 h-4 mr-2" />
                             Export
                         </Button>
@@ -682,20 +780,6 @@ export default function Projects() {
                         {/* View Mode Switcher with Tooltips */}
                         <TooltipProvider>
                             <div className="flex items-center gap-1 border rounded-md p-1 border-border bg-card">
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Button
-                                            variant={viewMode === 'card' ? 'default' : 'ghost'}
-                                            size="sm"
-                                            onClick={() => setViewMode('card')}
-                                            className="h-8 w-8 p-0"
-                                        >
-                                            <LayoutGrid className="h-4 w-4" />
-                                        </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>Card View</TooltipContent>
-                                </Tooltip>
-
                                 <Tooltip>
                                     <TooltipTrigger asChild>
                                         <Button
@@ -708,6 +792,20 @@ export default function Projects() {
                                         </Button>
                                     </TooltipTrigger>
                                     <TooltipContent>Table View</TooltipContent>
+                                </Tooltip>
+
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button
+                                            variant={viewMode === 'card' ? 'default' : 'ghost'}
+                                            size="sm"
+                                            onClick={() => setViewMode('card')}
+                                            className="h-8 w-8 p-0"
+                                        >
+                                            <LayoutGrid className="h-4 w-4" />
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>Card View</TooltipContent>
                                 </Tooltip>
 
                                 <Tooltip>
