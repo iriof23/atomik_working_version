@@ -983,7 +983,7 @@ function ProjectCard({
                     ? "border-2 border-primary shadow-md bg-primary/5"
                     : "hover:border-primary/50"
             )}
-            onClick={onSelect}
+            onClick={() => onViewDetails(project)}
         >
             {isSelected && (
                 <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-l-lg" />
@@ -1001,26 +1001,26 @@ function ProjectCard({
                         </p>
                     </div>
                     <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
+                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                             <Button variant="ghost" size="sm" className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100">
                                 <MoreVertical className="h-4 w-4" />
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => onViewDetails(project)}>
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onViewDetails(project); }}>
                                 <Eye className="h-4 w-4 mr-2" />
                                 View Details
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => onEditProject(project)}>
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEditProject(project); }}>
                                 <Edit className="h-4 w-4 mr-2" />
                                 Edit Project
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => onGenerateReport(project)}>
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onGenerateReport(project); }}>
                                 <FileText className="h-4 w-4 mr-2" />
                                 Generate Report
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem className="text-red-600" onClick={() => onDeleteProject(project)}>
+                            <DropdownMenuItem className="text-red-600" onClick={(e) => { e.stopPropagation(); onDeleteProject(project); }}>
                                 <Trash2 className="h-4 w-4 mr-2" />
                                 Delete Project
                             </DropdownMenuItem>
