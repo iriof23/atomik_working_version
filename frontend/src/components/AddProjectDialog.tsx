@@ -217,10 +217,13 @@ export function AddProjectDialog({ open, onOpenChange, onProjectAdded, clients, 
                 <DialogHeader>
                     <DialogTitle className="text-2xl font-bold flex items-center gap-2">
                         <FolderKanban className="h-6 w-6 text-blue-600" />
-                        Create New Project
+                        {editingProject ? 'Edit Project' : 'Create New Project'}
                     </DialogTitle>
                     <DialogDescription>
-                        Define scope, timeline, and team for a new penetration test
+                        {editingProject 
+                            ? 'Update project details, scope, timeline, and team'
+                            : 'Define scope, timeline, and team for a new penetration test'
+                        }
                     </DialogDescription>
                 </DialogHeader>
 
@@ -630,7 +633,7 @@ export function AddProjectDialog({ open, onOpenChange, onProjectAdded, clients, 
                                 className="bg-blue-600 hover:bg-blue-700"
                             >
                                 <CheckCircle2 className="h-4 w-4 mr-2" />
-                                Create Project
+                                {editingProject ? 'Update Project' : 'Create Project'}
                             </Button>
                         )}
                     </div>
