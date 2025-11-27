@@ -13,7 +13,9 @@ import {
     Pencil,
     Copy,
     Trash2,
-    MoreHorizontal
+    MoreHorizontal,
+    ChevronLeft,
+    ChevronRight
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -31,7 +33,6 @@ import {
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
-    DropdownMenuSeparator
 } from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
 import { vulnerabilityDatabase } from '../data/vulnerabilities'
@@ -49,6 +50,10 @@ export default function Findings() {
     const [editingFinding, setEditingFinding] = useState<any>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
     const { toast } = useToast()
+
+    // Pagination State
+    const [currentPage, setCurrentPage] = useState(1)
+    const itemsPerPage = 10
 
     // Load custom findings from localStorage
     useEffect(() => {
@@ -68,6 +73,11 @@ export default function Findings() {
         localStorage.setItem('customFindings', JSON.stringify(findings))
     }
 
+    // Reset pagination when filters change
+    useEffect(() => {
+        setCurrentPage(1)
+    }, [searchQuery, selectedCategory, selectedSeverity, activeTab])
+
     // Filter Logic
     const currentList = activeTab === 'system' ? vulnerabilityDatabase : customFindings
 
@@ -80,6 +90,13 @@ export default function Findings() {
 
         return matchesSearch && matchesCategory && matchesSeverity
     })
+
+    // Pagination Logic
+    const totalItems = filteredFindings.length
+    const totalPages = Math.ceil(totalItems / itemsPerPage)
+    const startIndex = (currentPage - 1) * itemsPerPage
+    const endIndex = Math.min(startIndex + itemsPerPage, totalItems)
+    const currentFindings = filteredFindings.slice(startIndex, endIndex)
 
     // Helper for Severity Colors
     const getSeverityColor = (severity: string) => {
@@ -237,16 +254,16 @@ export default function Findings() {
                     </div>
                 </div>
 
-                {/* Tabs */}
-                <div className="border-b border-border">
-                    <div className="flex gap-8">
+                {/* Tabs - Segmented Control Style */}
+                <div>
+                    <div className="bg-muted p-1 rounded-lg inline-flex">
                         <button
                             onClick={() => setActiveTab('system')}
                             className={cn(
-                                "pb-3 text-sm font-medium transition-all border-b-2 px-1",
+                                "px-4 py-1.5 text-sm font-medium rounded-md transition-all",
                                 activeTab === 'system'
-                                    ? "border-primary text-foreground"
-                                    : "border-transparent text-muted-foreground hover:text-foreground"
+                                    ? "bg-background text-foreground shadow-sm"
+                                    : "text-muted-foreground hover:text-foreground"
                             )}
                         >
                             System Library
@@ -254,10 +271,10 @@ export default function Findings() {
                         <button
                             onClick={() => setActiveTab('custom')}
                             className={cn(
-                                "pb-3 text-sm font-medium transition-all border-b-2 px-1",
+                                "px-4 py-1.5 text-sm font-medium rounded-md transition-all",
                                 activeTab === 'custom'
-                                    ? "border-primary text-foreground"
-                                    : "border-transparent text-muted-foreground hover:text-foreground"
+                                    ? "bg-background text-foreground shadow-sm"
+                                    : "text-muted-foreground hover:text-foreground"
                             )}
                         >
                             My Templates
@@ -353,7 +370,7 @@ export default function Findings() {
                         {/* Table Body */}
                         <ScrollArea className="flex-1">
                             <div className="divide-y divide-border">
-                                {filteredFindings.map((finding) => (
+                                {currentFindings.map((finding) => (
                                     <div 
                                         key={finding.id} 
                                         className="grid grid-cols-12 gap-4 px-6 py-3 items-center hover:bg-muted/40 transition-colors group cursor-pointer"
@@ -382,7 +399,7 @@ export default function Findings() {
                                                     <Button 
                                                         size="sm" 
                                                         variant="ghost" 
-                                                        className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
+                                                        className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
                                                         onClick={() => handleEdit(finding)}
                                                         title="Edit"
                                                     >
@@ -391,7 +408,7 @@ export default function Findings() {
                                                     <Button 
                                                         size="sm" 
                                                         variant="ghost" 
-                                                        className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
+                                                        className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
                                                         onClick={() => handleDuplicate(finding)}
                                                         title="Duplicate"
                                                     >
@@ -402,7 +419,7 @@ export default function Findings() {
                                                             <Button 
                                                                 size="sm" 
                                                                 variant="ghost" 
-                                                                className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                                                                className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
                                                             >
                                                                 <MoreHorizontal className="w-4 h-4" />
                                                             </Button>
@@ -419,7 +436,7 @@ export default function Findings() {
                                                 <Button 
                                                     size="sm" 
                                                     variant="ghost" 
-                                                    className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-primary"
+                                                    className="h-8 w-8 p-0 text-muted-foreground hover:text-primary"
                                                     onClick={() => handleDuplicate(finding)}
                                                     title="Create Template from this finding"
                                                 >
@@ -431,6 +448,35 @@ export default function Findings() {
                                 ))}
                             </div>
                         </ScrollArea>
+                        
+                        {/* Pagination Footer */}
+                        <div className="border-t border-border py-4 px-6 flex justify-between items-center text-sm text-muted-foreground bg-card">
+                            <div>
+                                Showing <span className="font-medium text-foreground">{startIndex + 1}-{Math.min(endIndex, totalItems)}</span> of <span className="font-medium text-foreground">{totalItems}</span> findings
+                            </div>
+                            <div className="flex gap-2">
+                                <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    disabled={currentPage === 1}
+                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                    className="text-xs h-8"
+                                >
+                                    <ChevronLeft className="w-3 h-3 mr-1" />
+                                    Previous
+                                </Button>
+                                <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    disabled={currentPage === totalPages || totalItems === 0}
+                                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                    className="text-xs h-8"
+                                >
+                                    Next
+                                    <ChevronRight className="w-3 h-3 ml-1" />
+                                </Button>
+                            </div>
+                        </div>
                     </>
                 )}
             </div>
