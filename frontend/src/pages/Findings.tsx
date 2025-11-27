@@ -15,7 +15,8 @@ import {
     Trash2,
     MoreHorizontal,
     ChevronLeft,
-    ChevronRight
+    ChevronRight,
+    Eye
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -254,16 +255,16 @@ export default function Findings() {
                     </div>
                 </div>
 
-                {/* Tabs - Segmented Control Style */}
+                {/* Tabs - Segmented Control Style - Premium Polish */}
                 <div>
-                    <div className="bg-muted p-1 rounded-lg inline-flex">
+                    <div className="bg-muted/50 p-1 rounded-lg inline-flex border border-border">
                         <button
                             onClick={() => setActiveTab('system')}
                             className={cn(
                                 "px-4 py-1.5 text-sm font-medium rounded-md transition-all",
                                 activeTab === 'system'
                                     ? "bg-background text-foreground shadow-sm"
-                                    : "text-muted-foreground hover:text-foreground"
+                                    : "text-muted-foreground hover:text-foreground hover:bg-muted-foreground/10"
                             )}
                         >
                             System Library
@@ -274,7 +275,7 @@ export default function Findings() {
                                 "px-4 py-1.5 text-sm font-medium rounded-md transition-all",
                                 activeTab === 'custom'
                                     ? "bg-background text-foreground shadow-sm"
-                                    : "text-muted-foreground hover:text-foreground"
+                                    : "text-muted-foreground hover:text-foreground hover:bg-muted-foreground/10"
                             )}
                         >
                             My Templates
@@ -369,12 +370,12 @@ export default function Findings() {
 
                         {/* Table Body */}
                         <ScrollArea className="flex-1">
-                            <div className="divide-y divide-border">
+                            <div className="divide-y divide-border/50">
                                 {currentFindings.map((finding) => (
                                     <div 
                                         key={finding.id} 
-                                        className="grid grid-cols-12 gap-4 px-6 py-3 items-center hover:bg-muted/40 transition-colors group cursor-pointer"
-                                        onClick={() => activeTab === 'custom' && handleEdit(finding)}
+                                        className="grid grid-cols-12 gap-4 px-6 py-3 items-center hover:bg-muted/40 transition-colors group cursor-pointer border-b border-border/50 last:border-0"
+                                        onClick={() => activeTab === 'custom' ? handleEdit(finding) : handleEdit(finding)}
                                     >
                                         <div className="col-span-2 md:col-span-1 font-mono text-xs text-muted-foreground">
                                             {finding.id || finding.owasp_id || 'N/A'}
@@ -393,13 +394,13 @@ export default function Findings() {
                                                 {finding.severity}
                                             </Badge>
                                         </div>
-                                        <div className="col-span-2 flex justify-end items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                                        <div className="col-span-2 flex justify-end items-center gap-2" onClick={(e) => e.stopPropagation()}>
                                             {activeTab === 'custom' ? (
                                                 <>
                                                     <Button 
                                                         size="sm" 
                                                         variant="ghost" 
-                                                        className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                                                        className="h-8 w-8 p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                                                         onClick={() => handleEdit(finding)}
                                                         title="Edit"
                                                     >
@@ -408,7 +409,7 @@ export default function Findings() {
                                                     <Button 
                                                         size="sm" 
                                                         variant="ghost" 
-                                                        className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                                                        className="h-8 w-8 p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                                                         onClick={() => handleDuplicate(finding)}
                                                         title="Duplicate"
                                                     >
@@ -419,7 +420,7 @@ export default function Findings() {
                                                             <Button 
                                                                 size="sm" 
                                                                 variant="ghost" 
-                                                                className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+                                                                className="h-8 w-8 p-2 rounded-md text-muted-foreground hover:text-destructive hover:bg-muted transition-colors"
                                                             >
                                                                 <MoreHorizontal className="w-4 h-4" />
                                                             </Button>
@@ -433,15 +434,26 @@ export default function Findings() {
                                                     </DropdownMenu>
                                                 </>
                                             ) : (
-                                                <Button 
-                                                    size="sm" 
-                                                    variant="ghost" 
-                                                    className="h-8 w-8 p-0 text-muted-foreground hover:text-primary"
-                                                    onClick={() => handleDuplicate(finding)}
-                                                    title="Create Template from this finding"
-                                                >
-                                                    <Copy className="w-4 h-4" />
-                                                </Button>
+                                                <>
+                                                    <Button 
+                                                        size="sm" 
+                                                        variant="ghost" 
+                                                        className="h-8 w-8 p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                                                        onClick={() => handleEdit(finding)}
+                                                        title="View Details"
+                                                    >
+                                                        <Eye className="w-4 h-4" />
+                                                    </Button>
+                                                    <Button 
+                                                        size="sm" 
+                                                        variant="ghost" 
+                                                        className="h-8 w-8 p-2 rounded-md text-muted-foreground hover:text-primary hover:bg-muted transition-colors"
+                                                        onClick={() => handleDuplicate(finding)}
+                                                        title="Create Template from this finding"
+                                                    >
+                                                        <Copy className="w-4 h-4" />
+                                                    </Button>
+                                                </>
                                             )}
                                         </div>
                                     </div>
@@ -449,14 +461,14 @@ export default function Findings() {
                             </div>
                         </ScrollArea>
                         
-                        {/* Pagination Footer */}
-                        <div className="border-t border-border py-4 px-6 flex justify-between items-center text-sm text-muted-foreground bg-card">
+                        {/* Pagination Footer - Anchored & Polished */}
+                        <div className="border-t border-border bg-muted/30 py-4 px-6 flex justify-between items-center text-sm text-muted-foreground">
                             <div>
                                 Showing <span className="font-medium text-foreground">{startIndex + 1}-{Math.min(endIndex, totalItems)}</span> of <span className="font-medium text-foreground">{totalItems}</span> findings
                             </div>
                             <div className="flex gap-2">
                                 <Button 
-                                    variant="ghost" 
+                                    variant="outline" 
                                     size="sm" 
                                     disabled={currentPage === 1}
                                     onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
@@ -466,7 +478,7 @@ export default function Findings() {
                                     Previous
                                 </Button>
                                 <Button 
-                                    variant="ghost" 
+                                    variant="outline" 
                                     size="sm" 
                                     disabled={currentPage === totalPages || totalItems === 0}
                                     onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
