@@ -379,11 +379,15 @@ export default function Projects() {
     const [filterDialogOpen, setFilterDialogOpen] = useState(false)
     const [appliedFilters, setAppliedFilters] = useState<ActiveFilters>({})
 
-    // Load saved view mode from localStorage
+    // Load saved view mode from localStorage (defaults to 'table' if not set)
     useEffect(() => {
         const saved = localStorage.getItem('projectsViewMode')
         if (saved && (saved === 'card' || saved === 'table' || saved === 'timeline')) {
             setViewMode(saved)
+        } else {
+            // Ensure default is 'table' and save it
+            setViewMode('table')
+            localStorage.setItem('projectsViewMode', 'table')
         }
     }, [])
 
