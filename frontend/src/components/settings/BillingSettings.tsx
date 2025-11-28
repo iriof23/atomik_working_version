@@ -78,6 +78,17 @@ export default function BillingSettings() {
                 token,
                 eventCallback: async (data) => {
                     console.log('Paddle Event:', data)
+                    
+                    // Handle checkout errors
+                    if (data.name === 'checkout.error') {
+                        console.error('Paddle Checkout Error:', data)
+                    }
+                    
+                    // Handle checkout closed
+                    if (data.name === 'checkout.closed') {
+                        console.log('Paddle Checkout Closed:', data)
+                    }
+                    
                     // Handle successful checkout
                     if (data.name === 'checkout.completed') {
                         console.log('Checkout completed!', data)
@@ -118,6 +129,12 @@ export default function BillingSettings() {
         // Build checkout options with user info
         const checkoutOptions: any = {
             items: [{ priceId, quantity: 1 }],
+            settings: {
+                successUrl: `${window.location.origin}/settings?checkout=success`,
+                displayMode: 'overlay', // or 'inline'
+                theme: 'dark',
+                locale: 'en'
+            }
         }
         
         // Add customer email if available
