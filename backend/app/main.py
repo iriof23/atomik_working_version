@@ -11,7 +11,7 @@ from prisma import Prisma
 
 from app.core.config import settings
 from app.db import db
-from app.api.routes import auth, clients, projects, findings, reports, templates, uploads, billing, webhooks
+from app.api.routes import auth, clients, projects, findings, reports, templates, uploads, billing, webhooks, orgs
 
 
 @asynccontextmanager
@@ -53,6 +53,7 @@ app.include_router(templates.router, prefix="/api/templates", tags=["Templates"]
 app.include_router(uploads.router, prefix="/api/uploads", tags=["Uploads"])
 app.include_router(billing.router, prefix="/api", tags=["Billing"])
 app.include_router(webhooks.router, prefix="/api/v1/webhooks", tags=["Webhooks"])
+app.include_router(orgs.router, prefix="/api/v1/orgs", tags=["Organizations"])
 
 # Mount static files for uploads
 uploads_dir = Path(settings.UPLOAD_DIR)
