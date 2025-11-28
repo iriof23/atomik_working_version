@@ -84,6 +84,7 @@ services:
       dockerfile: Dockerfile
       args:
         - VITE_CLERK_PUBLISHABLE_KEY=${VITE_CLERK_PUBLISHABLE_KEY}
+        - VITE_PADDLE_CLIENT_TOKEN=${VITE_PADDLE_CLIENT_TOKEN}
     container_name: pentest-frontend
     depends_on:
       - backend
