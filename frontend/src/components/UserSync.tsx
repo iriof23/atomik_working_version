@@ -16,6 +16,7 @@ export default function UserSync() {
     const { getToken } = useAuth()
     const setAuthData = useBillingStore((state) => state.setAuthData)
     const setLoading = useBillingStore((state) => state.setLoading)
+    const setInitialized = useBillingStore((state) => state.setInitialized)
     const lastSyncedUserId = useRef<string | null>(null)
 
     useEffect(() => {
@@ -23,9 +24,10 @@ export default function UserSync() {
             // Wait for Clerk to load
             if (!isUserLoaded) return
             
-            // No user signed in
+            // No user signed in - reset and mark as initialized
             if (!user) {
                 useBillingStore.getState().reset()
+                useBillingStore.getState().setInitialized(true)
                 lastSyncedUserId.current = null
                 return
             }
@@ -43,7 +45,6 @@ export default function UserSync() {
                 const token = await getToken()
                 if (!token) {
                     console.error('No auth token available for user sync')
-                    setLoading(false)
                     return
                 }
                 
@@ -58,6 +59,7 @@ export default function UserSync() {
                 console.log('✅ User data fetched:', data)
                 
                 // Update the billing store with plan and credits
+                // Note: setAuthData automatically sets isInitialized to true
                 setAuthData({
                     plan: data.organization?.plan || 'FREE',
                     credits: data.organization?.creditBalance ?? data.creditBalance ?? 0,
@@ -76,6 +78,7 @@ export default function UserSync() {
                 console.error('Error details:', error.response?.data)
                 
                 // Set default values on error
+                // Note: setAuthData automatically sets isInitialized to true
                 setAuthData({
                     plan: 'FREE',
                     credits: 0,
@@ -83,12 +86,15 @@ export default function UserSync() {
                     subscriptionStatus: null,
                 })
             } finally {
+                // Always mark as initialized when done, regardless of success/failure
+                // This tells the app "We are done checking, you can render now"
                 setLoading(false)
+                setInitialized(true)
             }
         }
         
         syncUserData()
-    }, [user, isUserLoaded, getToken, setAuthData, setLoading])
+    }, [user, isUserLoaded, getToken, setAuthData, setLoading, setInitialized])
 
     // This component renders nothing
     return null
