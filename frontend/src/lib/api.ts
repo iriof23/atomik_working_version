@@ -13,11 +13,13 @@ export const api = axios.create({
 })
 
 // Request interceptor to add auth token
+// Note: For Clerk auth, the token should be set by the calling component
 api.interceptors.request.use(
     (config) => {
-        const token = localStorage.getItem('access_token')
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`
+        // Try legacy token first (for backwards compatibility)
+        const legacyToken = localStorage.getItem('access_token')
+        if (legacyToken && !config.headers.Authorization) {
+            config.headers.Authorization = `Bearer ${legacyToken}`
         }
         return config
     },
@@ -109,20 +111,23 @@ export const reportsApi = {
 // Billing API
 export const billingApi = {
     // Get current user's billing info (plan, credits, subscription status)
-    getBillingInfo: async () => {
-        const response = await api.get('/billing/info')
+    getBillingInfo: async (token?: string) => {
+        const headers = token ? { Authorization: `Bearer ${token}` } : {}
+        const response = await api.get('/billing/info', { headers })
         return response.data
     },
 
     // Get organization's billing info
-    getOrganizationBilling: async (organizationId: string) => {
-        const response = await api.get(`/billing/organization/${organizationId}`)
+    getOrganizationBilling: async (organizationId: string, token?: string) => {
+        const headers = token ? { Authorization: `Bearer ${token}` } : {}
+        const response = await api.get(`/billing/organization/${organizationId}`, { headers })
         return response.data
     },
 
     // Update subscription after Paddle webhook
-    updateSubscription: async (data: any) => {
-        const response = await api.post('/billing/subscription/update', data)
+    updateSubscription: async (data: any, token?: string) => {
+        const headers = token ? { Authorization: `Bearer ${token}` } : {}
+        const response = await api.post('/billing/subscription/update', data, { headers })
         return response.data
     },
 }

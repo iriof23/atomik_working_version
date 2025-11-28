@@ -30,17 +30,22 @@ export default function BillingSettings() {
             try {
                 setFetchingBilling(true)
                 
-                // Get Clerk session token
+                // Get Clerk session token and set it for this request
                 const token = await getToken()
-                if (token) {
-                    // Set token in axios instance
-                    api.defaults.headers.common['Authorization'] = `Bearer ${token}`
+                console.log('Clerk token obtained:', token ? 'Yes' : 'No')
+                
+                if (!token) {
+                    console.error('No Clerk token available')
+                    throw new Error('Not authenticated')
                 }
                 
-                const data = await billingApi.getBillingInfo()
+                // Make request with token
+                const data = await billingApi.getBillingInfo(token)
+                console.log('Billing info fetched:', data)
                 setBillingInfo(data)
-            } catch (error) {
+            } catch (error: any) {
                 console.error('Failed to fetch billing info:', error)
+                console.error('Error details:', error.response?.data)
                 // Fallback to default values
                 setBillingInfo({
                     plan: 'FREE',
@@ -78,8 +83,11 @@ export default function BillingSettings() {
                         console.log('Checkout completed!', data)
                         // Refresh billing data from API
                         try {
-                            const updatedBilling = await billingApi.getBillingInfo()
-                            setBillingInfo(updatedBilling)
+                            const token = await getToken()
+                            if (token) {
+                                const updatedBilling = await billingApi.getBillingInfo(token)
+                                setBillingInfo(updatedBilling)
+                            }
                         } catch (error) {
                             console.error('Failed to refresh billing info:', error)
                         }
