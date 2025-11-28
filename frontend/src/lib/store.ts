@@ -121,6 +121,7 @@ interface BillingState {
     plan: Plan
     credits: number
     isLoading: boolean
+    isInitialized: boolean  // Tracks if initial data fetch has completed
     organizationId: string | null
     subscriptionStatus: string | null
     
@@ -134,6 +135,7 @@ interface BillingState {
     decrementCredits: (amount: number) => void
     incrementCredits: (amount: number) => void
     setLoading: (loading: boolean) => void
+    setInitialized: (initialized: boolean) => void
     reset: () => void
 }
 
@@ -143,6 +145,7 @@ export const useBillingStore = create<BillingState>()(
             plan: 'FREE',
             credits: 0,
             isLoading: true,
+            isInitialized: false,
             organizationId: null,
             subscriptionStatus: null,
 
@@ -153,6 +156,7 @@ export const useBillingStore = create<BillingState>()(
                     organizationId: data.organizationId ?? null,
                     subscriptionStatus: data.subscriptionStatus ?? null,
                     isLoading: false,
+                    isInitialized: true,  // Mark as initialized when data is set
                 })
             },
 
@@ -170,11 +174,16 @@ export const useBillingStore = create<BillingState>()(
                 set({ isLoading: loading })
             },
 
+            setInitialized: (initialized) => {
+                set({ isInitialized: initialized })
+            },
+
             reset: () => {
                 set({
                     plan: 'FREE',
                     credits: 0,
                     isLoading: false,
+                    isInitialized: false,
                     organizationId: null,
                     subscriptionStatus: null,
                 })
@@ -187,6 +196,7 @@ export const useBillingStore = create<BillingState>()(
                 credits: state.credits,
                 organizationId: state.organizationId,
                 subscriptionStatus: state.subscriptionStatus,
+                isInitialized: state.isInitialized,
             }),
         }
     )
@@ -216,5 +226,14 @@ export const useIsAgency = () => {
 export const useHasCredits = (required: number = 1) => {
     const credits = useBillingStore((state) => state.credits)
     return credits >= required
+}
+
+/**
+ * Check if billing data has been initialized (prevents flash of default content)
+ */
+export const useBillingReady = () => {
+    const isInitialized = useBillingStore((state) => state.isInitialized)
+    const isLoading = useBillingStore((state) => state.isLoading)
+    return isInitialized && !isLoading
 }
 
