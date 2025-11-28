@@ -9,15 +9,14 @@ import json
 from datetime import datetime
 
 from app.api.routes.auth import get_current_user
-from app.db import get_db
+from app.db import db
 
 router = APIRouter(prefix="/billing", tags=["billing"])
 
 
 @router.get("/info")
 async def get_billing_info(
-    current_user = Depends(get_current_user),
-    db = Depends(get_db)
+    current_user = Depends(get_current_user)
 ):
     """
     Get current user's billing information (plan, credits, subscription status)
@@ -69,8 +68,7 @@ async def get_billing_info(
 @router.get("/organization/{organization_id}")
 async def get_organization_billing(
     organization_id: str,
-    current_user = Depends(get_current_user),
-    db = Depends(get_db)
+    current_user = Depends(get_current_user)
 ):
     """
     Get organization's billing information
@@ -112,7 +110,6 @@ async def get_organization_billing(
 @router.post("/webhook")
 async def paddle_webhook(
     request: Request,
-    db = Depends(get_db),
     paddle_signature: Optional[str] = Header(None, alias="Paddle-Signature")
 ):
     """
