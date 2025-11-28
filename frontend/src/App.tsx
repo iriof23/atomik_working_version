@@ -14,6 +14,7 @@ import ReportEditor from './pages/ReportEditor'
 import Settings from './pages/Settings'
 import Layout from './components/Layout'
 import OrgSync from './components/OrgSync'
+import UserSync from './components/UserSync'
 import { useAuth } from '@clerk/clerk-react'
 
 function App() {
@@ -35,8 +36,13 @@ function App() {
 
     return (
         <BrowserRouter>
-            {/* Sync Clerk organization to backend database */}
-            {isAuthenticated && <OrgSync />}
+            {/* Sync Clerk organization and user data to backend database */}
+            {isAuthenticated && (
+                <>
+                    <OrgSync />
+                    <UserSync />
+                </>
+            )}
             
             <Routes>
                 {/* Authentication routes */}
