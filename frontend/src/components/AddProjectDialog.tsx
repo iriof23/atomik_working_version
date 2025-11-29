@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useAuth } from '@clerk/clerk-react'
 import {
     Dialog,
     DialogContent,
@@ -44,6 +45,8 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
+import { api } from '@/lib/api'
+import ProjectTeamManager from '@/components/projects/ProjectTeamManager'
 
 interface AddProjectDialogProps {
     open: boolean
@@ -54,7 +57,11 @@ interface AddProjectDialogProps {
 }
 
 export function AddProjectDialog({ open, onOpenChange, onProjectAdded, clients, editingProject }: AddProjectDialogProps) {
+    const { getToken } = useAuth()
     const [step, setStep] = useState(1)
+    const [projectMembers, setProjectMembers] = useState<any[]>([])
+    const [loadingMembers, setLoadingMembers] = useState(false)
+    
     const [formData, setFormData] = useState({
         // Step 1: Basics
         name: '',
@@ -79,23 +86,62 @@ export function AddProjectDialog({ open, onOpenChange, onProjectAdded, clients, 
         teamMembers: [] as string[]
     })
 
+    // Fetch project members when editing
+    useEffect(() => {
+        const fetchProjectMembers = async () => {
+            if (editingProject?.id) {
+                try {
+                    setLoadingMembers(true)
+                    const token = await getToken()
+                    
+                    if (!token) {
+                        console.error('No auth token available')
+                        return
+                    }
+
+                    // Fetch project with members
+                    const response = await api.get(`/projects/${editingProject.id}`, {
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
+                    })
+                    
+                    setProjectMembers(response.data.members || [])
+                } catch (error: any) {
+                    console.error('Failed to fetch project members:', error)
+                    setProjectMembers([])
+                } finally {
+                    setLoadingMembers(false)
+                }
+            } else {
+                setProjectMembers([])
+            }
+        }
+
+        if (open && editingProject?.id) {
+            fetchProjectMembers()
+        } else if (!editingProject) {
+            setProjectMembers([])
+        }
+    }, [editingProject?.id, open, getToken])
+
     // Update form data when editingProject changes
     useEffect(() => {
         if (editingProject) {
             setFormData({
                 name: editingProject.name || '',
-                clientId: editingProject.clientId || '',
-                clientName: editingProject.clientName || '',
+                clientId: editingProject.clientId || editingProject.client_id || '',
+                clientName: editingProject.clientName || editingProject.client_name || '',
                 type: editingProject.type || 'External',
                 description: editingProject.description || '',
                 scope: editingProject.scope || [],
                 methodology: editingProject.methodology || 'OWASP Testing Guide v4',
                 complianceFrameworks: editingProject.complianceFrameworks || [],
-                startDate: editingProject.startDate ? new Date(editingProject.startDate) : undefined,
-                endDate: editingProject.endDate ? new Date(editingProject.endDate) : undefined,
+                startDate: editingProject.startDate || editingProject.start_date ? new Date(editingProject.startDate || editingProject.start_date) : undefined,
+                endDate: editingProject.endDate || editingProject.end_date ? new Date(editingProject.endDate || editingProject.end_date) : undefined,
                 priority: editingProject.priority || 'Medium',
                 status: editingProject.status || 'Planning',
-                leadTester: editingProject.leadTester || '',
+                leadTester: editingProject.leadTester || editingProject.lead_id || '',
                 teamMembers: editingProject.teamMembers?.map((m: any) => m.id || m) || []
             })
         } else {
@@ -526,67 +572,39 @@ export function AddProjectDialog({ open, onOpenChange, onProjectAdded, clients, 
                     {/* Step 4: Team Assignment */}
                     {step === 4 && (
                         <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-                            <div className="space-y-2">
-                                <Label>Lead Tester</Label>
-                                <Select
-                                    value={formData.leadTester}
-                                    onValueChange={(value) => updateField('leadTester', value)}
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select lead tester..." />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {availableTeamMembers.map((member) => (
-                                            <SelectItem key={member.id} value={member.name}>
-                                                {member.name} ({member.role})
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label className="flex items-center gap-2">
-                                    <Users className="w-4 h-4 text-purple-600" />
-                                    Assign Team Members
-                                </Label>
-                                <div className="border rounded-md divide-y">
-                                    {availableTeamMembers.map((member) => (
-                                        <div
-                                            key={member.id}
-                                            className={cn(
-                                                "flex items-center justify-between p-3 cursor-pointer transition-colors",
-                                                formData.teamMembers.includes(member.id) ? "bg-blue-50 dark:bg-blue-900/10" : "hover:bg-muted/50"
-                                            )}
-                                            onClick={() => {
-                                                if (formData.teamMembers.includes(member.id)) {
-                                                    updateField('teamMembers', formData.teamMembers.filter(id => id !== member.id))
-                                                } else {
-                                                    updateField('teamMembers', [...formData.teamMembers, member.id])
-                                                }
-                                            }}
-                                        >
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
-                                                    {member.name.split(' ').map(n => n[0]).join('')}
-                                                </div>
-                                                <div>
-                                                    <p className="text-sm font-medium">{member.name}</p>
-                                                    <p className="text-xs text-muted-foreground">{member.role}</p>
-                                                </div>
-                                            </div>
-                                            <div className={cn(
-                                                "w-5 h-5 rounded border flex items-center justify-center",
-                                                formData.teamMembers.includes(member.id)
-                                                    ? "bg-blue-600 border-blue-600"
-                                                    : "border-gray-300"
-                                            )}>
-                                                {formData.teamMembers.includes(member.id) && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
-                                            </div>
-                                        </div>
-                                    ))}
+                            {editingProject?.id ? (
+                                // Use ProjectTeamManager for editing existing projects
+                                <ProjectTeamManager
+                                    projectId={editingProject.id}
+                                    members={projectMembers}
+                                    onMembersChange={(updatedMembers) => {
+                                        setProjectMembers(updatedMembers)
+                                        // Notify parent if needed
+                                        if (onProjectAdded) {
+                                            onProjectAdded({
+                                                ...editingProject,
+                                                members: updatedMembers
+                                            })
+                                        }
+                                    }}
+                                />
+                            ) : (
+                                // Keep original UI for new projects (team assignment happens after creation)
+                                <div className="space-y-4">
+                                    <div className="text-center py-8 border border-dashed rounded-lg">
+                                        <Users className="w-12 h-12 mx-auto mb-3 text-muted-foreground opacity-50" />
+                                        <p className="text-sm font-medium text-foreground mb-1">
+                                            Team Assignment
+                                        </p>
+                                        <p className="text-xs text-muted-foreground">
+                                            Assign team members after creating the project
+                                        </p>
+                                    </div>
+                                    <div className="text-xs text-muted-foreground text-center">
+                                        You can manage the project team from the project details page once it's created.
+                                    </div>
                                 </div>
-                            </div>
+                            )}
                         </div>
                     )}
                 </div>

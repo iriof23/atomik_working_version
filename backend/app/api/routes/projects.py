@@ -2,12 +2,13 @@
 Project management routes
 """
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from pydantic import BaseModel
 
 from app.api.routes.auth import get_current_user
 from app.db import db
+from prisma.enums import ProjectRole
 
 
 router = APIRouter()
@@ -30,6 +31,16 @@ class ProjectUpdate(BaseModel):
     end_date: Optional[datetime] = None
 
 
+class ProjectMemberInResponse(BaseModel):
+    """Project member data included in project response"""
+    id: str
+    userId: str
+    userName: Optional[str]
+    userEmail: str
+    role: str
+    assignedAt: str
+
+
 class ProjectResponse(BaseModel):
     id: str
     name: str
@@ -45,6 +56,7 @@ class ProjectResponse(BaseModel):
     updated_at: str
     finding_count: int
     report_count: int
+    members: Optional[List[ProjectMemberInResponse]] = None
 
 
 class AvailableMemberResponse(BaseModel):
@@ -60,7 +72,12 @@ class AvailableMemberResponse(BaseModel):
 class ProjectMemberAdd(BaseModel):
     """Request model for adding a project member"""
     userId: str
-    role: str  # "LEAD", "TESTER", or "VIEWER"
+    role: ProjectRole  # LEAD, TESTER, or VIEWER
+
+
+class ProjectMemberUpdate(BaseModel):
+    """Request model for updating a project member's role"""
+    role: ProjectRole
 
 
 class ProjectMemberResponse(BaseModel):
@@ -193,17 +210,96 @@ async def create_project(
     )
 
 
+# ============== Project Team Management Endpoints ==============
+# NOTE: This route MUST come before /{project_id} to avoid route shadowing
+@router.get("/available-members", response_model=list[AvailableMemberResponse])
+async def get_available_members(
+    current_user = Depends(get_current_user)
+):
+    """
+    Get all users in the current user's organization who are available to be assigned to projects.
+    
+    This populates the dropdown menu for adding team members.
+    
+    If the user doesn't belong to an organization, returns the current user themselves
+    as the only candidate (allows solo founders to assign themselves to projects).
+    
+    Returns empty list on error to prevent frontend crashes.
+    """
+    try:
+        # Safety Check: If user has no team, they can only assign themselves
+        if not current_user.organizationId:
+            print(f"⚠️ User {current_user.id} has no organizationId, returning self as only candidate")
+            return [
+                AvailableMemberResponse(
+                    id=current_user.id,
+                    email=current_user.email,
+                    firstName=current_user.firstName,
+                    lastName=current_user.lastName,
+                    imageUrl=current_user.imageUrl,
+                    name=current_user.name,
+                )
+            ]
+        
+        print(f"🔍 Fetching members for organization: {current_user.organizationId}")
+        
+        # Fetch Team Members
+        members = await db.user.find_many(
+            where={
+                "organizationId": current_user.organizationId
+            },
+            select={
+                "id": True,
+                "email": True,
+                "firstName": True,
+                "lastName": True,
+                "imageUrl": True,
+                "name": True,
+            },
+            order_by={"email": "asc"}
+        )
+        
+        print(f"✅ Found {len(members)} members in organization")
+        
+        # Convert to response model
+        return [
+            AvailableMemberResponse(
+                id=member.id,
+                email=member.email,
+                firstName=member.firstName,
+                lastName=member.lastName,
+                imageUrl=member.imageUrl,
+                name=member.name,
+            )
+            for member in members
+        ]
+        
+    except Exception as e:
+        print(f"❌ TEAM FETCH ERROR: {str(e)}")
+        print(f"   Current User ID: {current_user.id if current_user else 'None'}")
+        print(f"   Organization ID: {current_user.organizationId if current_user else 'None'}")
+        import traceback
+        traceback.print_exc()
+        # Return empty list on crash to prevent frontend white screen
+        return []
+
+
 @router.get("/{project_id}", response_model=ProjectResponse)
 async def get_project(
     project_id: str,
     current_user = Depends(get_current_user)
 ):
-    """Get a specific project by ID"""
+    """Get a specific project by ID with team members"""
     project = await db.project.find_unique(
         where={"id": project_id},
         include={
             "client": True,
             "lead": True,
+            "members": {
+                "include": {
+                    "user": True
+                }
+            },
             "_count": {
                 "select": {
                     "findings": True,
@@ -226,6 +322,21 @@ async def get_project(
             detail="Access denied"
         )
     
+    # Format members for response
+    members = None
+    if project.members:
+        members = [
+            ProjectMemberInResponse(
+                id=member.id,
+                userId=member.userId,
+                userName=member.user.name or f"{member.user.firstName or ''} {member.user.lastName or ''}".strip() or None,
+                userEmail=member.user.email,
+                role=member.role,
+                assignedAt=member.assignedAt.isoformat(),
+            )
+            for member in project.members
+        ]
+    
     return ProjectResponse(
         id=project.id,
         name=project.name,
@@ -241,6 +352,7 @@ async def get_project(
         updated_at=project.updatedAt.isoformat(),
         finding_count=project._count.findings,
         report_count=project._count.reports,
+        members=members,
     )
 
 
@@ -345,48 +457,6 @@ async def delete_project(
 
 # ============== Project Team Management Endpoints ==============
 
-@router.get("/available-members", response_model=list[AvailableMemberResponse])
-async def get_available_members(
-    current_user = Depends(get_current_user)
-):
-    """
-    Get all users in the current user's organization who are available to be assigned to projects.
-    
-    This populates the dropdown menu for adding team members.
-    """
-    if not current_user.organizationId:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="User must belong to an organization"
-        )
-    
-    # Fetch all users in the organization
-    users = await db.user.find_many(
-        where={"organizationId": current_user.organizationId},
-        select={
-            "id": True,
-            "email": True,
-            "firstName": True,
-            "lastName": True,
-            "imageUrl": True,
-            "name": True,
-        },
-        order_by={"email": "asc"}
-    )
-    
-    return [
-        AvailableMemberResponse(
-            id=user.id,
-            email=user.email,
-            firstName=user.firstName,
-            lastName=user.lastName,
-            imageUrl=user.imageUrl,
-            name=user.name,
-        )
-        for user in users
-    ]
-
-
 @router.post("/{project_id}/members", response_model=ProjectMemberResponse, status_code=status.HTTP_201_CREATED)
 async def add_project_member(
     project_id: str,
@@ -442,13 +512,7 @@ async def add_project_member(
             detail="Access denied: User does not belong to your organization"
         )
     
-    # Validate role
-    valid_roles = ["LEAD", "TESTER", "VIEWER"]
-    if member_data.role not in valid_roles:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid role. Must be one of: {', '.join(valid_roles)}"
-        )
+    # Role validation is handled by Pydantic using the ProjectRole enum
     
     # Check if user is already a member (unique constraint will also prevent this)
     existing_member = await db.projectmember.find_first(
@@ -554,3 +618,128 @@ async def remove_project_member(
     
     await db.projectmember.delete(where={"id": project_member.id})
     return None
+
+
+@router.get("/{project_id}/members", response_model=List[ProjectMemberResponse])
+async def get_project_members(
+    project_id: str,
+    current_user = Depends(get_current_user)
+):
+    """
+    Get all members assigned to a project.
+    
+    Security checks:
+    - Project must belong to user's organization
+    """
+    if not current_user.organizationId:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User must belong to an organization"
+        )
+    
+    # Verify project exists and belongs to user's organization
+    project = await db.project.find_unique(
+        where={"id": project_id},
+        include={"client": True}
+    )
+    
+    if not project:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Project not found"
+        )
+    
+    if project.client.organizationId != current_user.organizationId:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied: Project does not belong to your organization"
+        )
+    
+    # Fetch all project members with user details
+    members = await db.projectmember.find_many(
+        where={"projectId": project_id},
+        include={"user": True},
+        order_by={"assignedAt": "asc"}
+    )
+    
+    return [
+        ProjectMemberResponse(
+            id=member.id,
+            userId=member.userId,
+            userName=member.user.name or f"{member.user.firstName or ''} {member.user.lastName or ''}".strip() or None,
+            userEmail=member.user.email,
+            role=member.role,
+            assignedAt=member.assignedAt.isoformat(),
+        )
+        for member in members
+    ]
+
+
+@router.put("/{project_id}/members/{user_id}", response_model=ProjectMemberResponse)
+async def update_project_member_role(
+    project_id: str,
+    user_id: str,
+    member_data: ProjectMemberUpdate,
+    current_user = Depends(get_current_user)
+):
+    """
+    Update a project member's role.
+    
+    Security checks:
+    - Project must belong to user's organization
+    - User being updated must belong to user's organization
+    """
+    if not current_user.organizationId:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User must belong to an organization"
+        )
+    
+    # Verify project exists and belongs to user's organization
+    project = await db.project.find_unique(
+        where={"id": project_id},
+        include={"client": True}
+    )
+    
+    if not project:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Project not found"
+        )
+    
+    if project.client.organizationId != current_user.organizationId:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied: Project does not belong to your organization"
+        )
+    
+    # Find the project member
+    project_member = await db.projectmember.find_first(
+        where={
+            "projectId": project_id,
+            "userId": user_id
+        },
+        include={"user": True}
+    )
+    
+    if not project_member:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User is not a member of this project"
+        )
+    
+    # Update the role
+    updated_member = await db.projectmember.update(
+        where={"id": project_member.id},
+        data={"role": member_data.role},
+        include={"user": True}
+    )
+    
+    return ProjectMemberResponse(
+        id=updated_member.id,
+        userId=updated_member.userId,
+        userName=updated_member.user.name or f"{updated_member.user.firstName or ''} {updated_member.user.lastName or ''}".strip() or None,
+        userEmail=updated_member.user.email,
+        role=updated_member.role,
+        assignedAt=updated_member.assignedAt.isoformat(),
+    )

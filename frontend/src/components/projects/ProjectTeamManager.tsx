@@ -5,6 +5,7 @@
  * Linear-style UI with avatars, role badges, and member management.
  */
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@clerk/clerk-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -58,6 +59,7 @@ export default function ProjectTeamManager({
 }: ProjectTeamManagerProps) {
     const { getToken } = useAuth()
     const { toast } = useToast()
+    const navigate = useNavigate()
     
     const [availableMembers, setAvailableMembers] = useState<AvailableMember[]>([])
     const [currentMembers, setCurrentMembers] = useState<ProjectMember[]>(members)
@@ -83,11 +85,17 @@ export default function ProjectTeamManager({
                     return
                 }
 
-                const response = await api.get('/projects/available-members', {
+                const response = await api.get('/v1/projects/available-members', {
                     headers: {
                         Authorization: `Bearer ${token}`
                     }
                 })
+
+                // Handle empty response (user has no organization)
+                if (!response.data || response.data.length === 0) {
+                    setAvailableMembers([])
+                    return
+                }
 
                 // Filter out members already on the team
                 const assignedUserIds = new Set(currentMembers.map(m => m.userId))
@@ -96,11 +104,18 @@ export default function ProjectTeamManager({
                 setAvailableMembers(available)
             } catch (error: any) {
                 console.error('Failed to fetch available members:', error)
-                toast({
-                    title: 'Error',
-                    description: 'Failed to load available team members',
-                    variant: 'destructive'
-                })
+                
+                // Don't show error toast for 404/empty responses - just log it
+                if (error.response?.status === 404 || error.response?.status === 403) {
+                    console.warn('No organization found or no available members')
+                    setAvailableMembers([])
+                } else {
+                    toast({
+                        title: 'Error',
+                        description: 'Failed to load available team members. Please try again.',
+                        variant: 'destructive'
+                    })
+                }
             } finally {
                 setFetchingAvailable(false)
             }
@@ -246,20 +261,10 @@ export default function ProjectTeamManager({
             setCurrentMembers(updatedMembers)
             onMembersChange?.(updatedMembers)
 
-            // Remove old membership and add with new role
-            await api.delete(
+            // Use PUT endpoint to update role (more efficient)
+            const response = await api.put(
                 `/projects/${projectId}/members/${userId}`,
                 {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                }
-            )
-
-            const response = await api.post(
-                `/projects/${projectId}/members`,
-                {
-                    userId,
                     role: newRole
                 },
                 {
@@ -449,84 +454,121 @@ export default function ProjectTeamManager({
                 )}
             </div>
 
-            {/* Add Member Button */}
-            {availableMembers.length > 0 && (
-                <Popover open={memberSelectOpen} onOpenChange={setMemberSelectOpen}>
-                    <PopoverTrigger asChild>
-                        <Button
-                            variant="outline"
-                            className="w-full gap-2"
-                            disabled={loading || fetchingAvailable}
-                        >
-                            {loading || fetchingAvailable ? (
-                                <>
-                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                    Loading...
-                                </>
-                            ) : (
-                                <>
-                                    <UserPlus className="w-4 h-4" />
-                                    Add Member
-                                </>
-                            )}
-                        </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[400px] p-4" align="start">
-                        <div className="space-y-3">
-                            <div className="flex items-center gap-2">
-                                <Input
-                                    placeholder="Search members..."
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="h-9"
-                                />
-                            </div>
-                            <div className="max-h-[300px] overflow-y-auto space-y-1">
-                                {filteredAvailable.length === 0 ? (
-                                    <div className="text-center py-8 text-sm text-muted-foreground">
-                                        {fetchingAvailable ? 'Loading...' : 'No members found'}
-                                    </div>
-                                ) : (
-                                    filteredAvailable.map((member) => (
-                                        <button
-                                            key={member.id}
-                                            onClick={() => {
-                                                handleAddMember(member.id)
-                                                setMemberSelectOpen(false)
-                                            }}
-                                            className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-accent transition-colors text-left"
-                                            disabled={loading}
-                                        >
-                                            <Avatar className="w-8 h-8">
-                                                <AvatarImage 
-                                                    src={member.imageUrl || undefined}
-                                                    alt={getDisplayName(member)}
-                                                />
-                                                <AvatarFallback className="text-xs">
-                                                    {getInitials(member)}
-                                                </AvatarFallback>
-                                            </Avatar>
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-medium truncate">
-                                                    {getDisplayName(member)}
-                                                </p>
-                                                <p className="text-xs text-muted-foreground truncate">
-                                                    {member.email}
-                                                </p>
-                                            </div>
-                                        </button>
-                                    ))
-                                )}
-                            </div>
+            {/* Add Member Button - Always show, even if no available members */}
+            <Popover open={memberSelectOpen} onOpenChange={setMemberSelectOpen}>
+                <PopoverTrigger asChild>
+                    <Button
+                        variant="outline"
+                        className="w-full gap-2"
+                        disabled={loading || fetchingAvailable}
+                    >
+                        {loading || fetchingAvailable ? (
+                            <>
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                Loading...
+                            </>
+                        ) : (
+                            <>
+                                <UserPlus className="w-4 h-4" />
+                                Add Member
+                            </>
+                        )}
+                    </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[400px] p-0" align="start">
+                    <div className="p-4 space-y-3">
+                        <div className="flex items-center gap-2">
+                            <Input
+                                placeholder="Search members..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="h-9"
+                            />
                         </div>
-                    </PopoverContent>
-                </Popover>
-            )}
+                        <div className="max-h-[300px] overflow-y-auto space-y-1">
+                            {fetchingAvailable ? (
+                                <div className="text-center py-8 text-sm text-muted-foreground">
+                                    Loading...
+                                </div>
+                            ) : filteredAvailable.length === 0 ? (
+                                <div className="text-center py-8 text-sm text-muted-foreground">
+                                    {availableMembers.length === 0 ? (
+                                        <div className="space-y-2">
+                                            <p>No other members found in this organization.</p>
+                                            <p className="text-xs">Invite team members to assign them to projects.</p>
+                                        </div>
+                                    ) : (
+                                        <p>No members match your search.</p>
+                                    )}
+                                </div>
+                            ) : (
+                                filteredAvailable.map((member) => (
+                                    <button
+                                        key={member.id}
+                                        onClick={() => {
+                                            handleAddMember(member.id)
+                                            setMemberSelectOpen(false)
+                                        }}
+                                        className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-accent transition-colors text-left"
+                                        disabled={loading}
+                                    >
+                                        <Avatar className="w-8 h-8">
+                                            <AvatarImage 
+                                                src={member.imageUrl || undefined}
+                                                alt={getDisplayName(member)}
+                                            />
+                                            <AvatarFallback className="text-xs">
+                                                {getInitials(member)}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-medium truncate">
+                                                {getDisplayName(member)}
+                                            </p>
+                                            <p className="text-xs text-muted-foreground truncate">
+                                                {member.email}
+                                            </p>
+                                        </div>
+                                    </button>
+                                ))
+                            )}
+                        </div>
+                    </div>
+                    
+                    {/* Footer with Invite Button - Always visible */}
+                    <div className="p-2 border-t border-zinc-800 mt-2">
+                        <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="w-full justify-start text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10"
+                            onClick={() => {
+                                setMemberSelectOpen(false)
+                                navigate('/settings?tab=team')
+                            }}
+                        >
+                            <UserPlus className="w-4 h-4 mr-2" />
+                            Invite New Member
+                        </Button>
+                    </div>
+                </PopoverContent>
+            </Popover>
 
             {availableMembers.length === 0 && currentMembers.length > 0 && (
                 <p className="text-xs text-muted-foreground text-center">
                     All organization members are already assigned to this project
                 </p>
+            )}
+
+            {availableMembers.length === 0 && currentMembers.length === 0 && !fetchingAvailable && (
+                <div className="text-center py-6 border border-dashed rounded-lg bg-muted/30">
+                    <User className="w-8 h-8 mx-auto mb-2 text-muted-foreground opacity-50" />
+                    <p className="text-sm font-medium text-foreground mb-1">
+                        No team members available
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                        Invite team members in Settings to add them to projects
+                    </p>
+                </div>
             )}
         </div>
     )

@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useThemeStore } from '@/lib/store'
 import { 
     UserProfile, 
@@ -17,7 +18,37 @@ export default function Settings() {
     const { theme } = useThemeStore()
     const { organization } = useOrganization()
     const { createOrganization } = useOrganizationList()
-    const [activeTab, setActiveTab] = useState<'account' | 'team' | 'billing' | 'preferences'>('account')
+    const [searchParams, setSearchParams] = useSearchParams()
+    
+    // Initialize activeTab from URL query parameter, default to 'account'
+    const [activeTab, setActiveTab] = useState<'account' | 'team' | 'billing' | 'preferences'>(
+        (searchParams.get('tab') as 'account' | 'team' | 'billing' | 'preferences') || 'account'
+    )
+
+    // Sync activeTab changes to URL query parameter
+    useEffect(() => {
+        const tabParam = searchParams.get('tab')
+        if (tabParam !== activeTab) {
+            const newSearchParams = new URLSearchParams(searchParams)
+            if (activeTab === 'account') {
+                // Remove tab param for default tab (cleaner URL)
+                newSearchParams.delete('tab')
+            } else {
+                newSearchParams.set('tab', activeTab)
+            }
+            setSearchParams(newSearchParams, { replace: true })
+        }
+    }, [activeTab, searchParams, setSearchParams])
+
+    // Listen for URL changes (browser back/forward)
+    useEffect(() => {
+        const tabParam = searchParams.get('tab')
+        if (tabParam && ['account', 'team', 'billing', 'preferences'].includes(tabParam)) {
+            setActiveTab(tabParam as 'account' | 'team' | 'billing' | 'preferences')
+        } else if (!tabParam) {
+            setActiveTab('account')
+        }
+    }, [searchParams])
 
     const isDark = theme === 'dark'
 

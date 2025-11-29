@@ -46,7 +46,9 @@ app.add_middleware(GZipMiddleware, minimum_size=1000)
 # Include routers
 app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(clients.router, prefix="/api/clients", tags=["Clients"])
+# Register projects router at both paths for backwards compatibility
 app.include_router(projects.router, prefix="/api/projects", tags=["Projects"])
+app.include_router(projects.router, prefix="/api/v1/projects", tags=["Projects"])
 app.include_router(findings.router, prefix="/api/findings", tags=["Findings"])
 app.include_router(reports.router, prefix="/api/reports", tags=["Reports"])
 app.include_router(templates.router, prefix="/api/templates", tags=["Templates"])
