@@ -45,6 +45,9 @@ function App() {
     if (isSignedIn && !isInitialized) {
         return (
             <div className="h-screen w-full bg-zinc-950 flex items-center justify-center">
+                {/* Ensure UserSync runs to complete initialization */}
+                <UserSync />
+                <OrgSync />
                 <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-emerald-500"></div>
                 <span className="ml-3 text-zinc-400 font-medium">Syncing profile...</span>
             </div>

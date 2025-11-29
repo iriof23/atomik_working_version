@@ -378,7 +378,7 @@ export default function ProjectTeamManager({
                         {/* Avatar */}
                         <Avatar className="w-8 h-8">
                             <AvatarImage 
-                                src={('imageUrl' in member && member.imageUrl) || undefined}
+                                src={('imageUrl' in member && typeof member.imageUrl === 'string') ? member.imageUrl : undefined}
                                 alt={getDisplayName(member)}
                             />
                             <AvatarFallback className="text-xs bg-primary/10 text-primary">
@@ -514,7 +514,7 @@ export default function ProjectTeamManager({
                                     >
                                         <Avatar className="w-8 h-8">
                                             <AvatarImage 
-                                                src={member.imageUrl || undefined}
+                                                src={member.imageUrl ? member.imageUrl : undefined}
                                                 alt={getDisplayName(member)}
                                             />
                                             <AvatarFallback className="text-xs">
