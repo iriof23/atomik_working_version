@@ -756,9 +756,64 @@ export default function Dashboard() {
         setShowProjectDialog(true)
     }
     
-    const handleResumeReport = (project: Project) => {
-        // Navigate to the report editor for this project
-        navigate(`/reports/${project.id}`)
+    const handleResumeReport = async (project: Project) => {
+        // For mock projects (short IDs), show info message
+        if (project.id.length < 10) {
+            toast({
+                title: 'Info',
+                description: 'Please create a real project first to start a report.',
+            })
+            return
+        }
+        
+        try {
+            const token = await getToken()
+            if (!token) {
+                toast({
+                    title: 'Error',
+                    description: 'Authentication required',
+                    variant: 'destructive',
+                })
+                return
+            }
+            
+            // First, check if a report already exists for this project
+            try {
+                const reportsResponse = await api.get(`/v1/reports/?project_id=${project.id}`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                })
+                
+                if (reportsResponse.data && reportsResponse.data.length > 0) {
+                    // Report exists - navigate to the most recent one
+                    const sortedReports = reportsResponse.data.sort((a: any, b: any) => 
+                        new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+                    )
+                    navigate(`/reports/${sortedReports[0].id}`)
+                    return
+                }
+            } catch (e) {
+                console.log('No existing reports found, will create new one')
+            }
+            
+            // No report exists - create one
+            const response = await api.post('/v1/reports/', {
+                project_id: project.id,
+                title: `${project.name} Report`,
+                report_type: 'PENTEST'
+            }, {
+                headers: { Authorization: `Bearer ${token}` }
+            })
+            
+            // Navigate to the new report
+            navigate(`/reports/${response.data.id}`)
+        } catch (error: any) {
+            console.error('Failed to open/create report:', error)
+            toast({
+                title: 'Error',
+                description: error.response?.data?.detail || 'Failed to open report',
+                variant: 'destructive',
+            })
+        }
     }
     
     const handleActivityClick = (item: DashboardData['recentActivity'][0]) => {
