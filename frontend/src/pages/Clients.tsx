@@ -1,5 +1,6 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useAuth } from '@clerk/clerk-react'
+import { useLocation } from 'react-router-dom'
 import {
   Users,
   FileText,
@@ -241,61 +242,63 @@ export default function Clients() {
   const [deletingClient, setDeletingClient] = useState<Client | null>(null)
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null)
   const { getToken } = useAuth()
+  const location = useLocation()
 
-  // Fetch clients from API
-  useEffect(() => {
-    const fetchClients = async () => {
-      setIsLoading(true)
-      try {
-        const token = await getToken()
-        if (token) {
-          const response = await api.get('/clients', {
-            headers: { Authorization: `Bearer ${token}` }
-          })
+  // Fetch clients from API function
+  const fetchClients = useCallback(async () => {
+    setIsLoading(true)
+    try {
+      const token = await getToken()
+      if (token) {
+        const response = await api.get('/clients', {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        
+        if (response.data && Array.isArray(response.data) && response.data.length > 0) {
+          // Map API data to Client interface
+          const apiClients: Client[] = response.data.map((c: any) => ({
+            id: c.id,
+            name: c.name,
+            logoUrl: '🏢',
+            status: c.status || 'Active',
+            riskLevel: c.risk_level || 'Medium',
+            industry: c.industry || 'Technology',
+            companySize: c.company_size || 'SMB',
+            primaryContact: c.contact_name || '',
+            email: c.contact_email || '',
+            phone: c.contact_phone || '',
+            lastActivity: 'Recently',
+            lastActivityDate: c.updated_at ? new Date(c.updated_at) : new Date(),
+            tags: [],
+            projectsCount: 0,
+            reportsCount: 0,
+            totalFindings: 0,
+            findingsBySeverity: { critical: 0, high: 0, medium: 0, low: 0 },
+            createdAt: c.created_at ? new Date(c.created_at) : new Date(),
+            updatedAt: c.updated_at ? new Date(c.updated_at) : new Date(),
+          }))
           
-          if (response.data && Array.isArray(response.data) && response.data.length > 0) {
-            // Map API data to Client interface
-            const apiClients: Client[] = response.data.map((c: any) => ({
-              id: c.id,
-              name: c.name,
-              logoUrl: '🏢',
-              status: c.status || 'Active',
-              riskLevel: c.risk_level || 'Medium',
-              industry: c.industry || 'Technology',
-              companySize: c.company_size || 'SMB',
-              primaryContact: c.contact_name || '',
-              email: c.contact_email || '',
-              phone: c.contact_phone || '',
-              lastActivity: 'Recently',
-              lastActivityDate: c.updated_at ? new Date(c.updated_at) : new Date(),
-              tags: [],
-              projectsCount: 0,
-              reportsCount: 0,
-              totalFindings: 0,
-              findingsBySeverity: { critical: 0, high: 0, medium: 0, low: 0 },
-              createdAt: c.created_at ? new Date(c.created_at) : new Date(),
-              updatedAt: c.updated_at ? new Date(c.updated_at) : new Date(),
-            }))
-            
-            // Combine API clients with mock clients (API first)
-            setClients([...apiClients, ...mockClients])
-          } else {
-            // No API clients, use mock data
-            setClients(mockClients)
-          }
+          // Combine API clients with mock clients (API first)
+          setClients([...apiClients, ...mockClients])
         } else {
+          // No API clients, use mock data
           setClients(mockClients)
         }
-      } catch (error) {
-        console.error('Failed to fetch clients:', error)
+      } else {
         setClients(mockClients)
-      } finally {
-        setIsLoading(false)
       }
+    } catch (error) {
+      console.error('Failed to fetch clients:', error)
+      setClients(mockClients)
+    } finally {
+      setIsLoading(false)
     }
-    
-    fetchClients()
   }, [getToken])
+
+  // Fetch clients when page is navigated to (location.key changes on each navigation)
+  useEffect(() => {
+    fetchClients()
+  }, [location.key, fetchClients])
 
   // Save view mode to localStorage
   useEffect(() => {
