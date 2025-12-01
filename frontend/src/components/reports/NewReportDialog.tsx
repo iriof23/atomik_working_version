@@ -27,7 +27,6 @@ import {
 } from 'lucide-react'
 import { api } from '@/lib/api'
 import { useToast } from '@/components/ui/use-toast'
-import { mockProjects } from '@/pages/Projects'
 import { logReportCreated } from '@/lib/activityLog'
 
 interface DialogProject {
@@ -51,7 +50,6 @@ export function NewReportDialog({ children, onReportCreated }: NewReportDialogPr
     const [loading, setLoading] = useState(false)
     const [selectedProjectId, setSelectedProjectId] = useState<string>("")
     const [isSubmitting, setIsSubmitting] = useState(false)
-    const [usingMockProjects, setUsingMockProjects] = useState(false)
 
     const { getToken } = useAuth()
     const navigate = useNavigate()
@@ -62,7 +60,6 @@ export function NewReportDialog({ children, onReportCreated }: NewReportDialogPr
         if (open) {
             fetchProjects()
             setSelectedProjectId("")
-            setUsingMockProjects(false) // Reset on open
         }
     }, [open])
 
@@ -137,54 +134,14 @@ export function NewReportDialog({ children, onReportCreated }: NewReportDialogPr
             console.log(`Total projects fetched: ${apiProjects.length}, Active (non-archived): ${activeProjects.length}`)
             console.log('Active projects:', activeProjects.map(p => ({ id: p.id, name: p.name, status: p.status })))
             
-            // If no projects from API, fall back to mock projects for testing
-            if (activeProjects.length === 0) {
-                console.warn('No projects from API, using mock projects as fallback')
-                const mockProjectsList: DialogProject[] = mockProjects.map(p => ({
-                    id: p.id,
-                    name: p.name,
-                    clientName: p.clientName,
-                    startDate: p.startDate instanceof Date ? p.startDate.toISOString() : p.startDate,
-                    endDate: p.endDate instanceof Date ? p.endDate.toISOString() : p.endDate,
-                    findingsCount: p.findingsCount || 0,
-                    status: p.status
-                }))
-                // Filter out archived mock projects
-                const activeMockProjects = mockProjectsList.filter(p => {
-                    const status = String(p.status || '').toUpperCase().trim()
-                    return status !== 'ARCHIVED'
-                })
-                console.log(`Using ${activeMockProjects.length} mock projects as fallback`)
-                setProjects(activeMockProjects)
-                setUsingMockProjects(true) // Track that we're using mock data
-            } else {
-                setProjects(activeProjects)
-                setUsingMockProjects(false)
-            }
+            setProjects(activeProjects)
         } catch (error: any) {
             console.error('Failed to fetch projects from API:', error)
             if (error.response) {
                 console.error('Error response status:', error.response.status)
                 console.error('Error response data:', error.response.data)
             }
-            
-            // Fall back to mock projects on error
-            console.warn('API fetch failed, using mock projects as fallback')
-            const mockProjectsList: DialogProject[] = mockProjects.map(p => ({
-                id: p.id,
-                name: p.name,
-                clientName: p.clientName,
-                startDate: p.startDate instanceof Date ? p.startDate.toISOString() : p.startDate,
-                endDate: p.endDate instanceof Date ? p.endDate.toISOString() : p.endDate,
-                findingsCount: p.findingsCount || 0,
-                status: p.status
-            }))
-            const activeMockProjects = mockProjectsList.filter(p => {
-                const status = String(p.status || '').toUpperCase().trim()
-                return status !== 'ARCHIVED'
-            })
-            setProjects(activeMockProjects)
-            setUsingMockProjects(true) // Track that we're using mock data
+            setProjects([])
         } finally {
             setLoading(false)
         }
@@ -207,16 +164,6 @@ export function NewReportDialog({ children, onReportCreated }: NewReportDialogPr
             return
         }
 
-        // Check if we're using mock projects
-        if (usingMockProjects) {
-            console.warn('Attempting to create report with mock project. This will fail because mock projects are not in the database.')
-            toast({
-                title: "Cannot Create Report",
-                description: "Mock projects cannot be used to create reports. Please create a real project first in the Projects screen.",
-                variant: "destructive"
-            })
-            return
-        }
 
         // Validate project ID exists
         const projectId = String(selectedProjectId).trim()

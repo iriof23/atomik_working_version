@@ -115,206 +115,6 @@ export interface Project {
     updatedAt: Date
 }
 
-// Mock data
-export const mockProjects: Project[] = [
-    {
-        id: '1',
-        name: 'Q1 2024 External Penetration Test',
-        clientId: '1',
-        clientName: 'Acme Corporation',
-        clientLogoUrl: '🏢',
-        type: 'External',
-        status: 'In Progress',
-        priority: 'Critical',
-        startDate: new Date('2024-01-15'),
-        endDate: new Date('2024-02-28'),
-        progress: 65,
-        scope: ['acme.com', '*.acme.com', '203.0.113.0/24'],
-        methodology: 'PTES',
-        teamMembers: [
-            { id: '1', name: 'Alice Johnson', role: 'Lead Pentester', avatarUrl: '' },
-            { id: '2', name: 'Bob Smith', role: 'Security Analyst', avatarUrl: '' },
-            { id: '3', name: 'Carol White', role: 'Junior Tester', avatarUrl: '' }
-        ],
-        leadTester: 'Alice Johnson',
-        findingsCount: 23,
-        findingsBySeverity: { critical: 3, high: 7, medium: 10, low: 3 },
-        complianceFrameworks: ['PCI-DSS', 'SOC2'],
-        description: 'Comprehensive external penetration test covering all internet-facing assets',
-        lastActivity: '2 hours ago',
-        lastActivityDate: new Date(Date.now() - 2 * 60 * 60 * 1000),
-        createdAt: new Date('2024-01-10'),
-        updatedAt: new Date()
-    },
-    {
-        id: '2',
-        name: 'Mobile App Security Assessment',
-        clientId: '2',
-        clientName: 'TechStart Inc',
-        clientLogoUrl: '🚀',
-        type: 'Mobile',
-        status: 'Planning',
-        priority: 'High',
-        startDate: new Date('2024-02-01'),
-        endDate: new Date('2024-02-15'),
-        progress: 15,
-        scope: ['iOS App', 'Android App', 'API Backend'],
-        methodology: 'OWASP MASVS',
-        teamMembers: [
-            { id: '4', name: 'David Lee', role: 'Mobile Security Expert', avatarUrl: '' },
-            { id: '5', name: 'Emma Davis', role: 'API Tester', avatarUrl: '' }
-        ],
-        leadTester: 'David Lee',
-        findingsCount: 2,
-        findingsBySeverity: { critical: 0, high: 1, medium: 1, low: 0 },
-        complianceFrameworks: ['OWASP'],
-        description: 'Security assessment of mobile banking application',
-        lastActivity: '1 day ago',
-        lastActivityDate: new Date(Date.now() - 24 * 60 * 60 * 1000),
-        createdAt: new Date('2024-01-25'),
-        updatedAt: new Date(Date.now() - 24 * 60 * 60 * 1000)
-    },
-    {
-        id: '3',
-        name: 'Annual Infrastructure Audit',
-        clientId: '3',
-        clientName: 'Global Finance Ltd',
-        clientLogoUrl: '🏦',
-        type: 'Internal',
-        status: 'Completed',
-        priority: 'Critical',
-        startDate: new Date('2023-11-01'),
-        endDate: new Date('2023-12-15'),
-        progress: 100,
-        scope: ['Internal Network', 'Active Directory', 'Database Servers'],
-        methodology: 'NIST',
-        teamMembers: [
-            { id: '1', name: 'Alice Johnson', role: 'Lead Pentester', avatarUrl: '' },
-            { id: '6', name: 'Frank Miller', role: 'Network Specialist', avatarUrl: '' },
-            { id: '7', name: 'Grace Chen', role: 'Security Analyst', avatarUrl: '' }
-        ],
-        leadTester: 'Alice Johnson',
-        findingsCount: 45,
-        findingsBySeverity: { critical: 5, high: 12, medium: 18, low: 10 },
-        complianceFrameworks: ['PCI-DSS', 'GDPR', 'SOC2'],
-        description: 'Comprehensive internal network and infrastructure security audit',
-        lastActivity: '2 months ago',
-        lastActivityDate: new Date('2023-12-15'),
-        createdAt: new Date('2023-10-20'),
-        updatedAt: new Date('2023-12-15')
-    },
-    {
-        id: '4',
-        name: 'Cloud Security Review - AWS',
-        clientId: '1',
-        clientName: 'Acme Corporation',
-        clientLogoUrl: '🏢',
-        type: 'Cloud',
-        status: 'In Progress',
-        priority: 'High',
-        startDate: new Date('2024-01-20'),
-        endDate: new Date('2024-02-10'),
-        progress: 40,
-        scope: ['AWS Infrastructure', 'S3 Buckets', 'IAM Policies', 'EC2 Instances'],
-        methodology: 'CIS Benchmarks',
-        teamMembers: [
-            { id: '8', name: 'Henry Wilson', role: 'Cloud Security Expert', avatarUrl: '' },
-            { id: '2', name: 'Bob Smith', role: 'Security Analyst', avatarUrl: '' }
-        ],
-        leadTester: 'Henry Wilson',
-        findingsCount: 18,
-        findingsBySeverity: { critical: 2, high: 5, medium: 8, low: 3 },
-        complianceFrameworks: ['AWS Well-Architected', 'SOC2'],
-        description: 'Security review of AWS cloud infrastructure and configurations',
-        lastActivity: '5 hours ago',
-        lastActivityDate: new Date(Date.now() - 5 * 60 * 60 * 1000),
-        createdAt: new Date('2024-01-15'),
-        updatedAt: new Date()
-    },
-    {
-        id: '5',
-        name: 'Web Application Pentest',
-        clientId: '2',
-        clientName: 'TechStart Inc',
-        clientLogoUrl: '🚀',
-        type: 'Web App',
-        status: 'On Hold',
-        priority: 'Medium',
-        startDate: new Date('2024-01-10'),
-        endDate: new Date('2024-01-25'),
-        progress: 30,
-        scope: ['app.techstart.io', 'admin.techstart.io', 'API endpoints'],
-        methodology: 'OWASP Top 10',
-        teamMembers: [
-            { id: '9', name: 'Ivy Taylor', role: 'Web App Specialist', avatarUrl: '' }
-        ],
-        leadTester: 'Ivy Taylor',
-        findingsCount: 8,
-        findingsBySeverity: { critical: 1, high: 2, medium: 4, low: 1 },
-        complianceFrameworks: ['OWASP'],
-        description: 'Penetration testing of customer portal and admin interface',
-        lastActivity: '1 week ago',
-        lastActivityDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-        createdAt: new Date('2024-01-05'),
-        updatedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-    },
-    {
-        id: '6',
-        name: 'API Security Assessment',
-        clientId: '4',
-        clientName: 'HealthTech Solutions',
-        clientLogoUrl: '🏥',
-        type: 'API',
-        status: 'Planning',
-        priority: 'High',
-        startDate: new Date('2024-02-05'),
-        endDate: new Date('2024-02-20'),
-        progress: 10,
-        scope: ['REST API', 'GraphQL API', 'WebSocket endpoints'],
-        methodology: 'OWASP API Security',
-        teamMembers: [
-            { id: '5', name: 'Emma Davis', role: 'API Tester', avatarUrl: '' },
-            { id: '10', name: 'Jack Brown', role: 'Security Analyst', avatarUrl: '' }
-        ],
-        leadTester: 'Emma Davis',
-        findingsCount: 0,
-        findingsBySeverity: { critical: 0, high: 0, medium: 0, low: 0 },
-        complianceFrameworks: ['HIPAA', 'OWASP'],
-        description: 'Comprehensive API security testing for healthcare platform',
-        lastActivity: '3 days ago',
-        lastActivityDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-        createdAt: new Date('2024-01-28'),
-        updatedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)
-    },
-    {
-        id: '7',
-        name: 'Network Infrastructure Test',
-        clientId: '5',
-        clientName: 'RetailCo International',
-        clientLogoUrl: '🛒',
-        type: 'Network',
-        status: 'Completed',
-        priority: 'Medium',
-        startDate: new Date('2023-12-01'),
-        endDate: new Date('2023-12-20'),
-        progress: 100,
-        scope: ['Corporate Network', 'VPN', 'Firewall Rules', 'WiFi Security'],
-        methodology: 'PTES',
-        teamMembers: [
-            { id: '6', name: 'Frank Miller', role: 'Network Specialist', avatarUrl: '' },
-            { id: '3', name: 'Carol White', role: 'Junior Tester', avatarUrl: '' }
-        ],
-        leadTester: 'Frank Miller',
-        findingsCount: 12,
-        findingsBySeverity: { critical: 0, high: 3, medium: 6, low: 3 },
-        complianceFrameworks: ['PCI-DSS'],
-        description: 'Network security assessment of retail infrastructure',
-        lastActivity: '1 month ago',
-        lastActivityDate: new Date('2023-12-20'),
-        createdAt: new Date('2023-11-25'),
-        updatedAt: new Date('2023-12-20')
-    }
-]
 
 type ViewMode = 'card' | 'table' | 'timeline'
 
@@ -344,7 +144,7 @@ export default function Projects() {
     const [activeFilters, setActiveFilters] = useState<Array<{ id: string, label: string, value: string }>>([])
     const navigate = useNavigate()
     const { toast } = useToast()
-    const [projects, setProjects] = useState<Project[]>(mockProjects)
+    const [projects, setProjects] = useState<Project[]>([])
     const [addProjectDialogOpen, setAddProjectDialogOpen] = useState(false)
     const [editingProject, setEditingProject] = useState<Project | null>(null)
     const [viewingProject, setViewingProject] = useState<Project | null>(null)
@@ -414,8 +214,8 @@ export default function Projects() {
             try {
                 const token = await getToken()
                 if (!token) {
-                    console.warn('No auth token, using mock projects')
-                    setProjects(mockProjects)
+                    console.warn('No auth token available')
+                    setProjects([])
                     return
                 }
                 
@@ -456,15 +256,14 @@ export default function Projects() {
                     }))
                     
                     console.log(`Loaded ${apiProjects.length} real projects from API`)
-                    // Combine with mock projects for now (real projects first)
-                    setProjects([...apiProjects, ...mockProjects])
+                    setProjects(apiProjects)
                 } else {
-                    console.log('No projects from API, using mock projects')
-                    setProjects(mockProjects)
+                    console.log('No projects from API')
+                    setProjects([])
                 }
             } catch (error) {
                 console.error('Failed to fetch projects:', error)
-                setProjects(mockProjects)
+                setProjects([])
             } finally {
                 setIsLoading(false)
             }

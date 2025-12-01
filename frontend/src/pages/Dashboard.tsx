@@ -801,14 +801,6 @@ export default function Dashboard() {
     }
     
     const handleResumeReport = async (project: Project) => {
-        // For mock projects (short IDs), show info message
-        if (project.id.length < 10) {
-            toast({
-                title: 'Info',
-                description: 'Please create a real project first to start a report.',
-            })
-            return
-        }
         
         try {
             const token = await getToken()

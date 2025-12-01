@@ -23,90 +23,23 @@ import { api } from '@/lib/api'
 import { useToast } from '@/components/ui/use-toast'
 import { logProjectDeleted, logReportDeleted } from '@/lib/activityLog'
 
-// Mock data - will be replaced with actual data from Projects
-const mockProjects = [
-    {
-        id: '1',
-        name: 'Q4 2024 External Pentest',
-        clientName: 'Acme Corporation',
-        clientLogoUrl: '🏢',
-        status: 'In Progress' as const,
-        progress: 65,
-        findingsCount: 23,
-        findingsBySeverity: { critical: 3, high: 7, medium: 10, low: 3 },
-        teamMembers: [
-            { id: '1', name: 'Alice Johnson' },
-            { id: '2', name: 'Bob Smith' },
-            { id: '3', name: 'Carol White' }
-        ],
-        leadTester: 'Alice Johnson',
-        startDate: new Date('2024-07-14'),
-        endDate: new Date('2024-02-27'),
-        lastModified: new Date('2024-03-20'),
-        scope: 'External network, web applications, API endpoints',
-        priority: 'High' as const
-    },
-    {
-        id: '2',
-        name: 'Web Application Security Audit',
-        clientName: 'TechStart Inc',
-        clientLogoUrl: '🚀',
-        status: 'In Progress' as const,
-        progress: 40,
-        findingsCount: 15,
-        findingsBySeverity: { critical: 1, high: 4, medium: 7, low: 3 },
-        teamMembers: [
-            { id: '4', name: 'David Lee' },
-            { id: '5', name: 'Emma Davis' }
-        ],
-        leadTester: 'David Lee',
-        startDate: new Date('2024-01-31'),
-        endDate: new Date('2024-02-14'),
-        lastModified: new Date('2024-03-22'),
-        scope: 'Customer portal, admin dashboard, payment gateway',
-        priority: 'Medium' as const
-    },
-    {
-        id: '3',
-        name: 'Mobile App Security Assessment',
-        clientName: 'TechStart Inc',
-        clientLogoUrl: '🚀',
-        status: 'Planning' as const,
-        progress: 15,
-        findingsCount: 2,
-        findingsBySeverity: { critical: 0, high: 1, medium: 1, low: 0 },
-        teamMembers: [
-            { id: '6', name: 'Frank Miller' }
-        ],
-        leadTester: 'Frank Miller',
-        startDate: new Date('2024-01-31'),
-        endDate: new Date('2024-02-14'),
-        lastModified: new Date('2024-03-18'),
-        scope: 'iOS and Android mobile applications',
-        priority: 'Low' as const
-    },
-    {
-        id: '4',
-        name: 'Cloud Security Review - AWS',
-        clientName: 'Acme Corporation',
-        clientLogoUrl: '🏢',
-        status: 'In Progress' as const,
-        progress: 80,
-        findingsCount: 18,
-        findingsBySeverity: { critical: 2, high: 5, medium: 8, low: 3 },
-        teamMembers: [
-            { id: '7', name: 'Henry Wilson' },
-            { id: '8', name: 'Ivy Taylor' },
-            { id: '9', name: 'Jack Brown' }
-        ],
-        leadTester: 'Henry Wilson',
-        startDate: new Date('2024-01-19'),
-        endDate: new Date('2024-02-09'),
-        lastModified: new Date('2024-03-21'),
-        scope: 'AWS infrastructure, IAM policies, S3 buckets',
-        priority: 'High' as const
-    }
-]
+interface Project {
+    id: string
+    name: string
+    clientName: string
+    clientLogoUrl: string
+    status: 'Planning' | 'In Progress' | 'Completed' | 'On Hold'
+    progress: number
+    findingsCount: number
+    findingsBySeverity: { critical: number, high: number, medium: number, low: number }
+    teamMembers: Array<{ id: string, name: string }>
+    leadTester: string
+    startDate: Date
+    endDate: Date
+    lastModified: Date
+    scope: string
+    priority: 'High' | 'Medium' | 'Low'
+}
 
 interface Report {
     id: string
@@ -122,12 +55,12 @@ export default function ReportBuilder() {
     const { getToken } = useAuth()
     const { toast } = useToast()
     const [searchQuery, setSearchQuery] = useState('')
-    const [selectedProject, setSelectedProject] = useState(mockProjects[0])
+    const [selectedProject, setSelectedProject] = useState<Project | null>(null)
     const [statusFilter, setStatusFilter] = useState<'all' | 'In Progress' | 'Planning'>('all')
     const [projectFindingsData, setProjectFindingsData] = useState<Record<string, { count: number, severity: { critical: number, high: number, medium: number, low: number } }>>({})
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
     const [isDeleting, setIsDeleting] = useState(false)
-    const [projects, setProjects] = useState(mockProjects)
+    const [projects, setProjects] = useState<Project[]>([])
     const [projectReports, setProjectReports] = useState<Record<string, Report[]>>({})
     const [isOpeningEditor, setIsOpeningEditor] = useState(false)
     const [isLoadingProjects, setIsLoadingProjects] = useState(true)
@@ -139,9 +72,8 @@ export default function ReportBuilder() {
             try {
                 const token = await getToken()
                 if (!token) {
-                    // Fallback to mock projects if not authenticated
-                    setProjects(mockProjects)
-                    setSelectedProject(mockProjects[0])
+                    setProjects([])
+                    setSelectedProject(null)
                     return
                 }
                 
@@ -171,20 +103,17 @@ export default function ReportBuilder() {
                         priority: 'Medium' as const
                     }))
                     
-                    // Combine real projects with mock projects (real first)
-                    const combinedProjects = [...apiProjects, ...mockProjects]
-                    setProjects(combinedProjects)
-                    setSelectedProject(combinedProjects[0])
+                    setProjects(apiProjects)
+                    setSelectedProject(apiProjects[0] || null)
                 } else {
-                    // No real projects, use mock data
-                    setProjects(mockProjects)
-                    setSelectedProject(mockProjects[0])
+                    // No real projects
+                    setProjects([])
+                    setSelectedProject(null)
                 }
             } catch (error) {
                 console.error('Failed to fetch projects:', error)
-                // Fallback to mock projects on error
-                setProjects(mockProjects)
-                setSelectedProject(mockProjects[0])
+                setProjects([])
+                setSelectedProject(null)
             } finally {
                 setIsLoadingProjects(false)
             }
@@ -238,14 +167,9 @@ export default function ReportBuilder() {
                 return
             }
 
-            // Check if it's a real project (UUID) or mock project
-            const isRealProject = selectedProject.id.length > 10 // UUIDs are longer than mock IDs
-            
-            if (isRealProject) {
-                await api.delete(`/projects/${selectedProject.id}`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                })
-            }
+            await api.delete(`/projects/${selectedProject.id}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            })
 
             // Log activity
             logProjectDeleted(selectedProject.name, selectedProject.id)
@@ -308,14 +232,6 @@ export default function ReportBuilder() {
     })
 
     const handleOpenReport = async (projectId: string) => {
-        // For mock projects (short IDs), show info message
-        if (projectId.length < 10) {
-            toast({
-                title: 'Info',
-                description: 'Please create a real project first to start a report.',
-            })
-            return
-        }
         
         setIsOpeningEditor(true)
         try {
@@ -450,8 +366,7 @@ export default function ReportBuilder() {
                                     priority: 'Medium' as const
                                 }))
                                 
-                                const combinedProjects = [...apiProjects, ...mockProjects]
-                                setProjects(combinedProjects)
+                                setProjects(apiProjects)
                             }
                             
                             // Refresh reports
@@ -705,11 +620,11 @@ export default function ReportBuilder() {
                                                         Assigned Team
                                                     </div>
                                                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                                        {selectedProject.teamMembers.map(member => (
+                                                        {selectedProject.teamMembers.map((member: { id: string, name: string }) => (
                                                             <div key={member.id} className="flex items-center gap-3 p-3 rounded-lg border border-zinc-800 bg-zinc-900/20">
                                                                 <Avatar className="h-8 w-8 border border-zinc-700">
                                                                     <AvatarFallback className="bg-zinc-800 text-zinc-300 text-xs">
-                                                                        {member.name.split(' ').map(n => n[0]).join('')}
+                                                                        {member.name.split(' ').map((n: string) => n[0]).join('')}
                                                                     </AvatarFallback>
                                                                 </Avatar>
                                                                 <div>

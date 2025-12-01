@@ -87,142 +87,6 @@ interface Client {
   hasPortalAccess?: boolean
 }
 
-// Mock data for demonstration
-const mockClients: Client[] = [
-  {
-    id: '1',
-    name: 'Acme Corporation',
-    logoUrl: '🏢',
-    status: 'Active',
-    riskLevel: 'High',
-    industry: 'Financial Services',
-    companySize: 'Enterprise',
-    primaryContact: 'John Smith',
-    email: 'john@acme.com',
-    phone: '+1 (555) 123-4567',
-    lastActivity: '2 days ago',
-    lastActivityDate: new Date('2024-03-20'),
-    tags: ['PCI', 'Annual', 'VIP'],
-    projectsCount: 3,
-    reportsCount: 2,
-    totalFindings: 12,
-    findingsBySeverity: {
-      critical: 3,
-      high: 4,
-      medium: 3,
-      low: 2
-    },
-    createdAt: new Date('2024-01-15'),
-    updatedAt: new Date('2024-03-20'),
-    hasPortalAccess: true
-  },
-  {
-    id: '2',
-    name: 'TechStart Inc',
-    logoUrl: '🚀',
-    status: 'Active',
-    riskLevel: 'Medium',
-    industry: 'Technology',
-    companySize: 'Startup',
-    primaryContact: 'Sarah Johnson',
-    email: 'sarah@techstart.io',
-    phone: '+1 (555) 234-5678',
-    lastActivity: '1 hour ago',
-    lastActivityDate: new Date('2024-03-22'),
-    tags: ['SOC2', 'Quarterly'],
-    projectsCount: 5,
-    reportsCount: 1,
-    totalFindings: 8,
-    findingsBySeverity: {
-      critical: 1,
-      high: 2,
-      medium: 3,
-      low: 2
-    },
-    createdAt: new Date('2024-02-01'),
-    updatedAt: new Date('2024-03-22')
-  },
-  {
-    id: '3',
-    name: 'Global Finance Ltd',
-    logoUrl: '💼',
-    status: 'Active',
-    riskLevel: 'High',
-    industry: 'Banking',
-    companySize: 'Enterprise',
-    primaryContact: 'Michael Chen',
-    email: 'mchen@globalfinance.com',
-    phone: '+1 (555) 345-6789',
-    lastActivity: '1 day ago',
-    lastActivityDate: new Date('2024-03-21'),
-    tags: ['PCI', 'GDPR', 'Critical'],
-    projectsCount: 2,
-    reportsCount: 3,
-    totalFindings: 15,
-    findingsBySeverity: {
-      critical: 5,
-      high: 6,
-      medium: 3,
-      low: 1
-    },
-    createdAt: new Date('2024-01-20'),
-    updatedAt: new Date('2024-03-21'),
-    hasPortalAccess: true
-  },
-  {
-    id: '4',
-    name: 'HealthTech Solutions',
-    logoUrl: '🏥',
-    status: 'Prospect',
-    riskLevel: 'Low',
-    industry: 'Healthcare',
-    companySize: 'SMB',
-    primaryContact: 'Emily Rodriguez',
-    email: 'emily@healthtech.com',
-    phone: '+1 (555) 456-7890',
-    lastActivity: 'Just now',
-    lastActivityDate: new Date('2024-03-23'),
-    tags: ['HIPAA', 'New'],
-    projectsCount: 1,
-    reportsCount: 0,
-    totalFindings: 4,
-    findingsBySeverity: {
-      critical: 0,
-      high: 1,
-      medium: 2,
-      low: 1
-    },
-    createdAt: new Date('2024-03-01'),
-    updatedAt: new Date('2024-03-23')
-  },
-  {
-    id: '5',
-    name: 'RetailCo International',
-    logoUrl: '🛒',
-    status: 'Inactive',
-    riskLevel: 'Medium',
-    industry: 'Retail',
-    companySize: 'Enterprise',
-    primaryContact: 'David Martinez',
-    email: 'dmartinez@retailco.com',
-    phone: '+1 (555) 567-8901',
-    lastActivity: '3 weeks ago',
-    lastActivityDate: new Date('2024-03-01'),
-    tags: ['PCI-DSS', 'Archived'],
-    projectsCount: 0,
-    reportsCount: 5,
-    totalFindings: 22,
-    findingsBySeverity: {
-      critical: 2,
-      high: 8,
-      medium: 7,
-      low: 5
-    },
-    createdAt: new Date('2023-08-15'),
-    updatedAt: new Date('2024-03-01')
-  }
-]
-
 type ViewMode = 'card' | 'table' | 'list'
 
 export default function Clients() {
@@ -235,7 +99,7 @@ export default function Clients() {
   const { toast } = useToast()
   const [filterDialogOpen, setFilterDialogOpen] = useState(false)
   const [appliedFilters, setAppliedFilters] = useState<ActiveFilters>({})
-  const [clients, setClients] = useState<Client[]>(mockClients)
+  const [clients, setClients] = useState<Client[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [addClientDialogOpen, setAddClientDialogOpen] = useState(false)
   const [editingClient, setEditingClient] = useState<Client | null>(null)
@@ -279,18 +143,18 @@ export default function Clients() {
             updatedAt: c.updated_at ? new Date(c.updated_at) : new Date(),
           }))
           
-          // Combine API clients with mock clients (API first)
-          setClients([...apiClients, ...mockClients])
+          // Use only API clients
+          setClients(apiClients)
         } else {
-          // No API clients, use mock data
-          setClients(mockClients)
+          // No API clients, use empty array
+          setClients([])
         }
       } else {
-        setClients(mockClients)
+        setClients([])
       }
     } catch (error) {
       console.error('Failed to fetch clients:', error)
-      setClients(mockClients)
+      setClients([])
     } finally {
       setIsLoading(false)
     }
