@@ -52,19 +52,21 @@
 
 
 
-        /* --- 2. CLEAN PAGE GEOMETRY (No Header Space Needed) --- */
+        /* --- 2. CLEAN PAGE GEOMETRY (Standard Margins, No Header Space) --- */
 
         @page {
 
             size: A4;
 
-            margin: 20mm; /* Standard, Safe Margins all around */
+            margin: 20mm; /* Safe, balanced margins */
 
         }
 
 
 
-        @page :first { margin: 0 !important; } /* Full Bleed Cover Override */
+        /* Full Bleed Cover Override */
+
+        @page :first { margin: 0 !important; }
 
 
 
@@ -190,109 +192,33 @@
 
 
 
-        /* --- 5. ENGAGEMENT DETAILS (BEST OF BOTH WORLDS) --- */
+        /* --- 5. ENGAGEMENT DETAILS (Consolidated Card) --- */
 
-        .engagement-card {
+        .engagement-card { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 40px; box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
 
-            border: 1px solid var(--border);
-
-            border-radius: 8px;
-
-            overflow: hidden;
-
-            margin-bottom: 40px;
-
-            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
-
-        }
-
-
-
-        /* Dark Header */
-
-        .engagement-header {
-
-            background: var(--dark);
-
-            color: white;
-
-            padding: 15px 25px;
-
-            display: flex; justify-content: space-between; align-items: center;
-
-            border-bottom: 3px solid var(--primary);
-
-        }
+        .engagement-header { background: var(--dark); color: white; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid var(--primary); }
 
         .eh-title { font-weight: 800; text-transform: uppercase; letter-spacing: 1px; font-size: 10pt; }
 
         .eh-tag { font-family: 'JetBrains Mono'; font-size: 8pt; opacity: 0.8; letter-spacing: 1px; }
 
+        .engagement-grid { display: grid; grid-template-columns: 1fr 1fr; background: #fff; }
 
-
-        /* The Grid */
-
-        .engagement-grid {
-
-            display: grid; grid-template-columns: 1fr 1fr; background: #fff;
-
-        }
-
-        
-
-        .eng-cell {
-
-            padding: 20px 25px;
-
-            border-right: 1px solid var(--border);
-
-            border-bottom: 1px solid var(--border);
-
-        }
+        .eng-cell { padding: 20px 25px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
 
         .eng-cell-full { grid-column: 1 / -1; border-right: none; }
 
         .eng-cell:nth-child(even) { border-right: none; }
 
+        .eng-label { display: block; font-size: 9pt; color: var(--primary); font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
 
+        .eng-value { font-size: 11pt; font-weight: 600; color: var(--slate); font-family: 'Inter', sans-serif; }
 
-        .eng-label {
+        .eng-date { font-family: 'JetBrains Mono', monospace; letter-spacing: -0.5px; }
 
-            display: block; font-size: 9pt; color: var(--primary); font-weight: 800; 
+        .scope-section { background: #fafafa; padding: 25px; }
 
-            text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;
-
-        }
-
-        .eng-value {
-
-            font-size: 11pt; font-weight: 600; color: var(--slate); font-family: 'Inter', sans-serif;
-
-        }
-
-        .eng-date {
-
-            font-family: 'JetBrains Mono', monospace; letter-spacing: -0.5px;
-
-        }
-
-
-
-        /* Scope Footer */
-
-        .scope-section {
-
-            background: #fafafa; padding: 25px;
-
-        }
-
-        .scope-item {
-
-            font-family: 'JetBrains Mono'; font-size: 11pt; color: var(--dark);
-
-            margin-bottom: 5px; display: flex; align-items: center;
-
-        }
+        .scope-item { font-family: 'JetBrains Mono'; font-size: 11pt; color: var(--dark); margin-bottom: 5px; display: flex; align-items: center; }
 
         .scope-arrow { color: var(--primary); margin-right: 10px; font-weight: bold; }
 
@@ -302,7 +228,7 @@
 
         .risk-dashboard {
 
-            display: flex; gap: 40px; align-items: center; margin-bottom: 50px; padding: 25px; border: 1px solid var(--border); border-radius: 12px;
+            display: flex; gap: 40px; align-items: center; margin-bottom: 40px; padding: 25px; border: 1px solid var(--border); border-radius: 12px;
 
         }
 
@@ -326,25 +252,33 @@
 
 
 
-        /* --- 7. FINDING CARD --- */
+        /* --- 7. FINDINGS SUMMARY TABLE --- */
 
-        .finding-card {
+        .findings-table-card { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 40px; }
 
-            border: 1px solid var(--border); margin-bottom: 50px;
+        .findings-table { width: 100%; border-collapse: collapse; }
 
-            page-break-inside: avoid; background: #fff; border-radius: 8px; overflow: hidden;
+        .findings-table th { background: var(--dark); color: #fff; padding: 12px 25px; text-align: left; font-size: 8pt; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
 
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        .findings-table td { padding: 12px 25px; border-bottom: 1px solid var(--border); font-size: 10pt; color: var(--slate); }
 
-        }
+        .findings-table tr:last-child td { border-bottom: none; }
 
-        .finding-header-strip {
+        .findings-table tr:nth-child(even) { background-color: var(--light-gray); }
 
-            padding: 12px 25px; color: white; font-weight: 700; font-size: 11pt;
+        .ft-id { font-family: 'JetBrains Mono'; color: var(--slate); font-size: 9pt; }
 
-            display: flex; justify-content: space-between; align-items: center;
+        .ft-title { font-weight: 600; color: var(--dark); }
 
-        }
+        .ft-severity { font-weight: 700; font-size: 8pt; text-transform: uppercase; letter-spacing: 0.5px; }
+
+
+
+        /* --- 8. DETAILED FINDING CARD --- */
+
+        .finding-card { border: 1px solid var(--border); margin-bottom: 50px; page-break-inside: avoid; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+
+        .finding-header-strip { padding: 12px 25px; color: white; font-weight: 700; font-size: 11pt; display: flex; justify-content: space-between; align-items: center; }
 
         .bg-CRITICAL { background: var(--sev-critical); }
 
@@ -356,19 +290,11 @@
 
         .bg-INFO { background: var(--sev-info); }
 
-
-
-        .finding-meta-grid {
-
-            display: grid; grid-template-columns: 2fr 1fr; border-bottom: 1px solid var(--border); background: var(--light-gray);
-
-        }
+        .finding-meta-grid { display: grid; grid-template-columns: 2fr 1fr; border-bottom: 1px solid var(--border); background: var(--light-gray); }
 
         .meta-cell { padding: 15px 25px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
 
         .meta-cell:last-child { border-right: none; }
-
-        
 
         .f-label { display: block; font-family: 'JetBrains Mono'; font-size: 7pt; font-weight: 700; text-transform: uppercase; color: var(--slate); margin-bottom: 6px; letter-spacing: 0.5px; }
 
@@ -376,23 +302,11 @@
 
         .f-value-mono { font-family: 'JetBrains Mono'; font-size: 9pt; color: var(--dark); }
 
-
-
         .finding-content { padding: 30px 30px; }
 
         .content-section { margin-bottom: 30px; }
 
-        .content-title {
-
-            font-size: 9pt; font-weight: 800; text-transform: uppercase; 
-
-            color: var(--dark); border-bottom: 2px solid var(--primary); 
-
-            display: inline-block; margin-bottom: 15px; padding-bottom: 4px; letter-spacing: 0.5px;
-
-        }
-
-
+        .content-title { font-size: 9pt; font-weight: 800; text-transform: uppercase; color: var(--dark); border-bottom: 2px solid var(--primary); display: inline-block; margin-bottom: 15px; padding-bottom: 4px; letter-spacing: 0.5px; }
 
         .evidence-container { margin-top: 20px; border: 1px solid var(--border); padding: 10px; background: #fff; border-radius: 6px; }
 
@@ -460,8 +374,6 @@
 
     <div class="page-break">
 
-        
-
         <div class="engagement-card">
 
             <div class="engagement-header">
@@ -471,8 +383,6 @@
                 <span class="eh-tag">CONFIDENTIAL</span>
 
             </div>
-
-
 
             <div class="engagement-grid">
 
@@ -484,8 +394,6 @@
 
                 </div>
 
-
-
                 <div class="eng-cell">
 
                     <span class="eng-label">Lead Tester</span>
@@ -494,8 +402,6 @@
 
                 </div>
 
-
-
                 <div class="eng-cell">
 
                     <span class="eng-label">Testing Period</span>
@@ -503,8 +409,6 @@
                     <div class="eng-value eng-date">{{ project.start_date }} - {{ project.end_date }}</div>
 
                 </div>
-
-
 
                 <div class="eng-cell">
 
@@ -515,8 +419,6 @@
                 </div>
 
             </div>
-
-
 
             <div class="scope-section">
 
@@ -568,8 +470,6 @@
 
             </div>
 
-            
-
             <div class="risk-grid">
 
                 <div class="risk-stat-box">
@@ -605,6 +505,58 @@
                 </div>
 
             </div>
+
+        </div>
+
+
+
+        <h2 class="section-title-green">Findings Overview</h2>
+
+        <div class="findings-table-card">
+
+            <table class="findings-table">
+
+                <thead>
+
+                    <tr>
+
+                        <th style="width: 15%;">ID</th>
+
+                        <th style="width: 65%;">Finding Name</th>
+
+                        <th style="width: 20%;">Severity</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    {% for finding in findings %}
+
+                    <tr>
+
+                        <td class="ft-id">{{ finding.finding_id }}</td>
+
+                        <td class="ft-title">{{ finding.title }}</td>
+
+                        <td>
+
+                            <span class="ft-severity" style="color: var(--sev-{{ finding.severity | lower }})">
+
+                                {{ finding.severity }}
+
+                            </span>
+
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
 
         </div>
 
