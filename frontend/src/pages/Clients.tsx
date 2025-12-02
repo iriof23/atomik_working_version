@@ -195,7 +195,7 @@ export default function Clients() {
     const mappedClient: Client = {
       id: newClient.id,
       name: newClient.name,
-      logoUrl: '🏢',
+      logoUrl: newClient.logo_url || '',
       status: newClient.status || 'Active',
       riskLevel: newClient.risk_level || 'Medium',
       industry: newClient.industry || 'Technology',
