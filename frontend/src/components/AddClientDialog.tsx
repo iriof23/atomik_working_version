@@ -404,62 +404,69 @@ export function AddClientDialog({ open, onOpenChange, onClientAdded, editingClie
                 {/* Step 3: Classification */}
                 {step === 3 && (
                     <div className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="status" className="flex items-center gap-2">
-                                <Briefcase className="h-4 w-4 text-blue-600" />
+                        <div className="space-y-3">
+                            <Label htmlFor="status" className="flex items-center gap-2 text-xs font-medium text-zinc-400 uppercase tracking-wider">
+                                <Briefcase className="h-3.5 w-3.5" />
                                 Client Status
                             </Label>
-                            <div className="grid grid-cols-2 gap-2">
-                                {(['Prospect', 'Active', 'Inactive', 'Archived'] as const).map((status) => (
-                                    <button
-                                        key={status}
-                                        type="button"
-                                        onClick={() => updateField('status', status)}
-                                        className={cn(
-                                            "px-4 py-3 rounded-lg border-2 transition-all font-medium",
-                                            formData.status === status
-                                                ? "border-blue-600 bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300"
-                                                : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
-                                        )}
-                                    >
-                                        {status === 'Prospect' && '🔵 '}
-                                        {status === 'Active' && '🟢 '}
-                                        {status === 'Inactive' && '🟡 '}
-                                        {status === 'Archived' && '⚫ '}
-                                        {status}
-                                    </button>
-                                ))}
+                            <div className="flex flex-wrap gap-2">
+                                {(['Prospect', 'Active', 'Inactive'] as const).map((status) => {
+                                    const isSelected = formData.status === status
+                                    const statusColors: Record<string, { dot: string; selected: string }> = {
+                                        'Prospect': { dot: 'bg-blue-500', selected: 'border-blue-500/50 bg-blue-500/10 text-blue-400' },
+                                        'Active': { dot: 'bg-emerald-500', selected: 'border-emerald-500/50 bg-emerald-500/10 text-emerald-400' },
+                                        'Inactive': { dot: 'bg-amber-500', selected: 'border-amber-500/50 bg-amber-500/10 text-amber-400' },
+                                    }
+                                    return (
+                                        <button
+                                            key={status}
+                                            type="button"
+                                            onClick={() => updateField('status', status)}
+                                            className={cn(
+                                                "inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-sm font-medium transition-all duration-200",
+                                                isSelected
+                                                    ? statusColors[status].selected
+                                                    : "border-zinc-700/50 bg-zinc-800/30 text-zinc-400 hover:border-zinc-600 hover:bg-zinc-800/50 hover:text-zinc-300"
+                                            )}
+                                        >
+                                            <span className={cn("w-2 h-2 rounded-full", statusColors[status].dot)} />
+                                            {status}
+                                        </button>
+                                    )
+                                })}
                             </div>
                         </div>
 
-                        <div className="space-y-2">
-                            <Label htmlFor="riskLevel" className="flex items-center gap-2">
-                                <Shield className="h-4 w-4 text-orange-600" />
+                        <div className="space-y-3">
+                            <Label htmlFor="riskLevel" className="flex items-center gap-2 text-xs font-medium text-zinc-400 uppercase tracking-wider">
+                                <Shield className="h-3.5 w-3.5" />
                                 Risk Level
                             </Label>
-                            <div className="grid grid-cols-3 gap-2">
-                                {(['Low', 'Medium', 'High'] as const).map((risk) => (
-                                    <button
-                                        key={risk}
-                                        type="button"
-                                        onClick={() => updateField('riskLevel', risk)}
-                                        className={cn(
-                                            "px-4 py-3 rounded-lg border-2 transition-all font-medium",
-                                            formData.riskLevel === risk
-                                                ? risk === 'High'
-                                                    ? "border-red-600 bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-300"
-                                                    : risk === 'Medium'
-                                                        ? "border-yellow-600 bg-yellow-50 dark:bg-yellow-950 text-yellow-700 dark:text-yellow-300"
-                                                        : "border-green-600 bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300"
-                                                : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
-                                        )}
-                                    >
-                                        {risk === 'High' && '🔴 '}
-                                        {risk === 'Medium' && '🟡 '}
-                                        {risk === 'Low' && '🟢 '}
-                                        {risk}
-                                    </button>
-                                ))}
+                            <div className="flex gap-2">
+                                {(['Low', 'Medium', 'High'] as const).map((risk) => {
+                                    const isSelected = formData.riskLevel === risk
+                                    const riskColors: Record<string, { dot: string; selected: string }> = {
+                                        'Low': { dot: 'bg-emerald-500', selected: 'border-emerald-500/50 bg-emerald-500/10 text-emerald-400' },
+                                        'Medium': { dot: 'bg-amber-500', selected: 'border-amber-500/50 bg-amber-500/10 text-amber-400' },
+                                        'High': { dot: 'bg-red-500', selected: 'border-red-500/50 bg-red-500/10 text-red-400' },
+                                    }
+                                    return (
+                                        <button
+                                            key={risk}
+                                            type="button"
+                                            onClick={() => updateField('riskLevel', risk)}
+                                            className={cn(
+                                                "inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-sm font-medium transition-all duration-200",
+                                                isSelected
+                                                    ? riskColors[risk].selected
+                                                    : "border-zinc-700/50 bg-zinc-800/30 text-zinc-400 hover:border-zinc-600 hover:bg-zinc-800/50 hover:text-zinc-300"
+                                            )}
+                                        >
+                                            <span className={cn("w-2 h-2 rounded-full", riskColors[risk].dot)} />
+                                            {risk}
+                                        </button>
+                                    )
+                                })}
                             </div>
                         </div>
 
