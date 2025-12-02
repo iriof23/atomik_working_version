@@ -504,6 +504,7 @@ export default function FindingsTabContent({ projectId: propProjectId, onUpdate 
                 onClose={() => setSelectedFinding(null)}
                 onUpdate={handleUpdateFinding}
                 onDelete={() => setShowDeleteDialog(true)}
+                isEditable={true}
             />
 
             {/* Add Finding Modal - Bulk Selector */}

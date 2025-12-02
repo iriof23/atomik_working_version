@@ -522,6 +522,7 @@ export default function Findings() {
                             setEditingFinding(null)
                         }
                     }}
+                    isEditable={activeTab === 'custom'}
                 />
             )}
         </div>

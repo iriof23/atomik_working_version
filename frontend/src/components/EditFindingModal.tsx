@@ -46,9 +46,10 @@ interface EditFindingModalProps {
     onClose: () => void;
     onUpdate: (finding: ProjectFinding) => void;
     onDelete: () => void;
+    isEditable?: boolean; // Whether the title can be edited (true for custom templates)
 }
 
-export function EditFindingModal({ finding, isOpen, onClose, onUpdate, onDelete }: EditFindingModalProps) {
+export function EditFindingModal({ finding, isOpen, onClose, onUpdate, onDelete, isEditable = false }: EditFindingModalProps) {
     const [localFinding, setLocalFinding] = useState<ProjectFinding | null>(finding);
     const [isDirty, setIsDirty] = useState(false);
     const [newAssetUrl, setNewAssetUrl] = useState('');
@@ -172,7 +173,12 @@ export function EditFindingModal({ finding, isOpen, onClose, onUpdate, onDelete 
                 {/* Header - Fixed */}
                 <div className="h-16 border-b border-zinc-800 flex items-center justify-between px-6 shrink-0">
                     <div className="flex items-center gap-4 flex-1 min-w-0">
-                        <Input disabled value={localFinding.title} className="font-medium bg-zinc-900/50 border-zinc-800 text-white max-w-md truncate" />
+                        <Input 
+                            disabled={!isEditable}
+                            value={localFinding.title} 
+                            onChange={(e) => isEditable && handleChange({ title: e.target.value })}
+                            className="font-medium bg-zinc-900/50 border-zinc-800 text-white max-w-md truncate" 
+                        />
                         <Badge className={cn('text-xs px-2 py-0.5 flex-shrink-0', getSeverityColor(localFinding.severity))}>{localFinding.severity}</Badge>
                         {isDirty && <span className="text-xs text-orange-500 font-medium flex-shrink-0">• Unsaved Changes</span>}
                     </div>
