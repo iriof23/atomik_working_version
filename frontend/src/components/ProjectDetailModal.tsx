@@ -1,3 +1,5 @@
+import { useState, useEffect } from 'react'
+import { useAuth } from '@clerk/clerk-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -13,10 +15,12 @@ import {
     Clock,
     CheckCircle2,
     AlertTriangle,
-    Building2
+    Building2,
+    Loader2
 } from 'lucide-react'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { format } from 'date-fns'
+import { api } from '@/lib/api'
 
 interface Project {
     id: string
@@ -85,6 +89,62 @@ export default function ProjectDetailModal({
     onGenerateReport,
     onDelete
 }: ProjectDetailModalProps) {
+    const { getToken } = useAuth()
+    const [loadingFindings, setLoadingFindings] = useState(false)
+    const [totalFindings, setTotalFindings] = useState(0)
+    const [findingsBySeverity, setFindingsBySeverity] = useState({
+        critical: 0,
+        high: 0,
+        medium: 0,
+        low: 0
+    })
+
+    // Fetch findings when project changes
+    useEffect(() => {
+        const fetchFindings = async () => {
+            if (!project?.id || !open) return
+            
+            setLoadingFindings(true)
+            try {
+                const token = await getToken()
+                if (!token) {
+                    console.warn('No auth token for fetching findings')
+                    return
+                }
+
+                const response = await api.get(`/findings/?project_id=${project.id}`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                })
+
+                if (Array.isArray(response.data)) {
+                    const severityCounts = {
+                        critical: 0,
+                        high: 0,
+                        medium: 0,
+                        low: 0
+                    }
+                    
+                    response.data.forEach((finding: any) => {
+                        const severity = (finding.severity || '').toLowerCase()
+                        if (severity === 'critical') severityCounts.critical++
+                        else if (severity === 'high') severityCounts.high++
+                        else if (severity === 'medium') severityCounts.medium++
+                        else if (severity === 'low' || severity === 'info' || severity === 'informational') severityCounts.low++
+                    })
+
+                    setTotalFindings(response.data.length)
+                    setFindingsBySeverity(severityCounts)
+                }
+            } catch (error) {
+                console.error('Failed to fetch project findings:', error)
+            } finally {
+                setLoadingFindings(false)
+            }
+        }
+
+        fetchFindings()
+    }, [project?.id, open, getToken])
+
     if (!project) return null
 
     const getStatusColor = (status: string) => {
@@ -116,12 +176,6 @@ export default function ProjectDetailModal({
                 return 'bg-gray-500/10 text-gray-400 border-gray-500/20'
         }
     }
-
-    const totalFindings =
-        project.findingsBySeverity.critical +
-        project.findingsBySeverity.high +
-        project.findingsBySeverity.medium +
-        project.findingsBySeverity.low
 
     return (
         <Dialog open={open} onOpenChange={onClose}>
@@ -180,7 +234,9 @@ export default function ProjectDetailModal({
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-xs text-muted-foreground">Total Findings</p>
-                                    <p className="text-xl font-bold mt-0.5">{totalFindings}</p>
+                                    <p className="text-xl font-bold mt-0.5">
+                                        {loadingFindings ? <Loader2 className="w-4 h-4 animate-spin" /> : totalFindings}
+                                    </p>
                                 </div>
                                 <div className="p-2 bg-amber-500/10 rounded-lg">
                                     <Target className="w-5 h-5 text-amber-500" />
@@ -191,7 +247,9 @@ export default function ProjectDetailModal({
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-xs text-muted-foreground">Critical Issues</p>
-                                    <p className="text-xl font-bold mt-0.5 text-red-500">{project.findingsBySeverity.critical}</p>
+                                    <p className="text-xl font-bold mt-0.5 text-red-500">
+                                        {loadingFindings ? <Loader2 className="w-4 h-4 animate-spin" /> : findingsBySeverity.critical}
+                                    </p>
                                 </div>
                                 <div className="p-2 bg-red-500/10 rounded-lg">
                                     <AlertTriangle className="w-5 h-5 text-red-500" />

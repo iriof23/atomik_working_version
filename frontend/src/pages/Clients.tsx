@@ -74,6 +74,7 @@ interface Client {
   lastActivity: string // relative time like "2 days ago"
   lastActivityDate: Date
   tags: string[] // e.g., ["PCI", "Annual", "VIP"]
+  notes?: string
   projectsCount: number
   reportsCount: number
   totalFindings: number
@@ -125,14 +126,24 @@ export default function Clients() {
           if (response.data.length > 0) {
             // Map API data to Client interface
             const apiClients: Client[] = response.data.map((c: any) => {
-              const logo = typeof c.logo_url === 'string' ? c.logo_url.trim() : ''
-              const normalizedLogo = logo.startsWith('http://') || logo.startsWith('https://') ? logo : ''
+              // Keep the website URL as-is (don't require protocol)
+              const websiteUrl = typeof c.website_url === 'string' ? c.website_url.trim() : ''
+              
+              // Parse tags from JSON string if present
+              let parsedTags: string[] = []
+              if (c.tags) {
+                try {
+                  parsedTags = typeof c.tags === 'string' ? JSON.parse(c.tags) : c.tags
+                } catch {
+                  parsedTags = []
+                }
+              }
 
               return {
                 id: c.id,
                 name: c.name,
-                logoUrl: normalizedLogo,
-                status: c.status || 'Active',
+                logoUrl: websiteUrl,
+                status: c.status || 'Prospect',
                 riskLevel: c.risk_level || 'Medium',
                 industry: c.industry || 'Technology',
                 companySize: c.company_size || 'SMB',
@@ -141,7 +152,8 @@ export default function Clients() {
                 phone: c.contact_phone || '',
                 lastActivity: 'Recently',
                 lastActivityDate: c.updated_at ? new Date(c.updated_at) : new Date(),
-                tags: [],
+                tags: parsedTags,
+                notes: c.notes || '',
                 projectsCount: 0,
                 reportsCount: 0,
                 totalFindings: 0,
@@ -936,8 +948,10 @@ function TableView({ clients, onView, onEdit, onDelete, onDuplicate, onArchive, 
               {renderHeader('Client', 'name')}
               {renderHeader('Contact', 'primaryContact')}
               {renderHeader('Projects', 'projectsCount')}
-              {renderHeader('Reports', 'reportsCount')}
               {renderHeader('Findings', 'totalFindings')}
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                Tags
+              </th>
               {renderHeader('Last Activity', 'lastActivityDate')}
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Actions
@@ -973,15 +987,30 @@ function TableView({ clients, onView, onEdit, onDelete, onDuplicate, onArchive, 
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="text-sm text-foreground">{client.reportsCount} pending</span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-foreground">{client.totalFindings}</span>
                     {client.findingsBySeverity.critical > 0 && (
                       <span className="px-2 py-1 text-xs font-semibold bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-400 rounded-full">
                         {client.findingsBySeverity.critical} critical
                       </span>
+                    )}
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="flex flex-wrap gap-1 max-w-[200px]">
+                    {client.tags && client.tags.length > 0 ? (
+                      client.tags.slice(0, 3).map((tag) => (
+                        <Badge key={tag} variant="secondary" className="text-[10px] px-1.5 py-0">
+                          {tag}
+                        </Badge>
+                      ))
+                    ) : (
+                      <span className="text-sm text-muted-foreground">—</span>
+                    )}
+                    {client.tags && client.tags.length > 3 && (
+                      <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                        +{client.tags.length - 3}
+                      </Badge>
                     )}
                   </div>
                 </td>

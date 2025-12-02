@@ -20,6 +20,13 @@ class ClientCreate(BaseModel):
     contact_email: Optional[EmailStr] = None
     contact_phone: Optional[str] = None
     address: Optional[str] = None
+    industry: Optional[str] = None
+    company_size: Optional[str] = None
+    website_url: Optional[str] = None
+    status: Optional[str] = "Prospect"
+    risk_level: Optional[str] = "Medium"
+    tags: Optional[str] = None  # JSON array as string
+    notes: Optional[str] = None
 
 
 class ClientUpdate(BaseModel):
@@ -28,6 +35,13 @@ class ClientUpdate(BaseModel):
     contact_email: Optional[EmailStr] = None
     contact_phone: Optional[str] = None
     address: Optional[str] = None
+    industry: Optional[str] = None
+    company_size: Optional[str] = None
+    website_url: Optional[str] = None
+    status: Optional[str] = None
+    risk_level: Optional[str] = None
+    tags: Optional[str] = None
+    notes: Optional[str] = None
 
 
 class ClientResponse(BaseModel):
@@ -37,6 +51,13 @@ class ClientResponse(BaseModel):
     contact_email: Optional[str]
     contact_phone: Optional[str]
     address: Optional[str]
+    industry: Optional[str]
+    company_size: Optional[str]
+    website_url: Optional[str]
+    status: Optional[str]
+    risk_level: Optional[str]
+    tags: Optional[str]
+    notes: Optional[str]
     organization_id: Optional[str]
     created_at: str
     updated_at: str
@@ -70,6 +91,13 @@ async def list_clients(
             contact_email=client.contactEmail,
             contact_phone=client.contactPhone,
             address=client.address,
+            industry=client.industry,
+            company_size=client.companySize,
+            website_url=client.websiteUrl,
+            status=client.status,
+            risk_level=client.riskLevel,
+            tags=client.tags,
+            notes=client.notes,
             organization_id=client.organizationId,
             created_at=client.createdAt.isoformat(),
             updated_at=client.updatedAt.isoformat(),
@@ -91,6 +119,13 @@ async def create_client(
             "contactEmail": client_data.contact_email,
             "contactPhone": client_data.contact_phone,
             "address": client_data.address,
+            "industry": client_data.industry,
+            "companySize": client_data.company_size,
+            "websiteUrl": client_data.website_url,
+            "status": client_data.status,
+            "riskLevel": client_data.risk_level,
+            "tags": client_data.tags,
+            "notes": client_data.notes,
             "organizationId": current_user.organizationId,
         }
     )
@@ -102,6 +137,13 @@ async def create_client(
         contact_email=client.contactEmail,
         contact_phone=client.contactPhone,
         address=client.address,
+        industry=client.industry,
+        company_size=client.companySize,
+        website_url=client.websiteUrl,
+        status=client.status,
+        risk_level=client.riskLevel,
+        tags=client.tags,
+        notes=client.notes,
         organization_id=client.organizationId,
         created_at=client.createdAt.isoformat(),
         updated_at=client.updatedAt.isoformat(),
@@ -136,6 +178,13 @@ async def get_client(
         contact_email=client.contactEmail,
         contact_phone=client.contactPhone,
         address=client.address,
+        industry=client.industry,
+        company_size=client.companySize,
+        website_url=client.websiteUrl,
+        status=client.status,
+        risk_level=client.riskLevel,
+        tags=client.tags,
+        notes=client.notes,
         organization_id=client.organizationId,
         created_at=client.createdAt.isoformat(),
         updated_at=client.updatedAt.isoformat(),
@@ -176,6 +225,20 @@ async def update_client(
         update_data["contactPhone"] = client_data.contact_phone
     if client_data.address is not None:
         update_data["address"] = client_data.address
+    if client_data.industry is not None:
+        update_data["industry"] = client_data.industry
+    if client_data.company_size is not None:
+        update_data["companySize"] = client_data.company_size
+    if client_data.website_url is not None:
+        update_data["websiteUrl"] = client_data.website_url
+    if client_data.status is not None:
+        update_data["status"] = client_data.status
+    if client_data.risk_level is not None:
+        update_data["riskLevel"] = client_data.risk_level
+    if client_data.tags is not None:
+        update_data["tags"] = client_data.tags
+    if client_data.notes is not None:
+        update_data["notes"] = client_data.notes
     
     updated_client = await db.client.update(
         where={"id": client_id},
@@ -189,6 +252,13 @@ async def update_client(
         contact_email=updated_client.contactEmail,
         contact_phone=updated_client.contactPhone,
         address=updated_client.address,
+        industry=updated_client.industry,
+        company_size=updated_client.companySize,
+        website_url=updated_client.websiteUrl,
+        status=updated_client.status,
+        risk_level=updated_client.riskLevel,
+        tags=updated_client.tags,
+        notes=updated_client.notes,
         organization_id=updated_client.organizationId,
         created_at=updated_client.createdAt.isoformat(),
         updated_at=updated_client.updatedAt.isoformat(),

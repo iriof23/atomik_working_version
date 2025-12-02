@@ -67,7 +67,7 @@ export const EditorToolbar = ({ editor }: EditorToolbarProps) => {
                 '/v1/ai/generate',
                 {
                     type: 'fix_grammar',
-                    prompt: selectedText,
+                    text: selectedText,
                 },
                 {
                     headers: {

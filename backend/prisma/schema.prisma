@@ -122,6 +122,15 @@ model Client {
   contactEmail String?
   contactPhone String?
   address      String?
+  
+  // Additional client info
+  industry     String?
+  companySize  String?  // 'Enterprise', 'SMB', 'Startup'
+  websiteUrl   String?
+  status       String?  @default("Prospect") // 'Active', 'Inactive', 'Prospect'
+  riskLevel    String?  @default("Medium")   // 'High', 'Medium', 'Low'
+  tags         String?  // JSON array stored as string
+  notes        String?
 
   organizationId String?
   organization   Organization? @relation(fields: [organizationId], references: [id])

@@ -3,7 +3,7 @@ import { useAuth } from '@clerk/clerk-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Mail, Phone, Building2, Users, FileText, Activity, Edit, Archive, Download, Loader2 } from 'lucide-react'
+import { Mail, Phone, Building2, Users, FileText, Activity, Edit, Archive, Download, Loader2, Tag, StickyNote } from 'lucide-react'
 import { api } from '@/lib/api'
 
 interface Client {
@@ -20,6 +20,7 @@ interface Client {
     lastActivity: string
     lastActivityDate: Date
     tags: string[]
+    notes?: string
     projectsCount: number
     reportsCount: number
     totalFindings: number
@@ -52,10 +53,17 @@ export default function ClientDetailModal({ client, open, onClose, onEdit }: Cli
     const { getToken } = useAuth()
     const [associatedProjects, setAssociatedProjects] = useState<AssociatedProject[]>([])
     const [loadingProjects, setLoadingProjects] = useState(false)
+    const [totalFindings, setTotalFindings] = useState(0)
+    const [findingsBySeverity, setFindingsBySeverity] = useState({
+        critical: 0,
+        high: 0,
+        medium: 0,
+        low: 0
+    })
 
-    // Fetch associated projects when client changes
+    // Fetch associated projects and their findings when client changes
     useEffect(() => {
-        const fetchProjects = async () => {
+        const fetchProjectsAndFindings = async () => {
             if (!client?.id || !open) return
             
             setLoadingProjects(true)
@@ -83,18 +91,56 @@ export default function ClientDetailModal({ client, open, onClose, onEdit }: Cli
                         progress: calculateProgress(p.status),
                     }))
                     setAssociatedProjects(projects)
+
+                    // Fetch findings for all projects
+                    let allFindings: any[] = []
+                    for (const project of response.data) {
+                        try {
+                            const findingsResponse = await api.get(`/findings/?project_id=${project.id}`, {
+                                headers: { Authorization: `Bearer ${token}` }
+                            })
+                            if (Array.isArray(findingsResponse.data)) {
+                                allFindings = [...allFindings, ...findingsResponse.data]
+                            }
+                        } catch (findingError) {
+                            console.error(`Failed to fetch findings for project ${project.id}:`, findingError)
+                        }
+                    }
+
+                    // Calculate findings by severity
+                    const severityCounts = {
+                        critical: 0,
+                        high: 0,
+                        medium: 0,
+                        low: 0
+                    }
+                    
+                    allFindings.forEach((finding: any) => {
+                        const severity = (finding.severity || '').toLowerCase()
+                        if (severity === 'critical') severityCounts.critical++
+                        else if (severity === 'high') severityCounts.high++
+                        else if (severity === 'medium') severityCounts.medium++
+                        else if (severity === 'low' || severity === 'info' || severity === 'informational') severityCounts.low++
+                    })
+
+                    setTotalFindings(allFindings.length)
+                    setFindingsBySeverity(severityCounts)
                 } else {
                     setAssociatedProjects([])
+                    setTotalFindings(0)
+                    setFindingsBySeverity({ critical: 0, high: 0, medium: 0, low: 0 })
                 }
             } catch (error) {
                 console.error('Failed to fetch client projects:', error)
                 setAssociatedProjects([])
+                setTotalFindings(0)
+                setFindingsBySeverity({ critical: 0, high: 0, medium: 0, low: 0 })
             } finally {
                 setLoadingProjects(false)
             }
         }
 
-        fetchProjects()
+        fetchProjectsAndFindings()
     }, [client?.id, open, getToken])
 
     // Map API status to display status
@@ -205,7 +251,9 @@ export default function ClientDetailModal({ client, open, onClose, onEdit }: Cli
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-xs text-muted-foreground">Total Projects</p>
-                                    <p className="text-xl font-bold mt-0.5">{client.projectsCount || 0}</p>
+                                    <p className="text-xl font-bold mt-0.5">
+                                        {loadingProjects ? <Loader2 className="w-4 h-4 animate-spin" /> : associatedProjects.length}
+                                    </p>
                                 </div>
                                 <div className="p-2 bg-primary/10 rounded-lg">
                                     <FileText className="w-5 h-5 text-primary" />
@@ -216,7 +264,9 @@ export default function ClientDetailModal({ client, open, onClose, onEdit }: Cli
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-xs text-muted-foreground">Total Findings</p>
-                                    <p className="text-xl font-bold mt-0.5">{client.totalFindings || 0}</p>
+                                    <p className="text-xl font-bold mt-0.5">
+                                        {loadingProjects ? <Loader2 className="w-4 h-4 animate-spin" /> : totalFindings}
+                                    </p>
                                 </div>
                                 <div className="p-2 bg-amber-500/10 rounded-lg">
                                     <Activity className="w-5 h-5 text-amber-500" />
@@ -227,7 +277,9 @@ export default function ClientDetailModal({ client, open, onClose, onEdit }: Cli
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-xs text-muted-foreground">Critical Issues</p>
-                                    <p className="text-xl font-bold mt-0.5 text-red-500">{client.findingsBySeverity?.critical || 0}</p>
+                                    <p className="text-xl font-bold mt-0.5 text-red-500">
+                                        {loadingProjects ? <Loader2 className="w-4 h-4 animate-spin" /> : findingsBySeverity.critical}
+                                    </p>
                                 </div>
                                 <div className="p-2 bg-red-500/10 rounded-lg">
                                     <Activity className="w-5 h-5 text-red-500" />
@@ -235,6 +287,34 @@ export default function ClientDetailModal({ client, open, onClose, onEdit }: Cli
                             </div>
                         </div>
                     </div>
+
+                    {/* Tags */}
+                    {client.tags && client.tags.length > 0 && (
+                        <div className="bg-card border border-border rounded-lg p-3">
+                            <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                                <Tag className="w-4 h-4 text-purple-500" />
+                                Tags
+                            </h3>
+                            <div className="flex flex-wrap gap-2">
+                                {client.tags.map((tag) => (
+                                    <Badge key={tag} variant="secondary" className="text-xs">
+                                        #{tag}
+                                    </Badge>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Notes */}
+                    {client.notes && (
+                        <div className="bg-card border border-border rounded-lg p-3">
+                            <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                                <StickyNote className="w-4 h-4 text-amber-500" />
+                                Notes
+                            </h3>
+                            <p className="text-sm text-muted-foreground whitespace-pre-wrap">{client.notes}</p>
+                        </div>
+                    )}
 
                     {/* Associated Projects */}
                     <div className="bg-card border border-border rounded-lg p-3">

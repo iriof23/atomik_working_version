@@ -7,23 +7,38 @@ from typing import Optional
 
 from app.api.routes.auth import get_current_user
 from app.db import db
+from app.services.ai_service import ai_service
 
 router = APIRouter(prefix="/ai", tags=["AI"])
 
 
 # Cost mapping for different AI operations
 COST_MAP = {
+    "generate_finding": 5,
     "remediation": 5,
     "fix_grammar": 1,
-    "generate_summary": 3,
+    "generate_summary": 10,
     "translate": 2,
 }
 
 
 # Request/Response models
 class GenerateRequest(BaseModel):
-    prompt: str
-    type: str  # e.g., "remediation", "fix_grammar"
+    type: str  # e.g., "generate_finding", "remediation", "fix_grammar"
+    # For finding generation
+    finding_title: Optional[str] = None
+    severity: Optional[str] = None
+    current_description: Optional[str] = None
+    # For grammar/translate
+    text: Optional[str] = None
+    target_language: Optional[str] = None
+    # For executive summary
+    findings_summary: Optional[str] = None
+    total_findings: Optional[int] = None
+    critical_count: Optional[int] = None
+    high_count: Optional[int] = None
+    medium_count: Optional[int] = None
+    low_count: Optional[int] = None
 
 
 class GenerateResponse(BaseModel):
@@ -95,16 +110,84 @@ async def generate_ai_content(
                 "organizationId": organization.id,
                 "action": request.type,
                 "cost": cost,
-                "metadata": f"Prompt: {request.prompt[:100]}"  # Store first 100 chars
+                "metadata": f"Type: {request.type}, Title: {request.finding_title or 'N/A'}"
             }
         )
         
-        # TODO: Call OpenAI API here
-        # For now, return a mock response
-        mock_result = f"Here is the AI generated text for: {request.prompt}"
+        # Call the appropriate AI service method based on request type
+        try:
+            if request.type == "generate_finding":
+                if not request.finding_title:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="finding_title is required for generate_finding"
+                    )
+                result = await ai_service.generate_finding_text(
+                    finding_title=request.finding_title,
+                    severity=request.severity or "Medium",
+                    current_description=request.current_description
+                )
+            
+            elif request.type == "remediation":
+                if not request.finding_title:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="finding_title is required for remediation"
+                    )
+                result = await ai_service.generate_remediation(
+                    finding_title=request.finding_title,
+                    severity=request.severity or "Medium",
+                    description=request.current_description
+                )
+            
+            elif request.type == "fix_grammar":
+                if not request.text:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="text is required for fix_grammar"
+                    )
+                result = await ai_service.fix_grammar(text=request.text)
+            
+            elif request.type == "generate_summary":
+                result = await ai_service.generate_executive_summary(
+                    findings_summary=request.findings_summary or "",
+                    total_findings=request.total_findings or 0,
+                    critical_count=request.critical_count or 0,
+                    high_count=request.high_count or 0,
+                    medium_count=request.medium_count or 0,
+                    low_count=request.low_count or 0
+                )
+            
+            elif request.type == "translate":
+                if not request.text or not request.target_language:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="text and target_language are required for translate"
+                    )
+                result = await ai_service.translate_finding(
+                    text=request.text,
+                    target_language=request.target_language
+                )
+            
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Unknown operation type: {request.type}"
+                )
+        
+        except RuntimeError as e:
+            # AI service error - refund credits
+            await db.organization.update(
+                where={"id": organization.id},
+                data={"creditBalance": {"increment": cost}}
+            )
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=str(e)
+            )
         
         return GenerateResponse(
-            result=mock_result,
+            result=result,
             credits_used=cost,
             remaining_credits=updated_org.creditBalance
         )

@@ -142,8 +142,7 @@ export function AddClientDialog({ open, onOpenChange, onClientAdded, editingClie
             }
 
             // Map form data to API expected format (snake_case)
-            // Only include fields with actual values to avoid validation issues
-            const payload: Record<string, string> = {
+            const payload: Record<string, any> = {
                 name: formData.name.trim(),
             }
             
@@ -155,6 +154,27 @@ export function AddClientDialog({ open, onOpenChange, onClientAdded, editingClie
             }
             if (formData.phone?.trim()) {
                 payload.contact_phone = formData.phone.trim()
+            }
+            if (formData.industry?.trim()) {
+                payload.industry = formData.industry.trim()
+            }
+            if (formData.companySize) {
+                payload.company_size = formData.companySize
+            }
+            if (formData.logoUrl?.trim()) {
+                payload.website_url = formData.logoUrl.trim()
+            }
+            if (formData.status) {
+                payload.status = formData.status
+            }
+            if (formData.riskLevel) {
+                payload.risk_level = formData.riskLevel
+            }
+            if (formData.tags.length > 0) {
+                payload.tags = JSON.stringify(formData.tags)
+            }
+            if (formData.notes?.trim()) {
+                payload.notes = formData.notes.trim()
             }
 
             console.log('Creating client with payload:', payload)
