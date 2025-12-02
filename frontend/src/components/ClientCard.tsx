@@ -82,6 +82,7 @@ export function ClientCard({
     }
 
     const hasLogo = typeof client.logoUrl === 'string' && (client.logoUrl.startsWith('http://') || client.logoUrl.startsWith('https://'))
+    console.log('🔥 ClientCard rendering with initials logic, hasLogo:', hasLogo, 'client:', client.name)
 
     return (
         <div

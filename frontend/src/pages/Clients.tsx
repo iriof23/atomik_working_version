@@ -281,7 +281,7 @@ export default function Clients() {
       }
 
       // Call the backend API to delete the client
-      await api.delete(`/clients/${deletingClient.id}`, {
+      await api.delete(`/clients/${deletingClient.id}/`, {
         headers: { Authorization: `Bearer ${token}` }
       })
 

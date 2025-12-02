@@ -39,6 +39,7 @@ interface AddClientDialogProps {
 }
 
 export function AddClientDialog({ open, onOpenChange, onClientAdded, editingClient }: AddClientDialogProps) {
+    console.log('🔥 AddClientDialog LOADED - NEW VERSION with Client URL field')
     const { getToken } = useAuth()
     const { toast } = useToast()
     const [step, setStep] = useState(1)
