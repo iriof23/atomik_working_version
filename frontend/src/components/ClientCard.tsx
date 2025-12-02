@@ -11,6 +11,7 @@ import {
     Trash2,
     Globe
 } from 'lucide-react'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -80,6 +81,8 @@ export function ClientCard({
         }
     }
 
+    const hasLogo = typeof client.logoUrl === 'string' && (client.logoUrl.startsWith('http://') || client.logoUrl.startsWith('https://'))
+
     return (
         <div
             onClick={() => onView(client)}
@@ -88,7 +91,12 @@ export function ClientCard({
             {/* Header */}
             <div className="p-4 border-b border-border flex items-start justify-between bg-muted/50">
                 <div className="flex items-center gap-3">
-                    <div className="text-3xl select-none">{client.logoUrl}</div>
+                    <Avatar className="h-12 w-12 rounded-md">
+                        {hasLogo && <AvatarImage src={client.logoUrl} alt={client.name} />}
+                        <AvatarFallback className="rounded-md bg-muted text-muted-foreground font-semibold">
+                            {client.name.slice(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                    </Avatar>
                     <div>
                         <h3 className="font-semibold text-foreground leading-tight group-hover:text-primary transition-colors">
                             {client.name}

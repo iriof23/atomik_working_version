@@ -328,16 +328,16 @@ export function AddClientDialog({ open, onOpenChange, onClientAdded, editingClie
 
                         <div className="space-y-2">
                             <Label htmlFor="logoUrl" className="flex items-center gap-2">
-                                Logo URL (optional)
+                                Client URL (optional)
                             </Label>
                             <Input
                                 id="logoUrl"
-                                placeholder="https://example.com/logo.png"
+                                placeholder="https://client-company.com"
                                 value={formData.logoUrl}
                                 onChange={(e) => updateField('logoUrl', e.target.value)}
                             />
                             <p className="text-xs text-muted-foreground">
-                                Enter a URL to your company logo image
+                                Enter the client’s website URL
                             </p>
                         </div>
                     </div>

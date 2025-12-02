@@ -55,6 +55,8 @@ export function ClientListItem({
         }
     }
 
+    const hasLogo = typeof client.logoUrl === 'string' && (client.logoUrl.startsWith('http://') || client.logoUrl.startsWith('https://'))
+
     return (
         <div
             className="group flex flex-row items-center justify-between h-20 px-4 bg-transparent hover:bg-muted/50 border-b border-border transition-colors cursor-pointer"
@@ -64,7 +66,7 @@ export function ClientListItem({
             <div className="flex items-center gap-4 flex-1 min-w-0">
                 {/* Avatar - Square */}
                 <Avatar className="h-10 w-10 rounded-md flex-shrink-0">
-                    <AvatarImage src={client.logoUrl} alt={client.name} />
+                    {hasLogo && <AvatarImage src={client.logoUrl} alt={client.name} />}
                     <AvatarFallback className="rounded-md bg-muted text-muted-foreground font-semibold text-xs">
                         {client.name.slice(0, 2).toUpperCase()}
                     </AvatarFallback>

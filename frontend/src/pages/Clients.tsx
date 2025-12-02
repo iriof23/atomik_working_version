@@ -24,10 +24,10 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
-  Loader2,
-  Building2
+  Loader2
 } from 'lucide-react'
 
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { StatCard } from '@/components/StatCard'
@@ -122,27 +122,32 @@ export default function Clients() {
         
         if (response.data && Array.isArray(response.data) && response.data.length > 0) {
           // Map API data to Client interface
-          const apiClients: Client[] = response.data.map((c: any) => ({
-            id: c.id,
-            name: c.name,
-            logoUrl: '',
-            status: c.status || 'Active',
-            riskLevel: c.risk_level || 'Medium',
-            industry: c.industry || 'Technology',
-            companySize: c.company_size || 'SMB',
-            primaryContact: c.contact_name || '',
-            email: c.contact_email || '',
-            phone: c.contact_phone || '',
-            lastActivity: 'Recently',
-            lastActivityDate: c.updated_at ? new Date(c.updated_at) : new Date(),
-            tags: [],
-            projectsCount: 0,
-            reportsCount: 0,
-            totalFindings: 0,
-            findingsBySeverity: { critical: 0, high: 0, medium: 0, low: 0 },
-            createdAt: c.created_at ? new Date(c.created_at) : new Date(),
-            updatedAt: c.updated_at ? new Date(c.updated_at) : new Date(),
-          }))
+          const apiClients: Client[] = response.data.map((c: any) => {
+            const logo = typeof c.logo_url === 'string' ? c.logo_url.trim() : ''
+            const normalizedLogo = logo.startsWith('http://') || logo.startsWith('https://') ? logo : ''
+
+            return {
+              id: c.id,
+              name: c.name,
+              logoUrl: normalizedLogo,
+              status: c.status || 'Active',
+              riskLevel: c.risk_level || 'Medium',
+              industry: c.industry || 'Technology',
+              companySize: c.company_size || 'SMB',
+              primaryContact: c.contact_name || '',
+              email: c.contact_email || '',
+              phone: c.contact_phone || '',
+              lastActivity: 'Recently',
+              lastActivityDate: c.updated_at ? new Date(c.updated_at) : new Date(),
+              tags: [],
+              projectsCount: 0,
+              reportsCount: 0,
+              totalFindings: 0,
+              findingsBySeverity: { critical: 0, high: 0, medium: 0, low: 0 },
+              createdAt: c.created_at ? new Date(c.created_at) : new Date(),
+              updatedAt: c.updated_at ? new Date(c.updated_at) : new Date(),
+            }
+          })
           
           // Use only API clients
           setClients(apiClients)
@@ -192,10 +197,13 @@ export default function Clients() {
 
   const handleClientAdded = (newClient: any) => {
     // Map the API response to our Client interface
+    const logo = typeof newClient.logo_url === 'string' ? newClient.logo_url.trim() : ''
+    const normalizedLogo = logo.startsWith('http://') || logo.startsWith('https://') ? logo : ''
+
     const mappedClient: Client = {
       id: newClient.id,
       name: newClient.name,
-      logoUrl: newClient.logo_url || '',
+      logoUrl: normalizedLogo,
       status: newClient.status || 'Active',
       riskLevel: newClient.risk_level || 'Medium',
       industry: newClient.industry || 'Technology',
@@ -934,13 +942,14 @@ function TableView({ clients, onView, onEdit, onDelete, onDuplicate, onArchive, 
               <tr key={client.id} className="hover:bg-muted/50 transition-colors">
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center gap-3">
-                    {client.logoUrl ? (
-                      <img src={client.logoUrl} alt={client.name} className="w-10 h-10 rounded object-cover" />
-                    ) : (
-                      <div className="w-10 h-10 rounded bg-muted flex items-center justify-center">
-                        <Building2 className="w-5 h-5 text-muted-foreground" />
-                      </div>
-                    )}
+                    <Avatar className="h-10 w-10 rounded-md">
+                      {client.logoUrl && (
+                        <AvatarImage src={client.logoUrl} alt={client.name} />
+                      )}
+                      <AvatarFallback className="rounded-md bg-muted text-muted-foreground font-semibold text-xs">
+                        {client.name.slice(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
                     <div>
                       <div className="font-medium text-foreground">{client.name}</div>
                       <div className="text-sm text-muted-foreground">{client.industry}</div>
