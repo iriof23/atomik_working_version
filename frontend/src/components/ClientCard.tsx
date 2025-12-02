@@ -119,18 +119,9 @@ export function ClientCard({
                             <Edit className="w-4 h-4 mr-2" />
                             Edit Client
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onCopyLink(client) }}>
-                            <ExternalLink className="w-4 h-4 mr-2" />
-                            Copy Portal Link
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDuplicate(client) }}>
                             <Copy className="w-4 h-4 mr-2" />
                             Duplicate
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onArchive(client) }}>
-                            <Archive className="w-4 h-4 mr-2" />
-                            Archive
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem

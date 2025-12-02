@@ -86,7 +86,7 @@ export default function FindingsTabContent({ projectId: propProjectId, onUpdate 
                     return
                 }
 
-                const response = await api.get(`/findings?project_id=${projectId}`, {
+                const response = await api.get(`/findings/?project_id=${projectId}`, {
                     headers: { Authorization: `Bearer ${token}` }
                 })
 

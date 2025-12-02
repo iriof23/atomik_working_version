@@ -146,23 +146,7 @@ export function ClientListItem({
                                 <Pencil className="h-4 w-4 mr-2" />
                                 Edit Client
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); }}>
-                                <Plus className="h-4 w-4 mr-2" />
-                                New Project
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); }}>
-                                <Mail className="h-4 w-4 mr-2" />
-                                Send Email
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); }}>
-                                <StickyNote className="h-4 w-4 mr-2" />
-                                Add Note
-                            </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onArchive(client) }}>
-                                <Archive className="h-4 w-4 mr-2" />
-                                Archive
-                            </DropdownMenuItem>
                             <DropdownMenuItem
                                 className="text-red-500 focus:text-red-400 focus:bg-red-950/20 dark:focus:bg-red-950/20"
                                 onClick={(e) => { e.stopPropagation(); onDelete(client) }}

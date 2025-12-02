@@ -125,7 +125,7 @@ export default function ReportEditor() {
                 return
             }
 
-            const response = await api.get(`/findings?project_id=${projectIdForFindings}`, {
+            const response = await api.get(`/findings/?project_id=${projectIdForFindings}`, {
                 headers: { Authorization: `Bearer ${token}` }
             })
 

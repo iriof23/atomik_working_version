@@ -281,7 +281,7 @@ export default function Clients() {
       }
 
       // Call the backend API to delete the client
-      await api.delete(`/clients/${deletingClient.id}/`, {
+      await api.delete(`/clients/${deletingClient.id}`, {
         headers: { Authorization: `Bearer ${token}` }
       })
 
@@ -1012,14 +1012,6 @@ function TableView({ clients, onView, onEdit, onDelete, onDuplicate, onArchive, 
                         <DropdownMenuItem onClick={() => onDuplicate(client)}>
                           <Copy className="w-4 h-4 mr-2" />
                           Duplicate
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onArchive(client)}>
-                          <Archive className="w-4 h-4 mr-2" />
-                          Archive
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onCopyLink(client)}>
-                          <ExternalLink className="w-4 h-4 mr-2" />
-                          Copy Link
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => onDelete(client)} className="text-red-600 dark:text-red-400">

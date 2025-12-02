@@ -111,11 +111,7 @@ async def list_findings(
                 }
             },
             "createdBy": True,
-            "_count": {
-                "select": {
-                    "evidences": True,
-                }
-            }
+            "evidences": True
         },
         order={"createdAt": "desc"}
     )
@@ -141,7 +137,7 @@ async def list_findings(
             template_id=finding.templateId,
             created_at=finding.createdAt.isoformat(),
             updated_at=finding.updatedAt.isoformat(),
-            evidence_count=finding._count.evidences,
+            evidence_count=len(finding.evidences) if finding.evidences else 0,
         )
         for finding in findings
     ]
@@ -194,11 +190,7 @@ async def create_finding(
                 }
             },
             "createdBy": True,
-            "_count": {
-                "select": {
-                    "evidences": True,
-                }
-            }
+            "evidences": True
         }
     )
     
@@ -222,7 +214,7 @@ async def create_finding(
         template_id=finding.templateId,
         created_at=finding.createdAt.isoformat(),
         updated_at=finding.updatedAt.isoformat(),
-        evidence_count=finding._count.evidences,
+        evidence_count=len(finding.evidences) if finding.evidences else 0,
     )
 
 
@@ -237,11 +229,7 @@ async def get_finding(
         include={
             "project": {"include": {"client": True}},
             "createdBy": True,
-            "_count": {
-                "select": {
-                    "evidences": True,
-                }
-            }
+            "evidences": True
         }
     )
     
@@ -278,7 +266,7 @@ async def get_finding(
         template_id=finding.templateId,
         created_at=finding.createdAt.isoformat(),
         updated_at=finding.updatedAt.isoformat(),
-        evidence_count=finding._count.evidences,
+        evidence_count=len(finding.evidences) if finding.evidences else 0,
     )
 
 
@@ -340,11 +328,7 @@ async def update_finding(
                 }
             },
             "createdBy": True,
-            "_count": {
-                "select": {
-                    "evidences": True,
-                }
-            }
+            "evidences": True
         }
     )
     
@@ -368,7 +352,7 @@ async def update_finding(
         template_id=updated_finding.templateId,
         created_at=updated_finding.createdAt.isoformat(),
         updated_at=updated_finding.updatedAt.isoformat(),
-        evidence_count=updated_finding._count.evidences,
+        evidence_count=len(updated_finding.evidences) if updated_finding.evidences else 0,
     )
 
 
