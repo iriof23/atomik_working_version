@@ -58,20 +58,29 @@ export default function Findings() {
 
     // Load custom findings from localStorage
     useEffect(() => {
-        const saved = localStorage.getItem('customFindings')
-        if (saved) {
-            try {
-                setCustomFindings(JSON.parse(saved))
-            } catch (e) {
-                console.error('Failed to parse custom findings', e)
+        const loadFindings = () => {
+            const saved = localStorage.getItem('customFindings')
+            if (saved) {
+                try {
+                    setCustomFindings(JSON.parse(saved))
+                } catch (e) {
+                    console.error('Failed to parse custom findings', e)
+                }
             }
         }
+
+        loadFindings()
+
+        // Listen for updates from Dashboard or other components
+        window.addEventListener('custom-findings-updated', loadFindings)
+        return () => window.removeEventListener('custom-findings-updated', loadFindings)
     }, [])
 
     // Save custom findings to localStorage
     const saveCustomFindings = (findings: any[]) => {
         setCustomFindings(findings)
         localStorage.setItem('customFindings', JSON.stringify(findings))
+        window.dispatchEvent(new Event('custom-findings-updated'))
     }
 
     // Reset pagination when filters change

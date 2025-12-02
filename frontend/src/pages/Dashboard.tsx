@@ -922,6 +922,9 @@ export default function Dashboard() {
         }, ...existingFindings]
         localStorage.setItem('customFindings', JSON.stringify(updatedFindings))
         
+        // Dispatch event to notify Findings page
+        window.dispatchEvent(new Event('custom-findings-updated'))
+        
         // Log activity
         logFindingAdded(finding.title, finding.severity || 'Medium', 'Library', finding.id)
         
