@@ -146,7 +146,7 @@ export default function ReportEditor() {
             fetchFindingsCount()
         
             // Refresh count periodically (every 5 seconds) to catch updates
-            const interval = setInterval(() => {
+        const interval = setInterval(() => {
                 fetchFindingsCount()
             }, 5000)
         

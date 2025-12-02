@@ -174,15 +174,10 @@ export function EditFindingModal({ finding, isOpen, onClose, onUpdate, onDelete,
                 <div className="h-16 border-b border-zinc-800 flex items-center justify-between px-6 shrink-0">
                     <div className="flex items-center gap-4 flex-1 min-w-0">
                         <Input 
+                            disabled={!isEditable}
                             value={localFinding.title} 
-                            onChange={(e) => handleChange({ title: e.target.value })}
-                            readOnly={!isEditable}
-                            className={cn(
-                                "font-medium max-w-md",
-                                isEditable 
-                                    ? "bg-zinc-800 border-zinc-700 text-white focus:ring-1 focus:ring-emerald-500 cursor-text" 
-                                    : "bg-zinc-900/50 border-zinc-800 text-zinc-400 cursor-default"
-                            )}
+                            onChange={(e) => isEditable && handleChange({ title: e.target.value })}
+                            className="font-medium bg-zinc-900/50 border-zinc-800 text-white max-w-md truncate" 
                         />
                         <Badge className={cn('text-xs px-2 py-0.5 flex-shrink-0', getSeverityColor(localFinding.severity))}>{localFinding.severity}</Badge>
                         {isDirty && <span className="text-xs text-orange-500 font-medium flex-shrink-0">• Unsaved Changes</span>}

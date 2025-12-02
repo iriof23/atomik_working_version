@@ -111,33 +111,33 @@ async def create_report(
     and can be edited before final generation.
     """
     try:
-    # Verify project exists and user has access
+        # Verify project exists and user has access
         logger.info(f"Creating report for project {report_data.project_id} by user {current_user.id}")
         
-    project = await db.project.find_unique(
-        where={"id": report_data.project_id},
-        include={"client": True}
-    )
-    
-    if not project:
-            logger.warning(f"Project not found: {report_data.project_id}")
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Project not found: {report_data.project_id}"
+        project = await db.project.find_unique(
+            where={"id": report_data.project_id},
+            include={"client": True}
         )
-    
+        
+        if not project:
+            logger.warning(f"Project not found: {report_data.project_id}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Project not found: {report_data.project_id}"
+            )
+        
         # Check organization access
-    if current_user.organizationId and project.client.organizationId != current_user.organizationId:
+        if current_user.organizationId and project.client.organizationId != current_user.organizationId:
             logger.warning(
                 f"Access denied: User {current_user.id} (org: {current_user.organizationId}) "
                 f"tried to create report for project {report_data.project_id} "
                 f"(org: {project.client.organizationId})"
             )
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
                 detail="Access denied: You do not have permission to create reports for this project"
-        )
-    
+            )
+        
         # Validate template if provided
         if report_data.template_id:
             template = await db.template.find_unique(
@@ -151,47 +151,40 @@ async def create_report(
                 )
         
         # Create the report with all required fields
-        try:
-    report = await db.report.create(
-        data={
-                    "title": report_data.title.strip(),  # Clean whitespace
-                    "reportType": report_data.report_type,  # Validated by Pydantic
-            "projectId": report_data.project_id,
-            "generatedById": current_user.id,
-            "templateId": report_data.template_id,
-                    "status": "DRAFT",  # Always start as DRAFT
-        },
-        include={
-            "project": True,
-            "generatedBy": True,
-        }
-    )
-            logger.info(f"Successfully created report {report.id} for project {report_data.project_id}")
-        except Exception as db_error:
-            logger.error(f"Database error creating report: {str(db_error)}", exc_info=True)
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to create report: {str(db_error)}"
-            )
-    
-    # TODO: Add background task for PDF generation
-    # background_tasks.add_task(generate_report_pdf, report.id)
-    
-    return ReportResponse(
-        id=report.id,
-        title=report.title,
-        report_type=report.reportType,
-        status=report.status,
-        project_id=report.projectId,
-        project_name=report.project.name,
-        generated_by_id=report.generatedById,
-        generated_by_name=report.generatedBy.name,
-        template_id=report.templateId,
-        pdf_path=report.pdfPath,
-        created_at=report.createdAt.isoformat(),
-        updated_at=report.updatedAt.isoformat(),
-        generated_at=report.generatedAt.isoformat() if report.generatedAt else None,
-    )
+        report = await db.report.create(
+            data={
+                "title": report_data.title.strip(),
+                "reportType": report_data.report_type,
+                "projectId": report_data.project_id,
+                "generatedById": current_user.id,
+                "templateId": report_data.template_id,
+                "status": "DRAFT",
+            },
+            include={
+                "project": True,
+                "generatedBy": True,
+            }
+        )
+        logger.info(f"Successfully created report {report.id} for project {report_data.project_id}")
+        
+        # TODO: Add background task for PDF generation
+        # background_tasks.add_task(generate_report_pdf, report.id)
+        
+        return ReportResponse(
+            id=report.id,
+            title=report.title,
+            report_type=report.reportType,
+            status=report.status,
+            project_id=report.projectId,
+            project_name=report.project.name,
+            generated_by_id=report.generatedById,
+            generated_by_name=report.generatedBy.name,
+            template_id=report.templateId,
+            pdf_path=report.pdfPath,
+            created_at=report.createdAt.isoformat(),
+            updated_at=report.updatedAt.isoformat(),
+            generated_at=report.generatedAt.isoformat() if report.generatedAt else None,
+        )
     
     except HTTPException:
         # Re-raise HTTP exceptions as-is
