@@ -913,8 +913,14 @@ export default function Dashboard() {
     }
     
     const handleFindingAdded = (finding: any) => {
-        // Finding was already saved to the API by AddFindingDialog
-        // Just log activity and show success toast
+        // Save finding to customFindings in localStorage (same key used by Findings.tsx)
+        const existingFindings = JSON.parse(localStorage.getItem('customFindings') || '[]')
+        const updatedFindings = [{
+            ...finding,
+            isCustom: true,
+            createdAt: new Date().toISOString()
+        }, ...existingFindings]
+        localStorage.setItem('customFindings', JSON.stringify(updatedFindings))
         
         // Log activity
         logFindingAdded(finding.title, finding.severity || 'Medium', 'Library', finding.id)

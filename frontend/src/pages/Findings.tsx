@@ -184,10 +184,7 @@ export default function Findings() {
                 description: updatedFinding.description,
                 remediation: updatedFinding.recommendations,
                 evidence: updatedFinding.evidence,
-                references: updatedFinding.references,
-                // Preserve editable fields from the modal
-                cvss_vector: updatedFinding.cvssVector,
-                owasp_reference: updatedFinding.owaspId || f.owasp_reference
+                references: updatedFinding.references
             } : f
         )
         saveCustomFindings(updatedCustomFindings)
