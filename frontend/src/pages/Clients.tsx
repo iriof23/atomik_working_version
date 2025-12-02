@@ -123,38 +123,43 @@ export default function Clients() {
         if (response.data && Array.isArray(response.data)) {
           console.log(`Fetched ${response.data.length} clients from API`)
           if (response.data.length > 0) {
-             // Map API data to Client interface
-             const apiClients: Client[] = response.data.map((c: any) => {
-            const logo = typeof c.logo_url === 'string' ? c.logo_url.trim() : ''
-            const normalizedLogo = logo.startsWith('http://') || logo.startsWith('https://') ? logo : ''
+            // Map API data to Client interface
+            const apiClients: Client[] = response.data.map((c: any) => {
+              const logo = typeof c.logo_url === 'string' ? c.logo_url.trim() : ''
+              const normalizedLogo = logo.startsWith('http://') || logo.startsWith('https://') ? logo : ''
 
-            return {
-              id: c.id,
-              name: c.name,
-              logoUrl: normalizedLogo,
-              status: c.status || 'Active',
-              riskLevel: c.risk_level || 'Medium',
-              industry: c.industry || 'Technology',
-              companySize: c.company_size || 'SMB',
-              primaryContact: c.contact_name || '',
-              email: c.contact_email || '',
-              phone: c.contact_phone || '',
-              lastActivity: 'Recently',
-              lastActivityDate: c.updated_at ? new Date(c.updated_at) : new Date(),
-              tags: [],
-              projectsCount: 0,
-              reportsCount: 0,
-              totalFindings: 0,
-              findingsBySeverity: { critical: 0, high: 0, medium: 0, low: 0 },
-              createdAt: c.created_at ? new Date(c.created_at) : new Date(),
-              updatedAt: c.updated_at ? new Date(c.updated_at) : new Date(),
-            }
-          })
-          
-          // Use only API clients
-          setClients(apiClients)
+              return {
+                id: c.id,
+                name: c.name,
+                logoUrl: normalizedLogo,
+                status: c.status || 'Active',
+                riskLevel: c.risk_level || 'Medium',
+                industry: c.industry || 'Technology',
+                companySize: c.company_size || 'SMB',
+                primaryContact: c.contact_name || '',
+                email: c.contact_email || '',
+                phone: c.contact_phone || '',
+                lastActivity: 'Recently',
+                lastActivityDate: c.updated_at ? new Date(c.updated_at) : new Date(),
+                tags: [],
+                projectsCount: 0,
+                reportsCount: 0,
+                totalFindings: 0,
+                findingsBySeverity: { critical: 0, high: 0, medium: 0, low: 0 },
+                createdAt: c.created_at ? new Date(c.created_at) : new Date(),
+                updatedAt: c.updated_at ? new Date(c.updated_at) : new Date(),
+              }
+            })
+            
+            // Use only API clients
+            setClients(apiClients)
+          } else {
+            // No API clients, use empty array
+            setClients([])
+          }
         } else {
-          // No API clients, use empty array
+          // Response is not an array
+          console.warn('API response is not an array:', response.data)
           setClients([])
         }
       } else {
