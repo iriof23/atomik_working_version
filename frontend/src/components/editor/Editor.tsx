@@ -286,16 +286,27 @@ export const Editor = ({
     const isEvidenceVariant = variant === 'evidence';
     const showDropZone = isEvidenceVariant && isEmpty;
 
+    // Focus editor on single click anywhere in the container
+    const handleContainerClick = (e: React.MouseEvent) => {
+        // Don't focus if clicking on toolbar or other interactive elements
+        const target = e.target as HTMLElement;
+        if (target.closest('button') || target.closest('[role="toolbar"]')) {
+            return;
+        }
+        editor?.commands.focus();
+    };
+
     return (
         <div
             className={cn(
-                'relative w-full rounded-md border bg-transparent transition-all duration-200',
+                'relative w-full rounded-md border bg-transparent transition-all duration-200 cursor-text',
                 showDropZone
                     ? 'min-h-[400px] border-dashed border-2 border-zinc-700 hover:border-zinc-600'
                     : 'min-h-[400px] h-auto border-zinc-800/50 focus-within:border-zinc-500 focus-within:ring-1 focus-within:ring-zinc-600',
                 'p-0', // Removed padding to let toolbar sit flush if desired, or manage padding in toolbar/content
                 className
             )}
+            onClick={handleContainerClick}
             onDrop={handleWrapperDrop}
             onDragOver={handleWrapperDragOver}
         >
