@@ -905,7 +905,7 @@ function ExportTab({ reportId }: { reportId: string }) {
                             </>
                         ) : (
                             <>
-                                <Download className="w-4 h-4 mr-2" />
+                        <Download className="w-4 h-4 mr-2" />
                                 Export as {exportFormat.toUpperCase()}
                             </>
                         )}

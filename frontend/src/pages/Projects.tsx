@@ -380,22 +380,22 @@ export default function Projects() {
                         
                         if (Array.isArray(response.data)) {
                             const findings = response.data
-                            const breakdown = { critical: 0, high: 0, medium: 0, low: 0 }
-                            findings.forEach((f: any) => {
+                    const breakdown = { critical: 0, high: 0, medium: 0, low: 0 }
+                    findings.forEach((f: any) => {
                                 const severity = (f.severity || '').toLowerCase() as keyof typeof breakdown
                                 if (breakdown[severity] !== undefined) breakdown[severity]++
-                            })
-                            data[project.id] = { count: findings.length, severity: breakdown }
+                    })
+                    data[project.id] = { count: findings.length, severity: breakdown }
                         } else {
-                            data[project.id] = { count: 0, severity: { critical: 0, high: 0, medium: 0, low: 0 } }
-                        }
+                    data[project.id] = { count: 0, severity: { critical: 0, high: 0, medium: 0, low: 0 } }
+                }
                     } catch (error) {
                         console.error(`Failed to fetch findings for project ${project.id}:`, error)
-                        data[project.id] = { count: 0, severity: { critical: 0, high: 0, medium: 0, low: 0 } }
-                    }
+                data[project.id] = { count: 0, severity: { critical: 0, high: 0, medium: 0, low: 0 } }
+            }
                 }))
                 
-                setProjectFindingsData(data)
+        setProjectFindingsData(data)
             } catch (error) {
                 console.error('Failed to fetch findings data:', error)
             }
@@ -1378,24 +1378,24 @@ function TableView({
                                             >
                                                 <Edit className="w-4 h-4" />
                                             </button>
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <button className="p-2 text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors">
-                                                        <MoreVertical className="w-4 h-4" />
-                                                    </button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end">
-                                                    <DropdownMenuItem onClick={() => onGenerateReport(project)}>
-                                                        <FileText className="h-4 w-4 mr-2" />
-                                                        Generate Report
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuSeparator />
-                                                    <DropdownMenuItem className="text-red-600" onClick={() => onDeleteProject(project)}>
-                                                        <Trash2 className="h-4 w-4 mr-2" />
-                                                        Delete Project
-                                                    </DropdownMenuItem>
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <button className="p-2 text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors">
+                                                    <MoreVertical className="w-4 h-4" />
+                                                </button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                <DropdownMenuItem onClick={() => onGenerateReport(project)}>
+                                                    <FileText className="h-4 w-4 mr-2" />
+                                                    Generate Report
+                                                </DropdownMenuItem>
+                                                <DropdownMenuSeparator />
+                                                <DropdownMenuItem className="text-red-600" onClick={() => onDeleteProject(project)}>
+                                                    <Trash2 className="h-4 w-4 mr-2" />
+                                                    Delete Project
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
                                         </div>
                                     </td>
                                 </tr>
