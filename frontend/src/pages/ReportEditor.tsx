@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '@clerk/clerk-react'
-import { ChevronLeft, FileText, BookOpen, Settings, Eye, Download, Save, ChevronDown, ChevronRight, Loader2 } from 'lucide-react'
+import { ChevronLeft, FileText, BookOpen, Settings, Download, Save, ChevronDown, ChevronRight, Loader2 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -23,7 +23,7 @@ const defaultProject = {
     findingsBySeverity: { critical: 0, high: 0, medium: 0, low: 0 }
 }
 
-type TabType = 'findings' | 'narrative' | 'settings' | 'preview' | 'export'
+type TabType = 'findings' | 'narrative' | 'settings' | 'export'
 
 interface ReportData {
     id: string
@@ -260,7 +260,6 @@ export default function ReportEditor() {
         { id: 'narrative' as TabType, label: 'Narrative', icon: BookOpen },
         { id: 'findings' as TabType, label: 'Findings', icon: FileText },
         { id: 'settings' as TabType, label: 'Settings', icon: Settings },
-        { id: 'preview' as TabType, label: 'Preview', icon: Eye },
         { id: 'export' as TabType, label: 'Export', icon: Download }
     ]
 
@@ -401,9 +400,6 @@ export default function ReportEditor() {
                             setHasUnsavedChanges(true)
                         }}
                     />
-                )}
-                {activeTab === 'preview' && (
-                    <PreviewTab settings={reportSettings} project={project} />
                 )}
                 {activeTab === 'export' && reportId && (
                     <ExportTab reportId={reportId} settings={reportSettings} />
@@ -760,84 +756,6 @@ function SettingsTab({
                 </CardContent>
             </Card>
         </div>
-    )
-}
-
-// Preview Tab Component
-function PreviewTab({ settings, project }: { settings: any; project: any }) {
-    return (
-        <Card>
-            <CardContent className="p-8">
-                <div className="max-w-4xl mx-auto bg-white border border-slate-200 rounded-xl p-8 shadow-sm">
-                    {/* Report Header */}
-                    <div className="border-b border-slate-200 pb-6 mb-6">
-                        <div className="flex items-center justify-between mb-4">
-                            {settings.clientLogo && (
-                                <img
-                                    src={settings.clientLogo}
-                                    alt="Client logo"
-                                    className="h-12 w-auto max-w-[200px] object-contain"
-                                />
-                            )}
-                            <div className="text-right">
-                                <p className="text-xs text-slate-500">
-                                    {settings.headerText}
-                                </p>
-                            </div>
-                        </div>
-                        <h1 className="text-xl font-semibold text-slate-900 mb-2">
-                            {settings.reportTitle}
-                        </h1>
-                        <p className="text-sm text-slate-500">
-                            {project.clientName}
-                        </p>
-                    </div>
-
-                    {/* Report Content Preview */}
-                    <div className="space-y-6">
-                        <div>
-                            <h2 className="text-sm font-semibold text-slate-900 mb-2" style={{ color: settings.primaryColor }}>
-                                Executive Summary
-                            </h2>
-                            <p className="text-sm text-slate-500">
-                                This is a preview of your report. The actual content will appear here based on your findings and narrative.
-                            </p>
-                        </div>
-
-                        <div>
-                            <h2 className="text-sm font-semibold text-slate-900 mb-3" style={{ color: settings.primaryColor }}>
-                                Findings Summary
-                            </h2>
-                            <div className="grid grid-cols-4 gap-2">
-                                <div className="text-center p-3 bg-gradient-to-br from-red-600 to-red-700 rounded-xl shadow-sm">
-                                    <p className="text-xl font-bold text-white">{project.findingsBySeverity.critical}</p>
-                                    <p className="text-[10px] font-semibold uppercase tracking-wider text-white/80">Critical</p>
-                                </div>
-                                <div className="text-center p-3 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-sm">
-                                    <p className="text-xl font-bold text-white">{project.findingsBySeverity.high}</p>
-                                    <p className="text-[10px] font-semibold uppercase tracking-wider text-white/80">High</p>
-                                </div>
-                                <div className="text-center p-3 bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl shadow-sm">
-                                    <p className="text-xl font-bold text-white">{project.findingsBySeverity.medium}</p>
-                                    <p className="text-[10px] font-semibold uppercase tracking-wider text-white/80">Medium</p>
-                                </div>
-                                <div className="text-center p-3 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl shadow-sm">
-                                    <p className="text-xl font-bold text-white">{project.findingsBySeverity.low}</p>
-                                    <p className="text-[10px] font-semibold uppercase tracking-wider text-white/80">Low</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Report Footer */}
-                    <div className="border-t border-slate-200 mt-8 pt-4 text-center">
-                        <p className="text-xs text-slate-500">
-                            {settings.footerText}
-                        </p>
-                    </div>
-                </div>
-            </CardContent>
-        </Card>
     )
 }
 

@@ -121,21 +121,24 @@ export function AddFindingDialog({ open, onOpenChange, onFindingAdded }: AddFind
                                     value={formData.severity}
                                     onValueChange={(value) => setFormData({ ...formData, severity: value })}
                                 >
-                                    <SelectTrigger className={cn(
-                                        "h-9 bg-white border text-sm font-medium",
-                                        currentSeverity.border,
-                                        currentSeverity.color
-                                    )}>
-                                        <SelectValue />
+                                    <SelectTrigger className="h-9 bg-white border-slate-200 text-sm font-medium text-slate-900">
+                                        <SelectValue placeholder="Select severity" />
                                     </SelectTrigger>
                                     <SelectContent className="bg-white border-slate-200">
                                         {Object.entries(severityConfig).map(([level, config]) => {
                                             const Icon = config.icon
+                                            const colorMap: Record<string, string> = {
+                                                Critical: 'text-red-600',
+                                                High: 'text-orange-600',
+                                                Medium: 'text-amber-600',
+                                                Low: 'text-emerald-600',
+                                                Info: 'text-slate-600'
+                                            }
                                             return (
                                                 <SelectItem key={level} value={level} className="text-sm">
                                                     <div className="flex items-center gap-2">
-                                                        <Icon className={cn("w-3.5 h-3.5", config.color)} />
-                                                        <span className={config.color}>{level}</span>
+                                                        <Icon className={cn("w-3.5 h-3.5", colorMap[level])} />
+                                                        <span className={colorMap[level]}>{level}</span>
                                                     </div>
                                                 </SelectItem>
                                             )
