@@ -776,9 +776,24 @@ function PreviewTab({ settings, project }: { settings: any; project: any }) {
     )
 }
 
+// PDF Template options
+const PDF_TEMPLATES = [
+    {
+        id: 'classic',
+        name: 'Classic Premium',
+        description: 'Dark header, structured cards, professional look'
+    },
+    {
+        id: 'apple',
+        name: 'Apple Minimal',
+        description: 'Clean, spacious, Apple-inspired design'
+    }
+]
+
 // Export Tab Component
 function ExportTab({ reportId }: { reportId: string }) {
     const [exportFormat, setExportFormat] = useState<'pdf' | 'docx'>('pdf')
+    const [pdfTemplate, setPdfTemplate] = useState<string>('classic')
     const [isExporting, setIsExporting] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const { getToken } = useAuth()
@@ -794,9 +809,12 @@ function ExportTab({ reportId }: { reportId: string }) {
                 throw new Error('Authentication required')
             }
 
+            // Build the export URL with template parameter for PDF
+            const templateParam = exportFormat === 'pdf' ? `&template=${pdfTemplate}` : ''
+            
             // Call the export API
             const response = await fetch(
-                `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/v1/reports/${reportId}/export?format=${exportFormat}`,
+                `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/v1/reports/${reportId}/export?format=${exportFormat}${templateParam}`,
                 {
                     method: 'GET',
                     headers: {
@@ -883,6 +901,39 @@ function ExportTab({ reportId }: { reportId: string }) {
                             ))}
                         </div>
                     </div>
+
+                    {/* PDF Template Selection - Only show when PDF is selected */}
+                    {exportFormat === 'pdf' && (
+                        <div className="mb-6">
+                            <label className="block text-sm font-medium text-zinc-300 mb-3">
+                                PDF Template Style
+                            </label>
+                            <div className="grid grid-cols-2 gap-3">
+                                {PDF_TEMPLATES.map((template) => (
+                                    <button
+                                        key={template.id}
+                                        onClick={() => setPdfTemplate(template.id)}
+                                        className={cn(
+                                            'p-4 border-2 rounded-lg text-left transition-all',
+                                            pdfTemplate === template.id
+                                                ? 'border-emerald-500 bg-emerald-500/10'
+                                                : 'border-zinc-700 hover:border-zinc-600'
+                                        )}
+                                    >
+                                        <p className={cn(
+                                            'text-sm font-semibold',
+                                            pdfTemplate === template.id ? 'text-emerald-400' : 'text-zinc-300'
+                                        )}>
+                                            {template.name}
+                                        </p>
+                                        <p className="text-xs text-zinc-500 mt-1">
+                                            {template.description}
+                                        </p>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     {/* Error Message */}
                     {error && (

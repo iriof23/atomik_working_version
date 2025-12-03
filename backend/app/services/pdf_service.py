@@ -6,7 +6,7 @@ Part of the Atomik Report Engine.
 """
 import logging
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Literal
 
 from jinja2 import Environment, FileSystemLoader
 from playwright.async_api import async_playwright, Browser, Page
@@ -15,6 +15,23 @@ logger = logging.getLogger(__name__)
 
 # Template directory path
 TEMPLATES_DIR = Path(__file__).parent.parent / "templates" / "pdf"
+
+# Available templates
+TEMPLATE_OPTIONS = {
+    "classic": {
+        "file": "report_classic.html",
+        "name": "Classic Premium",
+        "description": "Dark header, structured cards, professional look"
+    },
+    "apple": {
+        "file": "report_apple.html", 
+        "name": "Apple Minimal",
+        "description": "Clean, spacious, Apple-inspired design"
+    }
+}
+
+# Default template
+DEFAULT_TEMPLATE = "classic"
 
 
 class PDFService:
@@ -49,12 +66,13 @@ class PDFService:
         
         return env
     
-    async def generate(self, context: Dict[str, Any]) -> bytes:
+    async def generate(self, context: Dict[str, Any], template_id: str = None) -> bytes:
         """
         Generate PDF from context dictionary.
         
         Args:
             context: Dictionary containing all report data for template rendering
+            template_id: Template to use ('classic' or 'apple'). Defaults to 'classic'.
             
         Returns:
             PDF content as bytes
@@ -62,12 +80,19 @@ class PDFService:
         Raises:
             RuntimeError: If PDF generation fails
         """
-        logger.info("Generating premium PDF report")
+        # Determine template file
+        template_id = template_id or DEFAULT_TEMPLATE
+        if template_id not in TEMPLATE_OPTIONS:
+            logger.warning(f"Unknown template '{template_id}', falling back to default")
+            template_id = DEFAULT_TEMPLATE
+        
+        template_file = TEMPLATE_OPTIONS[template_id]["file"]
+        logger.info(f"Generating PDF with template: {template_id} ({template_file})")
         
         try:
             # Step 1: Setup Jinja2 Environment (already done in __init__)
             # Step 2: Render the template
-            template = self._jinja_env.get_template("report.html")
+            template = self._jinja_env.get_template(template_file)
             html_content = template.render(context)
             
             logger.debug(f"Rendered HTML template: {len(html_content)} characters")
@@ -128,7 +153,7 @@ class PDFService:
             await self._playwright.stop()
             self._playwright = None
     
-    async def generate_from_report_id(self, report_id: str) -> bytes:
+    async def generate_from_report_id(self, report_id: str, template_id: str = None) -> bytes:
         """
         Convenience method: Generate PDF from report ID.
         
@@ -136,6 +161,7 @@ class PDFService:
         
         Args:
             report_id: UUID of the report to generate
+            template_id: Template to use ('classic' or 'apple')
             
         Returns:
             PDF content as bytes
@@ -146,8 +172,18 @@ class PDFService:
         context_obj = await ReportDataService.build_context(report_id)
         context = ReportDataService.context_to_dict(context_obj)
         
-        # Generate PDF
-        return await self.generate(context)
+        # Generate PDF with selected template
+        return await self.generate(context, template_id)
+    
+    @staticmethod
+    def get_available_templates() -> Dict[str, Dict[str, str]]:
+        """
+        Get list of available PDF templates.
+        
+        Returns:
+            Dictionary of template options with id, name, and description
+        """
+        return TEMPLATE_OPTIONS
 
 
 # Singleton instance

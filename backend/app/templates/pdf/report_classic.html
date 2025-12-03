@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ report.title }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* ============================================
+           ATOMIK PREMIUM REPORT TEMPLATE v2.0
+           $100M Quality Standard
+           ============================================ */
+
+        /* --- 1. DESIGN TOKENS --- */
+        :root {
+            --primary: {{ client.primary_color | default('#10b981') }};
+            --primary-dark: {{ client.primary_color | default('#059669') }};
+            --primary-glow: {{ client.primary_color | default('#10b981') }}40;
+            
+            --dark: #0a0a0b;
+            --dark-secondary: #18181b;
+            --slate: #475569;
+            --slate-light: #64748b;
+            --light: #f8fafc;
+            --border: #e2e8f0;
+            --border-light: #f1f5f9;
+            
+            /* Severity Palette - Refined */
+            --critical: #dc2626;
+            --critical-bg: #fef2f2;
+            --critical-border: #fecaca;
+            --high: #ea580c;
+            --high-bg: #fff7ed;
+            --high-border: #fed7aa;
+            --medium: #d97706;
+            --medium-bg: #fffbeb;
+            --medium-border: #fde68a;
+            --low: #059669;
+            --low-bg: #ecfdf5;
+            --low-border: #a7f3d0;
+            --info: #2563eb;
+            --info-bg: #eff6ff;
+            --info-border: #bfdbfe;
+        }
+
+        /* --- 2. PAGE SETUP --- */
+        @page {
+            size: A4;
+            margin: 25mm 20mm 20mm 20mm;
+        }
+        @page :first { margin: 0; }
+
+        * { box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 9.5pt;
+            line-height: 1.65;
+            color: #1e293b;
+            margin: 0;
+            background: #fff;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+            font-feature-settings: 'kern' 1, 'liga' 1;
+        }
+
+        .page-break { page-break-after: always; }
+        .no-break { page-break-inside: avoid; }
+        
+        h1, h2, h3, h4, h5 { 
+            margin: 0; 
+            font-weight: 700; 
+            color: var(--dark);
+            letter-spacing: -0.02em;
+        }
+        p { margin: 0 0 1em 0; }
+        a { color: var(--primary); text-decoration: none; }
+
+        /* --- 3. COVER PAGE (PREMIUM) --- */
+        .cover {
+            width: 210mm;
+            height: 297mm;
+            background: linear-gradient(135deg, var(--dark) 0%, var(--dark-secondary) 100%);
+            color: white;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        /* Subtle grid pattern */
+        .cover::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: 
+                linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+        }
+        
+        /* Accent bar with glow */
+        .cover-accent {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 6px;
+            background: var(--primary);
+            box-shadow: 0 0 60px var(--primary-glow), 0 0 100px var(--primary-glow);
+        }
+        
+        .cover-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 0 60px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .cover-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            padding: 10px 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 100px;
+            background: rgba(255,255,255,0.03);
+            backdrop-filter: blur(10px);
+            margin-bottom: 40px;
+            width: fit-content;
+        }
+        
+        .cover-badge::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: var(--primary);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--primary);
+        }
+        
+        .cover-title {
+            font-size: 46px;
+            font-weight: 800;
+            line-height: 1.1;
+            letter-spacing: -0.03em;
+            margin: 0;
+            max-width: 650px;
+            color: #ffffff !important; /* FIXED: Ensure white text on dark background */
+        }
+        
+        .cover-subtitle {
+            font-size: 18px;
+            font-weight: 400;
+            color: #9ca3af; /* Light gray, not blue-ish */
+            margin-top: 20px;
+            letter-spacing: 0.5px;
+        }
+        
+        .cover-footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 40px 60px;
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255,255,255,0.08);
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 40px;
+        }
+        
+        .cover-meta {
+            text-align: left;
+        }
+        .cover-meta:nth-child(2) { text-align: center; }
+        .cover-meta:nth-child(3) { text-align: right; }
+        
+        .cover-meta-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9px;
+            font-weight: 600;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+        }
+        .cover-meta-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        /* --- 4. TABLE OF CONTENTS (REFINED) --- */
+        .toc {
+            padding: 20px 0;
+        }
+        
+        .toc-header {
+            margin-bottom: 50px;
+        }
+        
+        .toc-title {
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--dark);
+            letter-spacing: -0.03em;
+            margin-bottom: 12px;
+        }
+        
+        .toc-divider {
+            width: 60px;
+            height: 4px;
+            background: var(--primary);
+            border-radius: 2px;
+        }
+        
+        .toc-section {
+            margin-bottom: 35px;
+        }
+        
+        .toc-section-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-light);
+        }
+        
+        .toc-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid transparent;
+            transition: all 0.2s;
+        }
+        
+        .toc-item:hover {
+            border-bottom-color: var(--border);
+        }
+        
+        .toc-item-number {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--slate-light);
+            width: 30px;
+            flex-shrink: 0;
+        }
+        
+        .toc-item-title {
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--slate);
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding-right: 15px;
+        }
+        
+        .toc-item-dots {
+            flex: 1;
+            border-bottom: 1px dotted var(--border);
+            margin: 0 10px 4px 0;
+            min-width: 30px;
+        }
+        
+        .toc-item-page {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--dark);
+            width: 25px;
+            text-align: right;
+        }
+        
+        .toc-severity {
+            display: inline-block;
+            font-size: 8px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 3px 8px;
+            border-radius: 4px;
+            margin-left: 10px;
+            flex-shrink: 0;
+        }
+        .toc-severity.critical { background: var(--critical-bg); color: var(--critical); }
+        .toc-severity.high { background: var(--high-bg); color: var(--high); }
+        .toc-severity.medium { background: var(--medium-bg); color: var(--medium); }
+        .toc-severity.low { background: var(--low-bg); color: var(--low); }
+        .toc-severity.info { background: var(--info-bg); color: var(--info); }
+
+        /* --- 5. ENGAGEMENT CARD (COMPACT) --- */
+        .engagement {
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 40px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        }
+        
+        .engagement-header {
+            background: var(--dark);
+            color: white;
+            padding: 14px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .engagement-header-title {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+        
+        .engagement-header-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9px;
+            font-weight: 600;
+            color: var(--primary);
+            letter-spacing: 1px;
+        }
+        
+        .engagement-accent {
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--primary-dark));
+        }
+        
+        .engagement-body {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+        }
+        
+        .engagement-cell {
+            padding: 18px 24px;
+            border-right: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+        .engagement-cell:nth-child(2n) { border-right: none; }
+        .engagement-cell.full { grid-column: 1 / -1; border-right: none; }
+        
+        .engagement-label {
+            font-size: 9px;
+            font-weight: 700;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+        }
+        
+        .engagement-value {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--dark);
+            line-height: 1.4;
+        }
+        
+        .engagement-value.mono {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            letter-spacing: -0.3px;
+        }
+        
+        .engagement-scope {
+            background: var(--light);
+            padding: 18px 24px;
+        }
+        
+        .scope-list {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+        
+        .scope-item {
+            display: flex;
+            align-items: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: var(--dark);
+            padding: 6px 0;
+        }
+        
+        .scope-item::before {
+            content: '>';
+            color: var(--primary);
+            font-weight: 700;
+            margin-right: 12px;
+        }
+
+        /* --- 6. SECTION HEADERS --- */
+        .section-header {
+            margin-bottom: 30px;
+        }
+        
+        .section-title {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--dark);
+            letter-spacing: -0.02em;
+            margin-bottom: 10px;
+        }
+        
+        .section-bar {
+            width: 50px;
+            height: 3px;
+            background: var(--dark);
+            border-radius: 2px;
+        }
+        
+        .section-title-green {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin: 35px 0 20px 0;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--primary);
+            display: inline-block;
+        }
+
+        /* --- 7. RISK DASHBOARD --- */
+        .risk-dashboard {
+            display: flex;
+            align-items: center;
+            gap: 40px;
+            padding: 30px;
+            background: var(--light);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin-bottom: 40px;
+        }
+        
+        .risk-total {
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            border: 8px solid var(--dark);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            flex-shrink: 0;
+            background: white;
+        }
+        
+        .risk-total-number {
+            font-size: 36px;
+            font-weight: 800;
+            color: var(--dark);
+            line-height: 1;
+        }
+        
+        .risk-total-label {
+            font-size: 9px;
+            font-weight: 700;
+            color: var(--slate-light);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 4px;
+        }
+        
+        .risk-breakdown {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+        }
+        
+        .risk-stat {
+            text-align: center;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+        
+        .risk-stat-number {
+            font-size: 28px;
+            font-weight: 800;
+            line-height: 1;
+            margin-bottom: 6px;
+        }
+        
+        .risk-stat-label {
+            font-size: 9px;
+            font-weight: 700;
+            color: var(--slate-light);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* --- 8. FINDINGS TABLE --- */
+        .findings-table-wrapper {
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 40px;
+        }
+        
+        .findings-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .findings-table th {
+            background: var(--dark);
+            color: white;
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 14px 20px;
+            text-align: left;
+        }
+        
+        .findings-table td {
+            padding: 14px 20px;
+            font-size: 11px;
+            color: var(--slate);
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .findings-table tr:last-child td { border-bottom: none; }
+        .findings-table tr:nth-child(even) { background: var(--light); }
+        
+        .findings-table .id {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            color: var(--slate-light);
+        }
+        
+        .findings-table .title {
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        .severity-badge {
+            display: inline-block;
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 4px 10px;
+            border-radius: 5px;
+        }
+        .severity-badge.critical { background: var(--critical-bg); color: var(--critical); border: 1px solid var(--critical-border); }
+        .severity-badge.high { background: var(--high-bg); color: var(--high); border: 1px solid var(--high-border); }
+        .severity-badge.medium { background: var(--medium-bg); color: var(--medium); border: 1px solid var(--medium-border); }
+        .severity-badge.low { background: var(--low-bg); color: var(--low); border: 1px solid var(--low-border); }
+        .severity-badge.info { background: var(--info-bg); color: var(--info); border: 1px solid var(--info-border); }
+
+        /* --- 9. FINDING CARDS --- */
+        .finding {
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 40px;
+            page-break-inside: avoid;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        }
+        
+        .finding-header {
+            padding: 14px 24px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .finding-header.critical { background: var(--critical); }
+        .finding-header.high { background: var(--high); }
+        .finding-header.medium { background: var(--medium); }
+        .finding-header.low { background: var(--low); }
+        .finding-header.info { background: var(--info); }
+        
+        .finding-header-label {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+        
+        .finding-header-id {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        
+        .finding-meta {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            background: var(--light);
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .finding-meta-cell {
+            padding: 14px 24px;
+            border-right: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+        .finding-meta-cell:nth-child(2n) { border-right: none; }
+        
+        .finding-meta-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 8px;
+            font-weight: 700;
+            color: var(--slate-light);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
+        }
+        
+        .finding-meta-value {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        .finding-meta-value.mono {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+        }
+        
+        .finding-content {
+            padding: 28px;
+        }
+        
+        .finding-section {
+            margin-bottom: 28px;
+        }
+        .finding-section:last-child { margin-bottom: 0; }
+        
+        .finding-section-title {
+            font-size: 10px;
+            font-weight: 800;
+            color: var(--dark);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--primary);
+            display: inline-block;
+        }
+        
+        .finding-section-content {
+            font-size: 10pt;
+            color: var(--slate);
+            line-height: 1.7;
+        }
+        
+        .finding-section-content ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        
+        .finding-section-content li {
+            margin-bottom: 6px;
+        }
+        
+        .finding-section-content pre {
+            background: var(--light);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 14px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9pt;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+
+        /* --- 10. EVIDENCE GALLERY --- */
+        .evidence-gallery {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 16px;
+        }
+        
+        .evidence-item {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            background: white;
+        }
+        
+        .evidence-item img {
+            width: 100%;
+            display: block;
+        }
+        
+        .evidence-caption {
+            padding: 10px 14px;
+            background: var(--light);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9px;
+            color: var(--slate-light);
+            text-align: center;
+            border-top: 1px solid var(--border);
+        }
+
+        /* --- 11. EXECUTIVE NARRATIVE --- */
+        /* MATCHED to .finding-section-content for consistency */
+        .narrative {
+            font-size: 10pt;
+            color: var(--slate);
+            line-height: 1.7;
+        }
+        
+        .narrative p {
+            margin-bottom: 1.4em;
+            text-align: justify;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ============ COVER PAGE ============ -->
+    <div class="cover page-break">
+        <div class="cover-accent"></div>
+        <div class="cover-content">
+            <div class="cover-badge">
+                <span>Confidential</span>
+            </div>
+            <h1 class="cover-title">{{ report.title }}</h1>
+            <p class="cover-subtitle">Security Assessment Report</p>
+        </div>
+        <div class="cover-footer">
+            <div class="cover-meta">
+                <div class="cover-meta-label">Prepared For</div>
+                <div class="cover-meta-value">{{ client.name }}</div>
+            </div>
+            <div class="cover-meta">
+                <div class="cover-meta-label">Date</div>
+                <div class="cover-meta-value">{{ report.date }}</div>
+            </div>
+            <div class="cover-meta">
+                <div class="cover-meta-label">Reference</div>
+                <div class="cover-meta-value" style="font-family: 'JetBrains Mono'">{{ report.id[:8] | upper }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ TABLE OF CONTENTS ============ -->
+    <div class="toc page-break">
+        <div class="toc-header">
+            <h1 class="toc-title">Contents</h1>
+            <div class="toc-divider"></div>
+        </div>
+        
+        <div class="toc-section">
+            <div class="toc-section-title">Overview</div>
+            <div class="toc-item">
+                <span class="toc-item-number">01</span>
+                <span class="toc-item-title">Engagement Details</span>
+                <span class="toc-item-dots"></span>
+                <span class="toc-item-page">3</span>
+            </div>
+        </div>
+        
+        <div class="toc-section">
+            <div class="toc-section-title">Executive Summary</div>
+            <div class="toc-item">
+                <span class="toc-item-number">02</span>
+                <span class="toc-item-title">Risk Overview</span>
+                <span class="toc-item-dots"></span>
+                <span class="toc-item-page">4</span>
+            </div>
+            <div class="toc-item">
+                <span class="toc-item-number">03</span>
+                <span class="toc-item-title">Findings Summary</span>
+                <span class="toc-item-dots"></span>
+                <span class="toc-item-page">4</span>
+            </div>
+            <div class="toc-item">
+                <span class="toc-item-number">04</span>
+                <span class="toc-item-title">Executive Narrative</span>
+                <span class="toc-item-dots"></span>
+                <span class="toc-item-page">4</span>
+            </div>
+        </div>
+        
+        <div class="toc-section">
+            <div class="toc-section-title">Technical Findings</div>
+            {% for finding in findings %}
+            <div class="toc-item">
+                <span class="toc-item-number">{{ '%02d' % (loop.index + 4) }}</span>
+                <span class="toc-item-title">{{ finding.title }}</span>
+                <span class="toc-severity {{ finding.severity | lower }}">{{ finding.severity }}</span>
+                <span class="toc-item-dots"></span>
+                <span class="toc-item-page">{{ loop.index + 4 }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- ============ ENGAGEMENT DETAILS ============ -->
+    <div class="page-break">
+        <div class="engagement">
+            <div class="engagement-header">
+                <span class="engagement-header-title">Engagement Details</span>
+                <span class="engagement-header-badge">Confidential</span>
+            </div>
+            <div class="engagement-accent"></div>
+            
+            <div class="engagement-body">
+                <div class="engagement-cell full">
+                    <div class="engagement-label">Report Title</div>
+                    <div class="engagement-value">{{ report.title }}</div>
+                </div>
+                <div class="engagement-cell">
+                    <div class="engagement-label">Lead Tester</div>
+                    <div class="engagement-value">{{ project.lead_tester or 'Security Team' }}</div>
+                </div>
+                <div class="engagement-cell">
+                    <div class="engagement-label">Testing Period</div>
+                    <div class="engagement-value mono">{{ project.start_date }} — {{ project.end_date }}</div>
+                </div>
+                <div class="engagement-cell">
+                    <div class="engagement-label">Delivery Date</div>
+                    <div class="engagement-value mono">{{ report.date }}</div>
+                </div>
+                <div class="engagement-cell">
+                    <div class="engagement-label">Reference ID</div>
+                    <div class="engagement-value mono">{{ report.id[:12] | upper }}</div>
+                </div>
+            </div>
+            
+            <div class="engagement-scope">
+                <div class="engagement-label">Assessment Scope</div>
+                <ul class="scope-list">
+                    {% if project.scope %}
+                        {% for item in project.scope %}
+                        <li class="scope-item">{{ item }}</li>
+                        {% endfor %}
+                    {% else %}
+                        <li class="scope-item" style="color: var(--slate-light);">No specific scope items defined</li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ EXECUTIVE SUMMARY ============ -->
+    <div class="page-break">
+        <div class="section-header">
+            <h2 class="section-title">Executive Summary</h2>
+            <div class="section-bar"></div>
+        </div>
+        
+        <div class="risk-dashboard">
+            <div class="risk-total">
+                <span class="risk-total-number">{{ findings|length }}</span>
+                <span class="risk-total-label">Total</span>
+            </div>
+            <div class="risk-breakdown">
+                <div class="risk-stat">
+                    <div class="risk-stat-number" style="color: var(--critical)">{{ stats.critical }}</div>
+                    <div class="risk-stat-label">Critical</div>
+                </div>
+                <div class="risk-stat">
+                    <div class="risk-stat-number" style="color: var(--high)">{{ stats.high }}</div>
+                    <div class="risk-stat-label">High</div>
+                </div>
+                <div class="risk-stat">
+                    <div class="risk-stat-number" style="color: var(--medium)">{{ stats.medium }}</div>
+                    <div class="risk-stat-label">Medium</div>
+                </div>
+                <div class="risk-stat">
+                    <div class="risk-stat-number" style="color: var(--low)">{{ stats.low }}</div>
+                    <div class="risk-stat-label">Low</div>
+                </div>
+            </div>
+        </div>
+        
+        <h3 class="section-title-green">Findings Summary</h3>
+        <div class="findings-table-wrapper">
+            <table class="findings-table">
+                <thead>
+                    <tr>
+                        <th style="width: 12%;">ID</th>
+                        <th style="width: 68%;">Finding</th>
+                        <th style="width: 20%;">Severity</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for finding in findings %}
+                    <tr>
+                        <td class="id">{{ finding.finding_id }}</td>
+                        <td class="title">{{ finding.title }}</td>
+                        <td><span class="severity-badge {{ finding.severity | lower }}">{{ finding.severity }}</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <h3 class="section-title-green">Executive Narrative</h3>
+        <div class="narrative">
+            {{ report.executive_summary | safe }}
+        </div>
+    </div>
+
+    <!-- ============ DETAILED FINDINGS ============ -->
+    <div>
+        <div class="section-header">
+            <h2 class="section-title">Technical Findings</h2>
+            <div class="section-bar"></div>
+        </div>
+
+        {% for finding in findings %}
+        <div class="finding no-break">
+            <div class="finding-header {{ finding.severity | lower }}">
+                <span class="finding-header-label">Finding</span>
+                <span class="finding-header-id">{{ finding.finding_id }}</span>
+            </div>
+            
+            <div class="finding-meta">
+                <div class="finding-meta-cell">
+                    <div class="finding-meta-label">Title</div>
+                    <div class="finding-meta-value">{{ finding.title }}</div>
+                </div>
+                <div class="finding-meta-cell">
+                    <div class="finding-meta-label">Severity</div>
+                    <div class="finding-meta-value" style="color: var(--{{ finding.severity | lower }})">{{ finding.severity }}</div>
+                </div>
+                <div class="finding-meta-cell">
+                    <div class="finding-meta-label">Affected Assets</div>
+                    <div class="finding-meta-value mono">
+                        {% if finding.assets %}{{ finding.assets | join(', ') }}{% else %}All Systems{% endif %}
+                    </div>
+                </div>
+                <div class="finding-meta-cell">
+                    <div class="finding-meta-label">Remediation SLA</div>
+                    <div class="finding-meta-value mono">
+                        {% if finding.severity == 'CRITICAL' %}Immediate{% elif finding.severity == 'HIGH' %}7 Days{% elif finding.severity == 'MEDIUM' %}30 Days{% else %}90 Days{% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="finding-content">
+                <div class="finding-section">
+                    <div class="finding-section-title">Description</div>
+                    <div class="finding-section-content">{{ finding.description_html | safe }}</div>
+                </div>
+                
+                <div class="finding-section">
+                    <div class="finding-section-title">Remediation</div>
+                    <div class="finding-section-content">{{ finding.remediation_html | safe }}</div>
+                </div>
+                
+                {% if finding.references %}
+                <div class="finding-section">
+                    <div class="finding-section-title">References</div>
+                    <div class="finding-section-content">
+                        <ul>
+                            {% for ref in finding.references %}
+                            <li><a href="{{ ref }}">{{ ref }}</a></li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if finding.evidence_items %}
+                <div class="finding-section">
+                    <div class="finding-section-title">Evidence</div>
+                    <div class="evidence-gallery">
+                        {% for item in finding.evidence_items %}
+                        <div class="evidence-item">
+                            {% if item.url %}<img src="{{ item.url }}" alt="{{ item.caption }}">{% endif %}
+                            <div class="evidence-caption">{{ item.caption }}</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+</body>
+</html>

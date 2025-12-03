@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ report.title }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        /* ============================================
+           ATOMIK REPORT - APPLE-INSPIRED DESIGN
+           Clean. Minimal. Premium.
+           ============================================ */
+
+        :root {
+            /* Apple-style monochromatic palette */
+            --black: #1d1d1f;
+            --gray-900: #1d1d1f;
+            --gray-800: #2d2d2d;
+            --gray-700: #424245;
+            --gray-600: #6e6e73;
+            --gray-500: #86868b;
+            --gray-400: #a1a1a6;
+            --gray-300: #d2d2d7;
+            --gray-200: #e8e8ed;
+            --gray-100: #f5f5f7;
+            --white: #ffffff;
+            
+            /* Single accent - used sparingly */
+            --accent: {{ client.primary_color | default('#0071e3') }};
+            
+            /* Severity - muted, Apple-style */
+            --critical: #ff3b30;
+            --high: #ff9500;
+            --medium: #ffcc00;
+            --low: #34c759;
+            --info: #007aff;
+        }
+
+        @page {
+            size: A4;
+            margin: 30mm 25mm;
+        }
+        @page :first { margin: 0; }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+            font-size: 11pt;
+            font-weight: 400;
+            line-height: 1.75;
+            color: var(--gray-700);
+            margin: 0;
+            background: var(--white);
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .page-break { page-break-after: always; }
+        .no-break { page-break-inside: avoid; }
+
+        /* ============================================
+           COVER PAGE - Dramatic & Minimal
+           ============================================ */
+        .cover {
+            width: 210mm;
+            height: 297mm;
+            background: var(--black);
+            color: var(--white);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 60px;
+        }
+
+        .cover-accent {
+            position: absolute;
+            top: 60px;
+            left: 60px;
+            width: 40px;
+            height: 4px;
+            background: var(--accent);
+        }
+
+        .cover-label {
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--gray-500);
+            margin-bottom: 20px;
+        }
+
+        .cover-title {
+            font-size: 52px;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            line-height: 1.05;
+            color: var(--white);
+            margin: 0 0 60px 0;
+            max-width: 500px;
+        }
+
+        .cover-meta {
+            display: flex;
+            gap: 60px;
+            padding-top: 40px;
+            border-top: 1px solid var(--gray-800);
+        }
+
+        .cover-meta-item {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .cover-meta-label {
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            color: var(--gray-500);
+        }
+
+        .cover-meta-value {
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--white);
+        }
+
+        /* ============================================
+           TABLE OF CONTENTS - Clean & Spacious
+           ============================================ */
+        .toc {
+            padding: 40px 0;
+        }
+
+        .toc-title {
+            font-size: 40px;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            color: var(--black);
+            margin-bottom: 60px;
+        }
+
+        .toc-section {
+            margin-bottom: 50px;
+        }
+
+        .toc-section-label {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--gray-500);
+            margin-bottom: 20px;
+        }
+
+        .toc-item {
+            display: flex;
+            align-items: baseline;
+            padding: 16px 0;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .toc-item:last-child {
+            border-bottom: none;
+        }
+
+        .toc-number {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--gray-400);
+            width: 40px;
+            flex-shrink: 0;
+        }
+
+        .toc-item-title {
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--black);
+            flex: 1;
+        }
+
+        .toc-severity {
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            padding: 4px 10px;
+            border-radius: 100px;
+            margin-left: 16px;
+        }
+        .toc-severity.critical { background: #ff3b3015; color: var(--critical); }
+        .toc-severity.high { background: #ff950015; color: var(--high); }
+        .toc-severity.medium { background: #ffcc0020; color: #b38f00; }
+        .toc-severity.low { background: #34c75915; color: var(--low); }
+        .toc-severity.info { background: #007aff15; color: var(--info); }
+
+        .toc-page {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--gray-400);
+            margin-left: 20px;
+        }
+
+        /* ============================================
+           ENGAGEMENT DETAILS - Card Style
+           ============================================ */
+        .engagement {
+            background: var(--gray-100);
+            border-radius: 20px;
+            padding: 50px;
+            margin-bottom: 60px;
+        }
+
+        .engagement-title {
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--gray-500);
+            margin-bottom: 30px;
+        }
+
+        .engagement-report-name {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: var(--black);
+            margin-bottom: 40px;
+            line-height: 1.2;
+        }
+
+        .engagement-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .engagement-item {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .engagement-label {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            color: var(--gray-500);
+        }
+
+        .engagement-value {
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--black);
+        }
+
+        .engagement-scope {
+            padding-top: 30px;
+            border-top: 1px solid var(--gray-300);
+        }
+
+        .scope-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .scope-item {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--black);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .scope-item::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            background: var(--accent);
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        /* ============================================
+           SECTION HEADERS - Bold & Clean
+           ============================================ */
+        .section-header {
+            margin-bottom: 50px;
+        }
+
+        .section-title {
+            font-size: 36px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: var(--black);
+            margin: 0;
+        }
+
+        .section-subtitle {
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-top: 40px;
+            margin-bottom: 24px;
+        }
+
+        /* ============================================
+           RISK DASHBOARD - Minimal Stats
+           ============================================ */
+        .risk-dashboard {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 60px;
+        }
+
+        .risk-total {
+            background: var(--black);
+            color: var(--white);
+            border-radius: 20px;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-width: 140px;
+        }
+
+        .risk-total-number {
+            font-size: 48px;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            line-height: 1;
+        }
+
+        .risk-total-label {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--gray-500);
+            margin-top: 8px;
+        }
+
+        .risk-breakdown {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+
+        .risk-stat {
+            background: var(--gray-100);
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+        }
+
+        .risk-stat-number {
+            font-size: 32px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            line-height: 1;
+        }
+
+        .risk-stat-label {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            color: var(--gray-500);
+            margin-top: 8px;
+        }
+
+        /* ============================================
+           FINDINGS TABLE - Clean Lines
+           ============================================ */
+        .findings-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 60px;
+        }
+
+        .findings-table th {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            color: var(--gray-500);
+            text-align: left;
+            padding: 16px 0;
+            border-bottom: 2px solid var(--black);
+        }
+
+        .findings-table td {
+            font-size: 14px;
+            padding: 20px 0;
+            border-bottom: 1px solid var(--gray-200);
+            vertical-align: middle;
+        }
+
+        .findings-table .id {
+            font-weight: 600;
+            color: var(--gray-500);
+            width: 100px;
+        }
+
+        .findings-table .title {
+            font-weight: 500;
+            color: var(--black);
+        }
+
+        .severity-pill {
+            display: inline-block;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            padding: 6px 14px;
+            border-radius: 100px;
+        }
+        .severity-pill.critical { background: var(--critical); color: white; }
+        .severity-pill.high { background: var(--high); color: white; }
+        .severity-pill.medium { background: var(--medium); color: var(--gray-800); }
+        .severity-pill.low { background: var(--low); color: white; }
+        .severity-pill.info { background: var(--info); color: white; }
+
+        /* ============================================
+           NARRATIVE - Clean Typography
+           ============================================ */
+        .narrative {
+            font-size: 15px;
+            font-weight: 400;
+            line-height: 1.8;
+            color: var(--gray-700);
+        }
+
+        .narrative p {
+            margin: 0 0 1.5em 0;
+        }
+
+        /* ============================================
+           FINDING CARDS - Spacious & Clean
+           ============================================ */
+        .finding {
+            margin-bottom: 60px;
+            page-break-inside: avoid;
+        }
+
+        .finding-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            padding-bottom: 30px;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .finding-title-group {
+            flex: 1;
+        }
+
+        .finding-id {
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            color: var(--gray-500);
+            margin-bottom: 8px;
+        }
+
+        .finding-title {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: var(--black);
+            margin: 0;
+            line-height: 1.2;
+        }
+
+        .finding-severity {
+            margin-left: 30px;
+            flex-shrink: 0;
+        }
+
+        .finding-meta {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+            margin-bottom: 40px;
+            padding: 30px;
+            background: var(--gray-100);
+            border-radius: 16px;
+        }
+
+        .finding-meta-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .finding-meta-label {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            color: var(--gray-500);
+        }
+
+        .finding-meta-value {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--black);
+        }
+
+        .finding-section {
+            margin-bottom: 36px;
+        }
+
+        .finding-section-title {
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--black);
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--accent);
+            display: inline-block;
+        }
+
+        .finding-section-content {
+            font-size: 14px;
+            font-weight: 400;
+            line-height: 1.75;
+            color: var(--gray-700);
+        }
+
+        .finding-section-content ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .finding-section-content li {
+            margin-bottom: 8px;
+        }
+
+        .finding-section-content pre {
+            background: var(--gray-100);
+            border-radius: 12px;
+            padding: 20px;
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 12px;
+            line-height: 1.6;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+
+        /* ============================================
+           EVIDENCE GALLERY - Clean Grid
+           ============================================ */
+        .evidence-gallery {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .evidence-item {
+            border-radius: 12px;
+            overflow: hidden;
+            background: var(--gray-100);
+        }
+
+        .evidence-item img {
+            width: 100%;
+            display: block;
+        }
+
+        .evidence-caption {
+            padding: 12px 16px;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--gray-600);
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ============ COVER ============ -->
+    <div class="cover page-break">
+        <div class="cover-accent"></div>
+        <div>
+            <div class="cover-label">Security Assessment Report</div>
+            <h1 class="cover-title">{{ report.title }}</h1>
+        </div>
+        <div class="cover-meta">
+            <div class="cover-meta-item">
+                <span class="cover-meta-label">Prepared for</span>
+                <span class="cover-meta-value">{{ client.name }}</span>
+            </div>
+            <div class="cover-meta-item">
+                <span class="cover-meta-label">Date</span>
+                <span class="cover-meta-value">{{ report.date }}</span>
+            </div>
+            <div class="cover-meta-item">
+                <span class="cover-meta-label">Reference</span>
+                <span class="cover-meta-value">{{ report.id[:8] | upper }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ CONTENTS ============ -->
+    <div class="toc page-break">
+        <h1 class="toc-title">Contents</h1>
+        
+        <div class="toc-section">
+            <div class="toc-section-label">Overview</div>
+            <div class="toc-item">
+                <span class="toc-number">01</span>
+                <span class="toc-item-title">Engagement Details</span>
+                <span class="toc-page">3</span>
+            </div>
+        </div>
+        
+        <div class="toc-section">
+            <div class="toc-section-label">Executive Summary</div>
+            <div class="toc-item">
+                <span class="toc-number">02</span>
+                <span class="toc-item-title">Risk Overview</span>
+                <span class="toc-page">4</span>
+            </div>
+            <div class="toc-item">
+                <span class="toc-number">03</span>
+                <span class="toc-item-title">Findings Summary</span>
+                <span class="toc-page">4</span>
+            </div>
+            <div class="toc-item">
+                <span class="toc-number">04</span>
+                <span class="toc-item-title">Executive Narrative</span>
+                <span class="toc-page">4</span>
+            </div>
+        </div>
+        
+        <div class="toc-section">
+            <div class="toc-section-label">Technical Findings</div>
+            {% for finding in findings %}
+            <div class="toc-item">
+                <span class="toc-number">{{ '%02d' % (loop.index + 4) }}</span>
+                <span class="toc-item-title">{{ finding.title }}</span>
+                <span class="toc-severity {{ finding.severity | lower }}">{{ finding.severity }}</span>
+                <span class="toc-page">{{ loop.index + 4 }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- ============ ENGAGEMENT ============ -->
+    <div class="page-break">
+        <div class="engagement">
+            <div class="engagement-title">Engagement Details</div>
+            <div class="engagement-report-name">{{ report.title }}</div>
+            
+            <div class="engagement-grid">
+                <div class="engagement-item">
+                    <span class="engagement-label">Lead Tester</span>
+                    <span class="engagement-value">{{ project.lead_tester or 'Security Team' }}</span>
+                </div>
+                <div class="engagement-item">
+                    <span class="engagement-label">Testing Period</span>
+                    <span class="engagement-value">{{ project.start_date }} — {{ project.end_date }}</span>
+                </div>
+                <div class="engagement-item">
+                    <span class="engagement-label">Delivery Date</span>
+                    <span class="engagement-value">{{ report.date }}</span>
+                </div>
+                <div class="engagement-item">
+                    <span class="engagement-label">Reference ID</span>
+                    <span class="engagement-value">{{ report.id[:12] | upper }}</span>
+                </div>
+            </div>
+            
+            <div class="engagement-scope">
+                <div class="engagement-label" style="margin-bottom: 16px;">Assessment Scope</div>
+                <ul class="scope-list">
+                    {% if project.scope %}
+                        {% for item in project.scope %}
+                        <li class="scope-item">{{ item }}</li>
+                        {% endfor %}
+                    {% else %}
+                        <li class="scope-item" style="color: var(--gray-500);">No specific scope items defined</li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ EXECUTIVE SUMMARY ============ -->
+    <div class="page-break">
+        <div class="section-header">
+            <h2 class="section-title">Executive Summary</h2>
+        </div>
+        
+        <div class="risk-dashboard">
+            <div class="risk-total">
+                <span class="risk-total-number">{{ findings|length }}</span>
+                <span class="risk-total-label">Total</span>
+            </div>
+            <div class="risk-breakdown">
+                <div class="risk-stat">
+                    <div class="risk-stat-number" style="color: var(--critical)">{{ stats.critical }}</div>
+                    <div class="risk-stat-label">Critical</div>
+                </div>
+                <div class="risk-stat">
+                    <div class="risk-stat-number" style="color: var(--high)">{{ stats.high }}</div>
+                    <div class="risk-stat-label">High</div>
+                </div>
+                <div class="risk-stat">
+                    <div class="risk-stat-number" style="color: #b38f00">{{ stats.medium }}</div>
+                    <div class="risk-stat-label">Medium</div>
+                </div>
+                <div class="risk-stat">
+                    <div class="risk-stat-number" style="color: var(--low)">{{ stats.low }}</div>
+                    <div class="risk-stat-label">Low</div>
+                </div>
+            </div>
+        </div>
+
+        <h3 class="section-subtitle">Findings Summary</h3>
+        <table class="findings-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Finding</th>
+                    <th>Severity</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for finding in findings %}
+                <tr>
+                    <td class="id">{{ finding.finding_id }}</td>
+                    <td class="title">{{ finding.title }}</td>
+                    <td><span class="severity-pill {{ finding.severity | lower }}">{{ finding.severity }}</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <h3 class="section-subtitle">Executive Narrative</h3>
+        <div class="narrative">
+            {{ report.executive_summary | safe }}
+        </div>
+    </div>
+
+    <!-- ============ TECHNICAL FINDINGS ============ -->
+    <div>
+        <div class="section-header">
+            <h2 class="section-title">Technical Findings</h2>
+        </div>
+
+        {% for finding in findings %}
+        <div class="finding no-break">
+            <div class="finding-header">
+                <div class="finding-title-group">
+                    <div class="finding-id">{{ finding.finding_id }}</div>
+                    <h3 class="finding-title">{{ finding.title }}</h3>
+                </div>
+                <div class="finding-severity">
+                    <span class="severity-pill {{ finding.severity | lower }}">{{ finding.severity }}</span>
+                </div>
+            </div>
+            
+            <div class="finding-meta">
+                <div class="finding-meta-item">
+                    <span class="finding-meta-label">Affected Assets</span>
+                    <span class="finding-meta-value">{% if finding.assets %}{{ finding.assets | join(', ') }}{% else %}All Systems{% endif %}</span>
+                </div>
+                <div class="finding-meta-item">
+                    <span class="finding-meta-label">Remediation SLA</span>
+                    <span class="finding-meta-value">{% if finding.severity == 'CRITICAL' %}Immediate{% elif finding.severity == 'HIGH' %}7 Days{% elif finding.severity == 'MEDIUM' %}30 Days{% else %}90 Days{% endif %}</span>
+                </div>
+            </div>
+            
+            <div class="finding-section">
+                <div class="finding-section-title">Description</div>
+                <div class="finding-section-content">{{ finding.description_html | safe }}</div>
+            </div>
+            
+            <div class="finding-section">
+                <div class="finding-section-title">Remediation</div>
+                <div class="finding-section-content">{{ finding.remediation_html | safe }}</div>
+            </div>
+            
+            {% if finding.references %}
+            <div class="finding-section">
+                <div class="finding-section-title">References</div>
+                <div class="finding-section-content">
+                    <ul>
+                        {% for ref in finding.references %}
+                        <li><a href="{{ ref }}" style="color: var(--accent);">{{ ref }}</a></li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if finding.evidence_items %}
+            <div class="finding-section">
+                <div class="finding-section-title">Evidence</div>
+                <div class="evidence-gallery">
+                    {% for item in finding.evidence_items %}
+                    <div class="evidence-item">
+                        {% if item.url %}<img src="{{ item.url }}" alt="{{ item.caption }}">{% endif %}
+                        <div class="evidence-caption">{{ item.caption }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+</body>
+</html>

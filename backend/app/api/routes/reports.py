@@ -13,12 +13,35 @@ from pydantic import BaseModel, Field, field_validator
 from app.api.routes.auth import get_current_user
 from app.db import db
 from app.services.report_data_service import ReportDataService
-from app.services.pdf_service import pdf_service
+from app.services.pdf_service import pdf_service, PDFService
 from app.services.docx_service import docx_service
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(redirect_slashes=False)
+
+
+# ============ PDF TEMPLATES ENDPOINT ============
+
+@router.get("/templates/pdf")
+async def get_pdf_templates():
+    """
+    Get available PDF templates
+    
+    Returns a list of available PDF templates that can be used when exporting reports.
+    """
+    templates = PDFService.get_available_templates()
+    return {
+        "templates": [
+            {
+                "id": template_id,
+                "name": template_info["name"],
+                "description": template_info["description"]
+            }
+            for template_id, template_info in templates.items()
+        ],
+        "default": "classic"
+    }
 
 
 # Request/Response models
@@ -493,6 +516,7 @@ async def download_report(
 async def export_report(
     report_id: str,
     format: Literal["pdf", "docx"] = Query(default="pdf", description="Export format: pdf or docx"),
+    template: str = Query(default="classic", description="PDF template: 'classic' or 'apple'"),
     current_user = Depends(get_current_user)
 ):
     """
@@ -501,11 +525,13 @@ async def export_report(
     This endpoint generates a professional report document using the configured templates.
     
     - **pdf**: Generates a glossy, print-ready PDF using Playwright rendering
+      - template='classic': Dark header, structured cards, professional look
+      - template='apple': Clean, spacious, Apple-inspired design
     - **docx**: Generates an editable Word document using docxtpl
     
     The generated file is returned directly as a download.
     """
-    logger.info(f"Exporting report {report_id} as {format} for user {current_user.id}")
+    logger.info(f"Exporting report {report_id} as {format} (template: {template}) for user {current_user.id}")
     
     # Verify report exists and user has access
     report = await db.report.find_unique(
@@ -541,9 +567,9 @@ async def export_report(
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         
         if format == "pdf":
-            # Generate PDF using PDFService
-            logger.info(f"Generating PDF for report {report_id}")
-            pdf_bytes = await pdf_service.generate(context_dict)
+            # Generate PDF using PDFService with selected template
+            logger.info(f"Generating PDF for report {report_id} with template '{template}'")
+            pdf_bytes = await pdf_service.generate(context_dict, template_id=template)
             
             filename = f"{safe_title}_{timestamp}.pdf"
             
