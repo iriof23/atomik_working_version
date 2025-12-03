@@ -275,45 +275,45 @@ export function NewReportDialog({ children, onReportCreated }: NewReportDialogPr
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
                 {children || (
-                    <Button className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                    <Button className="bg-violet-600 hover:bg-violet-700 text-white">
                         <Plus className="w-4 h-4 mr-2" />
                         New Report
                     </Button>
                 )}
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px] bg-zinc-950 border-zinc-800 text-zinc-100 p-0 gap-0 overflow-hidden">
+            <DialogContent className="sm:max-w-[500px] bg-white border-slate-200 p-0 gap-0 overflow-hidden">
                 <DialogHeader className="p-6 pb-2">
-                    <DialogTitle className="text-xl font-bold">New Report</DialogTitle>
-                    <DialogDescription className="text-zinc-400">
+                    <DialogTitle className="text-xl font-semibold text-slate-900">New Report</DialogTitle>
+                    <DialogDescription className="text-slate-500">
                         Select an active engagement to generate a report for.
                     </DialogDescription>
                 </DialogHeader>
 
                 <div className="p-6 space-y-6">
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-zinc-300">Project</label>
+                        <label className="text-sm font-medium text-slate-700">Project</label>
                         <Select 
                             value={selectedProjectId} 
                             onValueChange={setSelectedProjectId}
                             disabled={loading}
                         >
-                            <SelectTrigger className="bg-zinc-900 border-zinc-800 text-zinc-100 focus:ring-emerald-500/50">
+                            <SelectTrigger className="bg-white border-slate-200 text-slate-900 focus:ring-violet-500/50">
                                 <SelectValue placeholder={loading ? "Loading projects..." : "Select a project..."} />
                             </SelectTrigger>
-                            <SelectContent className="bg-zinc-900 border-zinc-800 text-zinc-100">
+                            <SelectContent className="bg-white border-slate-200">
                                 {projects.length > 0 ? (
                                     projects.map((project) => (
                                         <SelectItem 
                                             key={project.id} 
                                             value={project.id}
-                                            className="focus:bg-zinc-800 focus:text-zinc-100 cursor-pointer"
+                                            className="focus:bg-slate-50 cursor-pointer"
                                         >
                                             {project.name}
                                         </SelectItem>
                                     ))
                                 ) : !loading ? (
                                     <div className="p-4 text-center">
-                                        <p className="text-sm text-zinc-500 mb-3">No active projects found</p>
+                                        <p className="text-sm text-slate-500 mb-3">No active projects found</p>
                                         <Button
                                             variant="outline"
                                             size="sm"
@@ -321,7 +321,7 @@ export function NewReportDialog({ children, onReportCreated }: NewReportDialogPr
                                                 setOpen(false)
                                                 navigate('/projects')
                                             }}
-                                            className="text-emerald-500 border-emerald-500/50 hover:bg-emerald-500/10"
+                                            className="text-violet-600 border-violet-200 hover:bg-violet-50"
                                         >
                                             Create your first Project
                                         </Button>
@@ -332,22 +332,22 @@ export function NewReportDialog({ children, onReportCreated }: NewReportDialogPr
                     </div>
 
                     {selectedProject && (
-                        <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4 space-y-3 animate-in fade-in slide-in-from-top-2">
+                        <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3 animate-in fade-in slide-in-from-top-2">
                             <div className="flex items-start justify-between">
                                 <div>
-                                    <h3 className="font-semibold text-zinc-100">{selectedProject.name}</h3>
-                                    <div className="flex items-center text-sm text-zinc-400 mt-1">
+                                    <h3 className="font-semibold text-slate-900">{selectedProject.name}</h3>
+                                    <div className="flex items-center text-sm text-slate-500 mt-1">
                                         <Building2 className="w-3 h-3 mr-1.5" />
                                         {selectedProject.clientName}
                                     </div>
                                 </div>
                             </div>
                             
-                            <div className="pt-2 border-t border-zinc-800/50">
+                            <div className="pt-2 border-t border-slate-200">
                                 <div className="space-y-1">
-                                    <span className="text-xs text-zinc-500 uppercase tracking-wider font-medium">Timeline</span>
-                                    <div className="flex items-center text-sm text-zinc-300">
-                                        <Calendar className="w-3.5 h-3.5 mr-1.5 text-emerald-500" />
+                                    <span className="text-xs text-slate-500 uppercase tracking-wider font-medium">Timeline</span>
+                                    <div className="flex items-center text-sm text-slate-700">
+                                        <Calendar className="w-3.5 h-3.5 mr-1.5 text-violet-500" />
                                         {new Date(selectedProject.startDate).toLocaleDateString()}
                                     </div>
                                 </div>
@@ -356,18 +356,18 @@ export function NewReportDialog({ children, onReportCreated }: NewReportDialogPr
                     )}
                 </div>
 
-                <DialogFooter className="p-6 pt-2 border-t border-zinc-800 bg-zinc-900/30">
+                <DialogFooter className="p-6 pt-2 border-t border-slate-100 bg-slate-50/50">
                     <Button
                         variant="ghost"
                         onClick={() => setOpen(false)}
-                        className="text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800"
+                        className="text-slate-600 hover:text-slate-900 hover:bg-slate-100"
                     >
                         Cancel
                     </Button>
                     <Button
                         onClick={handleCreateDraft}
                         disabled={!selectedProjectId || isSubmitting}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-50 disabled:cursor-not-allowed min-w-[120px]"
+                        className="bg-violet-600 hover:bg-violet-700 text-white disabled:opacity-50 disabled:cursor-not-allowed min-w-[120px]"
                     >
                         {isSubmitting ? (
                             <>

@@ -16,7 +16,12 @@ import {
     MoreHorizontal,
     ChevronLeft,
     ChevronRight,
-    Eye
+    Eye,
+    Filter,
+    LayoutGrid,
+    List as ListIcon,
+    AlertTriangle,
+    CheckCircle2
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -40,6 +45,8 @@ import { vulnerabilityDatabase } from '../data/vulnerabilities'
 import { AddFindingDialog } from '@/components/AddFindingDialog'
 import { EditFindingModal, ProjectFinding } from '@/components/EditFindingModal'
 import { useToast } from "@/components/ui/use-toast"
+import { StatCard } from '@/components/StatCard'
+import { Card } from '@/components/ui/card'
 
 export default function Findings() {
     const [activeTab, setActiveTab] = useState<'system' | 'custom'>('system')
@@ -111,11 +118,11 @@ export default function Findings() {
     // Helper for Severity Colors
     const getSeverityColor = (severity: string) => {
         switch (severity) {
-            case 'Critical': return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border-red-200 dark:border-red-800'
-            case 'High': return 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400 border-orange-200 dark:border-orange-800'
-            case 'Medium': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800'
-            case 'Low': return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border-green-200 dark:border-green-800'
-            default: return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200 dark:border-blue-800'
+            case 'Critical': return 'bg-red-50 text-red-700 border-red-200'
+            case 'High': return 'bg-orange-50 text-orange-700 border-orange-200'
+            case 'Medium': return 'bg-amber-50 text-amber-700 border-amber-200'
+            case 'Low': return 'bg-emerald-50 text-emerald-700 border-emerald-200'
+            default: return 'bg-blue-50 text-blue-700 border-blue-200'
         }
     }
 
@@ -237,15 +244,15 @@ export default function Findings() {
     }
 
     return (
-        <div className="space-y-6 h-[calc(100vh-100px)] flex flex-col">
+        <div className="space-y-6 pb-20">
             {/* Header Section */}
-            <div className="flex flex-col gap-6 flex-shrink-0">
+            <div className="flex flex-col gap-6">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold text-foreground">Findings Database</h1>
-                        <p className="text-muted-foreground">Browse standard vulnerabilities and manage your custom templates</p>
+                        <h1 className="text-2xl font-semibold text-slate-900">Findings Database</h1>
+                        <p className="text-sm text-slate-500 mt-1">Browse standard vulnerabilities and manage your custom templates</p>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-3">
                         <input
                             type="file"
                             ref={fileInputRef}
@@ -253,253 +260,284 @@ export default function Findings() {
                             accept=".xml,.csv,.json"
                             onChange={handleFileChange}
                         />
-                        <Button variant="outline" onClick={handleImportClick}>
+                        <Button variant="outline" onClick={handleImportClick} className="bg-white border-slate-200 hover:bg-slate-50 text-slate-700">
                             <Upload className="w-4 h-4 mr-2" />
-                            Import Findings
+                            Import
                         </Button>
-                        <Button className="bg-primary hover:bg-primary/90" onClick={() => setAddDialogOpen(true)}>
+                        <Button className="bg-violet-600 hover:bg-violet-700 text-white" onClick={() => setAddDialogOpen(true)}>
                             <Plus className="w-4 h-4 mr-2" />
                             New Finding
                         </Button>
                     </div>
                 </div>
 
-                {/* Tabs - Segmented Control Style - Premium Polish */}
-                <div>
-                    <div className="bg-muted/50 p-1 rounded-lg inline-flex border border-border">
-                        <button
-                            onClick={() => setActiveTab('system')}
-                            className={cn(
-                                "px-4 py-1.5 text-sm font-medium rounded-md transition-all",
-                                activeTab === 'system'
-                                    ? "bg-background text-foreground shadow-sm"
-                                    : "text-muted-foreground hover:text-foreground hover:bg-muted-foreground/10"
-                            )}
-                        >
-                            System Library
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('custom')}
-                            className={cn(
-                                "px-4 py-1.5 text-sm font-medium rounded-md transition-all",
-                                activeTab === 'custom'
-                                    ? "bg-background text-foreground shadow-sm"
-                                    : "text-muted-foreground hover:text-foreground hover:bg-muted-foreground/10"
-                            )}
-                        >
-                            My Templates
-                        </button>
-                    </div>
+                {/* Stats Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <StatCard
+                        label="Total Templates"
+                        value={vulnerabilityDatabase.length + customFindings.length}
+                        icon={<Shield className="w-5 h-5" />}
+                        subtitle="System + Custom"
+                        variant="default"
+                    />
+                    <StatCard
+                        label="My Templates"
+                        value={customFindings.length}
+                        icon={<FileText className="w-5 h-5" />}
+                        subtitle="Custom Findings"
+                        variant="success"
+                    />
+                     <StatCard
+                        label="Critical Issues"
+                        value={currentList.filter(f => f.severity === 'Critical').length}
+                        icon={<AlertTriangle className="w-5 h-5" />}
+                        subtitle="In Current View"
+                        variant="destructive"
+                    />
+                    <StatCard
+                        label="Categories"
+                        value={new Set(currentList.map(f => f.category)).size}
+                        icon={<LayoutGrid className="w-5 h-5" />}
+                        subtitle="Unique Types"
+                        variant="warning"
+                    />
                 </div>
 
-                {/* Toolbar */}
-                <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between bg-card p-4 rounded-lg border border-border shadow-sm">
-                    <div className="flex gap-4 flex-1 w-full">
-                        <div className="relative flex-1 max-w-md">
-                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                            <Input
-                                placeholder="Search by title, ID, or description..."
-                                className="pl-10 w-full"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                            />
+                {/* Main Content Card */}
+                <Card className="border-slate-200 shadow-sm bg-white overflow-hidden">
+                    {/* Toolbar */}
+                    <div className="p-4 border-b border-slate-200 bg-white flex flex-col md:flex-row gap-4 items-center justify-between sticky top-0 z-10">
+                        {/* Tabs */}
+                        <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200">
+                            <button
+                                onClick={() => setActiveTab('system')}
+                                className={cn(
+                                    "px-4 py-1.5 text-sm font-medium rounded-md transition-all",
+                                    activeTab === 'system'
+                                        ? "bg-white text-slate-900 shadow-sm"
+                                        : "text-slate-500 hover:text-slate-900"
+                                )}
+                            >
+                                System Library
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('custom')}
+                                className={cn(
+                                    "px-4 py-1.5 text-sm font-medium rounded-md transition-all",
+                                    activeTab === 'custom'
+                                        ? "bg-white text-slate-900 shadow-sm"
+                                        : "text-slate-500 hover:text-slate-900"
+                                )}
+                            >
+                                My Templates
+                            </button>
                         </div>
-                        <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                            <SelectTrigger className="w-[160px]">
-                                <SelectValue placeholder="Category" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="All">All Categories</SelectItem>
-                                <SelectItem value="Web">Web</SelectItem>
-                                <SelectItem value="Mobile">Mobile</SelectItem>
-                                <SelectItem value="Network">Network</SelectItem>
-                                <SelectItem value="Database">Database</SelectItem>
-                                <SelectItem value="Cloud">Cloud</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <Select value={selectedSeverity} onValueChange={setSelectedSeverity}>
-                            <SelectTrigger className="w-[160px]">
-                                <SelectValue placeholder="Severity" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="All">All Severities</SelectItem>
-                                <SelectItem value="Critical">Critical</SelectItem>
-                                <SelectItem value="High">High</SelectItem>
-                                <SelectItem value="Medium">Medium</SelectItem>
-                                <SelectItem value="Low">Low</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                        {filteredFindings.length} findings found
-                    </div>
-                </div>
-            </div>
 
-            {/* Main Content - High Density Table */}
-            <div className="flex-1 min-h-0 bg-card rounded-lg border border-border overflow-hidden shadow-sm flex flex-col">
-                {filteredFindings.length === 0 ? (
-                    <div className="flex-1 flex flex-col items-center justify-center text-center py-12 text-muted-foreground">
-                        {activeTab === 'custom' && !searchQuery ? (
-                            <>
-                                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
-                                    <FileText className="w-8 h-8 opacity-50" />
-                                </div>
-                                <h3 className="text-lg font-semibold text-foreground mb-2">No custom templates yet</h3>
-                                <p className="max-w-sm mb-6">Create your first custom finding template or duplicate one from the System Library to get started.</p>
-                                <Button onClick={() => setAddDialogOpen(true)}>
-                                    <Plus className="w-4 h-4 mr-2" />
-                                    Create Template
-                                </Button>
-                            </>
+                        <div className="flex gap-3 flex-1 justify-end w-full md:w-auto">
+                            <div className="relative flex-1 md:w-64 max-w-md">
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
+                                <Input
+                                    placeholder="Search findings..."
+                                    className="pl-9 w-full bg-white border-slate-200 focus:ring-violet-500/20 focus:border-violet-500"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                />
+                            </div>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="outline" className="border-slate-200 text-slate-600 hover:bg-slate-50">
+                                        <Filter className="w-4 h-4 mr-2" />
+                                        Filter
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-56">
+                                    <DropdownMenuItem onClick={() => { setSelectedCategory('All'); setSelectedSeverity('All') }}>
+                                        Clear Filters
+                                    </DropdownMenuItem>
+                                    {/* Add more sophisticated filtering if needed */}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                             <Select value={selectedSeverity} onValueChange={setSelectedSeverity}>
+                                <SelectTrigger className="w-[140px] border-slate-200 text-slate-600">
+                                    <SelectValue placeholder="Severity" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="All">All Severities</SelectItem>
+                                    <SelectItem value="Critical">Critical</SelectItem>
+                                    <SelectItem value="High">High</SelectItem>
+                                    <SelectItem value="Medium">Medium</SelectItem>
+                                    <SelectItem value="Low">Low</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+
+                    {/* Table Area */}
+                    <div className="min-h-[400px]">
+                        {filteredFindings.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center text-center py-20 text-slate-500">
+                                {activeTab === 'custom' && !searchQuery ? (
+                                    <>
+                                        <div className="w-16 h-16 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center mb-4">
+                                            <FileText className="w-8 h-8 text-slate-300" />
+                                        </div>
+                                        <h3 className="text-lg font-semibold text-slate-900 mb-2">No custom templates yet</h3>
+                                        <p className="max-w-sm mb-6 text-slate-500">Create your first custom finding template or duplicate one from the System Library to get started.</p>
+                                        <Button onClick={() => setAddDialogOpen(true)} className="bg-violet-600 hover:bg-violet-700 text-white">
+                                            <Plus className="w-4 h-4 mr-2" />
+                                            Create Template
+                                        </Button>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Search className="w-12 h-12 mx-auto mb-4 text-slate-200" />
+                                        <p>No findings found matching your criteria.</p>
+                                        <Button variant="link" onClick={() => {
+                                            setSearchQuery('')
+                                            setSelectedCategory('All')
+                                            setSelectedSeverity('All')
+                                        }} className="text-violet-600">
+                                            Clear Filters
+                                        </Button>
+                                    </>
+                                )}
+                            </div>
                         ) : (
                             <>
-                                <Search className="w-12 h-12 mx-auto mb-4 opacity-20" />
-                                <p>No findings found matching your criteria.</p>
-                                <Button variant="link" onClick={() => {
-                                    setSearchQuery('')
-                                    setSelectedCategory('All')
-                                    setSelectedSeverity('All')
-                                }}>
-                                    Clear Filters
-                                </Button>
+                                {/* Table Header */}
+                                <div className="grid grid-cols-12 gap-4 px-6 py-3 border-b border-slate-100 bg-slate-50/50 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                    <div className="col-span-2 md:col-span-1">ID</div>
+                                    <div className="col-span-6 md:col-span-5">Title</div>
+                                    <div className="col-span-2 hidden md:block">Category</div>
+                                    <div className="col-span-2 md:col-span-2">Severity</div>
+                                    <div className="col-span-2 text-right">Actions</div>
+                                </div>
+
+                                {/* Table Body */}
+                                <div className="divide-y divide-slate-100">
+                                    {currentFindings.map((finding) => (
+                                        <div 
+                                            key={finding.id} 
+                                            className="grid grid-cols-12 gap-4 px-6 py-3 items-center hover:bg-slate-50/80 transition-colors group cursor-pointer"
+                                            onClick={() => handleEdit(finding)}
+                                        >
+                                            <div className="col-span-2 md:col-span-1 font-mono text-xs text-slate-500">
+                                                {finding.id || finding.owasp_id || 'N/A'}
+                                            </div>
+                                            <div className="col-span-6 md:col-span-5 font-medium text-sm text-slate-900 truncate pr-4">
+                                                {finding.title}
+                                            </div>
+                                            <div className="col-span-2 hidden md:block">
+                                                <div className="flex items-center gap-2 text-sm text-slate-500">
+                                                    <div className="p-1 rounded-md bg-slate-100 text-slate-500">
+                                                        {getCategoryIcon(finding.category)}
+                                                    </div>
+                                                    <span>{finding.category}</span>
+                                                </div>
+                                            </div>
+                                            <div className="col-span-2 md:col-span-2">
+                                                <Badge variant="outline" className={cn("text-[10px] px-2 py-0.5 font-medium border rounded-md", getSeverityColor(finding.severity))}>
+                                                    {finding.severity}
+                                                </Badge>
+                                            </div>
+                                            <div className="col-span-2 flex justify-end items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                                                {activeTab === 'custom' ? (
+                                                    <>
+                                                        <Button 
+                                                            size="sm" 
+                                                            variant="ghost" 
+                                                            className="h-8 w-8 p-0 text-slate-400 hover:text-violet-600 hover:bg-violet-50"
+                                                            onClick={() => handleEdit(finding)}
+                                                            title="Edit"
+                                                        >
+                                                            <Pencil className="w-4 h-4" />
+                                                        </Button>
+                                                        <Button 
+                                                            size="sm" 
+                                                            variant="ghost" 
+                                                            className="h-8 w-8 p-0 text-slate-400 hover:text-slate-900 hover:bg-slate-100"
+                                                            onClick={() => handleDuplicate(finding)}
+                                                            title="Duplicate"
+                                                        >
+                                                            <Copy className="w-4 h-4" />
+                                                        </Button>
+                                                        <DropdownMenu>
+                                                            <DropdownMenuTrigger asChild>
+                                                                <Button 
+                                                                    size="sm" 
+                                                                    variant="ghost" 
+                                                                    className="h-8 w-8 p-0 text-slate-400 hover:text-red-600 hover:bg-red-50"
+                                                                >
+                                                                    <Trash2 className="w-4 h-4" />
+                                                                </Button>
+                                                            </DropdownMenuTrigger>
+                                                            <DropdownMenuContent align="end">
+                                                                <DropdownMenuItem onClick={() => handleDelete(finding.id)} className="text-red-600 focus:text-red-600 focus:bg-red-50">
+                                                                    <Trash2 className="w-4 h-4 mr-2" />
+                                                                    Delete Template
+                                                                </DropdownMenuItem>
+                                                            </DropdownMenuContent>
+                                                        </DropdownMenu>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Button 
+                                                            size="sm" 
+                                                            variant="ghost" 
+                                                            className="h-8 w-8 p-0 text-slate-400 hover:text-slate-900 hover:bg-slate-100"
+                                                            onClick={() => handleEdit(finding)}
+                                                            title="View Details"
+                                                        >
+                                                            <Eye className="w-4 h-4" />
+                                                        </Button>
+                                                        <Button 
+                                                            size="sm" 
+                                                            variant="ghost" 
+                                                            className="h-8 w-8 p-0 text-slate-400 hover:text-violet-600 hover:bg-violet-50"
+                                                            onClick={() => handleDuplicate(finding)}
+                                                            title="Create Template from this finding"
+                                                        >
+                                                            <Copy className="w-4 h-4" />
+                                                        </Button>
+                                                    </>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                                
+                                {/* Pagination Footer */}
+                                <div className="border-t border-slate-200 bg-white py-4 px-6 flex justify-between items-center text-sm text-slate-500">
+                                    <div>
+                                        Showing <span className="font-medium text-slate-900">{startIndex + 1}-{Math.min(endIndex, totalItems)}</span> of <span className="font-medium text-slate-900">{totalItems}</span> findings
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <Button 
+                                            variant="outline" 
+                                            size="sm" 
+                                            disabled={currentPage === 1}
+                                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                            className="text-xs h-8 border-slate-200 text-slate-600 hover:text-slate-900"
+                                        >
+                                            <ChevronLeft className="w-3 h-3 mr-1" />
+                                            Previous
+                                        </Button>
+                                        <Button 
+                                            variant="outline" 
+                                            size="sm" 
+                                            disabled={currentPage === totalPages || totalItems === 0}
+                                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                            className="text-xs h-8 border-slate-200 text-slate-600 hover:text-slate-900"
+                                        >
+                                            Next
+                                            <ChevronRight className="w-3 h-3 ml-1" />
+                                        </Button>
+                                    </div>
+                                </div>
                             </>
                         )}
                     </div>
-                ) : (
-                    <>
-                        {/* Table Header */}
-                        <div className="grid grid-cols-12 gap-4 px-6 py-3 border-b border-border bg-muted/30 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                            <div className="col-span-2 md:col-span-1">ID</div>
-                            <div className="col-span-6 md:col-span-5">Title</div>
-                            <div className="col-span-2 hidden md:block">Category</div>
-                            <div className="col-span-2 md:col-span-2">Severity</div>
-                            <div className="col-span-2 text-right">Actions</div>
-                        </div>
-
-                        {/* Table Body */}
-                        <ScrollArea className="flex-1">
-                            <div className="divide-y divide-border/50">
-                                {currentFindings.map((finding) => (
-                                    <div 
-                                        key={finding.id} 
-                                        className="grid grid-cols-12 gap-4 px-6 py-3 items-center hover:bg-muted/40 transition-colors group cursor-pointer border-b border-border/50 last:border-0"
-                                        onClick={() => activeTab === 'custom' ? handleEdit(finding) : handleEdit(finding)}
-                                    >
-                                        <div className="col-span-2 md:col-span-1 font-mono text-xs text-muted-foreground">
-                                            {finding.id || finding.owasp_id || 'N/A'}
-                                        </div>
-                                        <div className="col-span-6 md:col-span-5 font-medium text-sm text-foreground truncate pr-4">
-                                            {finding.title}
-                                        </div>
-                                        <div className="col-span-2 hidden md:block">
-                                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                                {getCategoryIcon(finding.category)}
-                                                <span>{finding.category}</span>
-                                            </div>
-                                        </div>
-                                        <div className="col-span-2 md:col-span-2">
-                                            <Badge variant="outline" className={cn("text-[10px] px-2 py-0.5 font-medium border", getSeverityColor(finding.severity))}>
-                                                {finding.severity}
-                                            </Badge>
-                                        </div>
-                                        <div className="col-span-2 flex justify-end items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                                            {activeTab === 'custom' ? (
-                                                <>
-                                                    <Button 
-                                                        size="sm" 
-                                                        variant="ghost" 
-                                                        className="h-8 w-8 p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                                                        onClick={() => handleEdit(finding)}
-                                                        title="Edit"
-                                                    >
-                                                        <Pencil className="w-4 h-4" />
-                                                    </Button>
-                                                    <Button 
-                                                        size="sm" 
-                                                        variant="ghost" 
-                                                        className="h-8 w-8 p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                                                        onClick={() => handleDuplicate(finding)}
-                                                        title="Duplicate"
-                                                    >
-                                                        <Copy className="w-4 h-4" />
-                                                    </Button>
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild>
-                                                            <Button 
-                                                                size="sm" 
-                                                                variant="ghost" 
-                                                                className="h-8 w-8 p-2 rounded-md text-muted-foreground hover:text-destructive hover:bg-muted transition-colors"
-                                                            >
-                                                                <MoreHorizontal className="w-4 h-4" />
-                                                            </Button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent align="end">
-                                                            <DropdownMenuItem onClick={() => handleDelete(finding.id)} className="text-destructive focus:text-destructive">
-                                                                <Trash2 className="w-4 h-4 mr-2" />
-                                                                Delete Template
-                                                            </DropdownMenuItem>
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <Button 
-                                                        size="sm" 
-                                                        variant="ghost" 
-                                                        className="h-8 w-8 p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                                                        onClick={() => handleEdit(finding)}
-                                                        title="View Details"
-                                                    >
-                                                        <Eye className="w-4 h-4" />
-                                                    </Button>
-                                                    <Button 
-                                                        size="sm" 
-                                                        variant="ghost" 
-                                                        className="h-8 w-8 p-2 rounded-md text-muted-foreground hover:text-primary hover:bg-muted transition-colors"
-                                                        onClick={() => handleDuplicate(finding)}
-                                                        title="Create Template from this finding"
-                                                    >
-                                                        <Copy className="w-4 h-4" />
-                                                    </Button>
-                                                </>
-                                            )}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </ScrollArea>
-                        
-                        {/* Pagination Footer - Anchored & Polished */}
-                        <div className="border-t border-border bg-muted/30 py-4 px-6 flex justify-between items-center text-sm text-muted-foreground">
-                            <div>
-                                Showing <span className="font-medium text-foreground">{startIndex + 1}-{Math.min(endIndex, totalItems)}</span> of <span className="font-medium text-foreground">{totalItems}</span> findings
-                            </div>
-                            <div className="flex gap-2">
-                                <Button 
-                                    variant="outline" 
-                                    size="sm" 
-                                    disabled={currentPage === 1}
-                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                                    className="text-xs h-8"
-                                >
-                                    <ChevronLeft className="w-3 h-3 mr-1" />
-                                    Previous
-                                </Button>
-                                <Button 
-                                    variant="outline" 
-                                    size="sm" 
-                                    disabled={currentPage === totalPages || totalItems === 0}
-                                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                                    className="text-xs h-8"
-                                >
-                                    Next
-                                    <ChevronRight className="w-3 h-3 ml-1" />
-                                </Button>
-                            </div>
-                        </div>
-                    </>
-                )}
+                </Card>
             </div>
 
             {/* Add Finding Dialog */}

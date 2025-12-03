@@ -6,63 +6,103 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    /* ========================================
+       ATOMIK LIGHT THEME (Apple/Linear Style)
+       ======================================== */
+    
+    /* Background: Soft off-white like screenshot */
+    --background: 210 20% 98%;        /* #F8FAFC - slate-50 */
+    --foreground: 222 47% 11%;        /* #1E293B - slate-800 */
+    
+    /* Cards: Pure white with subtle depth */
+    --card: 0 0% 100%;                /* #FFFFFF */
+    --card-foreground: 222 47% 11%;   /* #1E293B */
+    
+    /* Popovers/Dropdowns */
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 160 84% 39%;
+    --popover-foreground: 222 47% 11%;
+    
+    /* Primary: Violet/Purple gradient accent (from screenshot) */
+    --primary: 262 83% 58%;           /* #8B5CF6 - violet-500 */
     --primary-foreground: 0 0% 100%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 160 84% 39%;
-    --radius: 0.5rem;
+    
+    /* Secondary: Light gray for subtle backgrounds */
+    --secondary: 210 40% 96%;         /* #F1F5F9 - slate-100 */
+    --secondary-foreground: 222 47% 11%;
+    
+    /* Muted: For labels and subdued elements */
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;  /* #64748B - slate-500 */
+    
+    /* Accent: Hover states */
+    --accent: 210 40% 96%;
+    --accent-foreground: 222 47% 11%;
+    
+    /* Destructive: Red for errors/critical */
+    --destructive: 0 84% 60%;         /* #EF4444 - red-500 */
+    --destructive-foreground: 0 0% 100%;
+    
+    /* Borders: Very subtle */
+    --border: 214 32% 91%;            /* #E2E8F0 - slate-200 */
+    --input: 214 32% 91%;
+    --ring: 262 83% 58%;              /* Match primary */
+    --radius: 0.75rem;                /* Slightly more rounded */
+    
+    /* Severity colors (semantic) */
+    --critical: 0 84% 60%;            /* #EF4444 */
+    --high: 25 95% 53%;               /* #F97316 - orange-500 */
+    --medium: 45 93% 47%;             /* #EAB308 - yellow-500 */
+    --low: 142 71% 45%;               /* #22C55E - green-500 */
+    --info: 217 91% 60%;              /* #3B82F6 - blue-500 */
+    
+    /* Sidebar specific */
+    --sidebar-bg: 0 0% 100%;
+    --sidebar-border: 214 32% 91%;
+    --sidebar-hover: 210 40% 96%;
+    --sidebar-active: 262 83% 97%;    /* Light violet tint */
+    --sidebar-active-text: 262 83% 58%;
   }
 
   .dark {
-    /* Dark gray backgrounds with contrast - not pure black */
+    /* ========================================
+       ATOMIK DARK THEME (Preserved for toggle)
+       ======================================== */
     --background: 0 0% 6%;
     --foreground: 0 0% 95%;
     --card: 0 0% 10%;
     --card-foreground: 0 0% 95%;
     --popover: 0 0% 8%;
     --popover-foreground: 0 0% 95%;
-
-    /* Emerald green primary - cybersecurity aesthetic */
     --primary: 160 84% 39%;
     --primary-foreground: 0 0% 100%;
-
-    /* Contrast sections - lighter gray for cards */
     --secondary: 0 0% 12%;
     --secondary-foreground: 0 0% 95%;
     --muted: 0 0% 12%;
     --muted-foreground: 0 0% 60%;
     --accent: 0 0% 12%;
     --accent-foreground: 0 0% 95%;
-
-    /* Semantic colors for severity levels */
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 95%;
-
-    /* Borders - subtle but visible */
     --border: 0 0% 16%;
     --input: 0 0% 16%;
     --ring: 160 84% 39%;
+    
+    /* Sidebar dark mode */
+    --sidebar-bg: 0 0% 8%;
+    --sidebar-border: 0 0% 16%;
+    --sidebar-hover: 0 0% 12%;
+    --sidebar-active: 160 84% 10%;
+    --sidebar-active-text: 160 84% 50%;
   }
 }
 
 @layer base {
   * {
     @apply border-border;
+  }
+
+  html {
+    font-size: 14px; /* Reduced from 16px for tighter, more refined look */
   }
 
   body {
@@ -360,8 +400,8 @@
 
 /* Modern, sleek scrollbar for all scrollable areas */
 .custom-scrollbar::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
@@ -370,13 +410,13 @@
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.1);
   border-radius: 100px;
   transition: background 0.2s ease;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.2);
 }
 
 .dark .custom-scrollbar::-webkit-scrollbar-thumb {
@@ -390,7 +430,7 @@
 /* Firefox scrollbar styling */
 .custom-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+  scrollbar-color: rgba(0, 0, 0, 0.1) transparent;
 }
 
 .dark .custom-scrollbar {
@@ -400,4 +440,96 @@
 /* Smooth scrolling */
 .custom-scrollbar {
   scroll-behavior: smooth;
+}
+
+/* =========================================
+   ATOMIK DESIGN SYSTEM UTILITIES
+   ========================================= */
+
+/* Stat Cards - Large numbers like in screenshot */
+.stat-number {
+  @apply text-3xl font-bold tracking-tight text-slate-900;
+}
+
+.stat-label {
+  @apply text-xs font-medium uppercase tracking-wide text-slate-500;
+}
+
+/* Progress bar gradient (purple like screenshot) */
+.progress-gradient {
+  background: linear-gradient(90deg, #8B5CF6 0%, #A78BFA 100%);
+}
+
+/* Card hover effect */
+.card-hover {
+  @apply transition-all duration-200 hover:shadow-md hover:border-slate-300;
+}
+
+/* Priority badges matching screenshot */
+.badge-urgent {
+  @apply bg-orange-100 text-orange-700 border border-orange-200;
+}
+
+.badge-normal {
+  @apply bg-slate-100 text-slate-600 border border-slate-200;
+}
+
+.badge-low {
+  @apply bg-green-100 text-green-700 border border-green-200;
+}
+
+/* Sidebar navigation item styles */
+.nav-item {
+  @apply flex items-center gap-3 px-3 py-2 text-sm font-medium text-slate-600 
+         rounded-lg transition-all duration-150 hover:bg-slate-100 hover:text-slate-900;
+}
+
+.nav-item-active {
+  @apply bg-violet-50 text-violet-700 hover:bg-violet-50;
+}
+
+/* Section headers like screenshot */
+.section-header {
+  @apply text-xs font-semibold uppercase tracking-wider text-slate-400 px-3 py-2;
+}
+
+/* Counter badge (like "24" next to menu items) */
+.counter-badge {
+  @apply ml-auto text-xs font-medium text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full;
+}
+
+/* Notification dot */
+.notification-dot {
+  @apply w-5 h-5 bg-orange-500 text-white text-xs font-bold rounded-full 
+         flex items-center justify-center ml-auto;
+}
+
+/* Search input styling */
+.search-input {
+  @apply w-full pl-10 pr-4 py-2 text-sm bg-slate-100 border-0 rounded-lg 
+         placeholder-slate-400 focus:ring-2 focus:ring-violet-500 focus:bg-white
+         transition-all duration-200;
+}
+
+/* Kanban column header */
+.kanban-header {
+  @apply flex items-center gap-2 text-sm font-medium text-slate-700;
+}
+
+/* Mini sparkline container */
+.sparkline-container {
+  @apply h-10 flex items-end gap-0.5;
+}
+
+.sparkline-bar {
+  @apply w-1.5 bg-violet-400 rounded-t;
+}
+
+/* Avatar group */
+.avatar-group {
+  @apply flex -space-x-2;
+}
+
+.avatar-group img {
+  @apply w-7 h-7 rounded-full border-2 border-white;
 }

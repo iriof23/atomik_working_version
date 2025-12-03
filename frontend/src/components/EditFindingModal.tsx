@@ -3,20 +3,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Editor } from '@/components/editor/Editor';
-import { Trash2, Save, Globe, Plus, X } from 'lucide-react';
+import { Trash2, Save, Globe, Plus, X, Shield, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
     Dialog,
     DialogContent,
     DialogClose,
 } from "@/components/ui/dialog";
-import {
-    Accordion,
-    AccordionContent,
-    AccordionItem,
-    AccordionTrigger,
-} from "@/components/ui/accordion";
-import { Textarea } from "@/components/ui/textarea";
 
 // Define types locally for now, ideally should be shared
 export interface ProjectFinding {
@@ -55,28 +48,15 @@ export function EditFindingModal({ finding, isOpen, onClose, onUpdate, onDelete,
     const [newAssetUrl, setNewAssetUrl] = useState('');
     const [affectedAssetsCount, setAffectedAssetsCount] = useState(0);
 
-    // Generate professional Finding ID from client name + UUID (e.g., "ACM-AF3")
+    // Generate professional Finding ID
     const generateFindingId = (): string => {
-        if (finding?.references) {
-            return finding.references;
-        }
-
-        // Try to get client prefix from nested structure
+        if (finding?.references) return finding.references;
         let clientPrefix = finding?.project?.client?.name?.slice(0, 3).toUpperCase();
-
-        // Fallback: Use first 3 letters of finding title if no client name
         if (!clientPrefix && finding?.title) {
             clientPrefix = finding.title.replace(/[^A-Za-z]/g, '').slice(0, 3).toUpperCase();
         }
-
-        // Final fallback
-        if (!clientPrefix) {
-            clientPrefix = 'GEN';
-        }
-
-        // Get Unique Suffix from finding ID (e.g. "AF3")
+        if (!clientPrefix) clientPrefix = 'GEN';
         const suffix = finding?.id?.replace(/[^A-Za-z0-9]/g, '').slice(-3).toUpperCase() || '000';
-
         return `${clientPrefix}-${suffix}`;
     };
 
@@ -85,7 +65,6 @@ export function EditFindingModal({ finding, isOpen, onClose, onUpdate, onDelete,
     useEffect(() => {
         setLocalFinding(finding);
         setIsDirty(false);
-        // Initialize from finding.affectedAssets array length
         setAffectedAssetsCount(finding?.affectedAssets?.length || 0);
     }, [finding]);
 
@@ -109,10 +88,9 @@ export function EditFindingModal({ finding, isOpen, onClose, onUpdate, onDelete,
 
     const handleSave = () => {
         if (localFinding) {
-            // Include evidence in the save payload
             onUpdate({
                 ...localFinding,
-                evidence: localFinding.evidence // Explicitly include evidence
+                evidence: localFinding.evidence
             });
             setIsDirty(false);
         }
@@ -130,11 +108,11 @@ export function EditFindingModal({ finding, isOpen, onClose, onUpdate, onDelete,
 
     const getSeverityColor = (severity: string) => {
         switch (severity) {
-            case 'Critical': return 'bg-red-500/10 text-red-600 border-red-500/20';
-            case 'High': return 'bg-orange-500/10 text-orange-600 border-orange-500/20';
-            case 'Medium': return 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20';
-            case 'Low': return 'bg-green-500/10 text-green-600 border-green-500/20';
-            default: return 'bg-blue-500/10 text-blue-600 border-blue-500/20';
+            case 'Critical': return 'bg-red-50 text-red-700 border-red-200';
+            case 'High': return 'bg-orange-50 text-orange-700 border-orange-200';
+            case 'Medium': return 'bg-amber-50 text-amber-700 border-amber-200';
+            case 'Low': return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+            default: return 'bg-blue-50 text-blue-700 border-blue-200';
         }
     };
 
@@ -162,141 +140,145 @@ export function EditFindingModal({ finding, isOpen, onClose, onUpdate, onDelete,
     if (!localFinding) return null;
 
     return (
-        <Dialog open={isOpen} onOpenChange={(open) => {
-            if (!open) {
-                handleClose();
-            }
-        }}>
-            <DialogContent
-                className="max-w-[96vw] w-full h-[92vh] p-0 gap-0 bg-zinc-950 border-zinc-800 flex flex-col [&>button]:hidden"
-            >
-                {/* Header - Fixed */}
-                <div className="h-16 border-b border-zinc-800 flex items-center justify-between px-6 shrink-0">
+        <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+            <DialogContent className="max-w-[90vw] w-full h-[90vh] p-0 gap-0 bg-white border-slate-200 shadow-2xl flex flex-col overflow-hidden [&>button]:hidden sm:rounded-xl">
+                
+                {/* Header */}
+                <div className="h-16 border-b border-slate-200 flex items-center justify-between px-6 shrink-0 bg-white z-10">
                     <div className="flex items-center gap-4 flex-1 min-w-0">
-                        <Input 
-                            disabled={!isEditable}
-                            value={localFinding.title} 
-                            onChange={(e) => isEditable && handleChange({ title: e.target.value })}
-                            className="font-medium bg-zinc-900/50 border-zinc-800 text-white max-w-md truncate" 
-                        />
-                        <Badge className={cn('text-xs px-2 py-0.5 flex-shrink-0', getSeverityColor(localFinding.severity))}>{localFinding.severity}</Badge>
-                        {isDirty && <span className="text-xs text-orange-500 font-medium flex-shrink-0">• Unsaved Changes</span>}
+                         <div className="p-2 bg-violet-50 rounded-lg border border-violet-100">
+                            <Shield className="w-5 h-5 text-violet-600" />
+                        </div>
+                        <div className="flex flex-col">
+                             <Input 
+                                disabled={!isEditable}
+                                value={localFinding.title} 
+                                onChange={(e) => isEditable && handleChange({ title: e.target.value })}
+                                className={cn(
+                                    "font-semibold text-lg border-none px-0 h-7 focus-visible:ring-0 bg-transparent text-slate-900 placeholder:text-slate-400 shadow-none",
+                                    !isEditable && "cursor-default"
+                                )}
+                            />
+                             <div className="flex items-center gap-2 text-xs text-slate-500 mt-0.5">
+                                <span className="font-mono">{findingId}</span>
+                                <span>•</span>
+                                <Badge variant="outline" className={cn('font-medium border rounded-md', getSeverityColor(localFinding.severity))}>
+                                    {localFinding.severity}
+                                </Badge>
+                                {isDirty && (
+                                    <>
+                                        <span>•</span>
+                                        <span className="text-amber-600 font-medium flex items-center gap-1">
+                                            <AlertCircle className="w-3 h-3" />
+                                            Unsaved Changes
+                                        </span>
+                                    </>
+                                )}
+                            </div>
+                        </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                        <Button type="button" size="sm" onClick={handleSave} disabled={!isDirty} className="bg-emerald-600 hover:bg-emerald-500 text-white">
+                    <div className="flex items-center gap-2">
+                        {onDelete && isEditable && (
+                             <Button variant="ghost" size="sm" onClick={onDelete} className="text-slate-500 hover:text-red-600 hover:bg-red-50 mr-2">
+                                <Trash2 className="w-4 h-4" />
+                            </Button>
+                        )}
+                        <Button variant="outline" size="sm" onClick={handleClose} className="text-slate-700 border-slate-200 hover:bg-slate-50">
+                            Cancel
+                        </Button>
+                         <Button size="sm" onClick={handleSave} disabled={!isDirty} className="bg-violet-600 hover:bg-violet-700 text-white shadow-sm">
                             <Save className="w-4 h-4 mr-2" />
                             Save Changes
                         </Button>
-                        <Button type="button" size="sm" onClick={onDelete} className="bg-transparent hover:bg-red-500/10 text-zinc-400 hover:text-red-500 border-none shadow-none outline-none ring-0 focus:ring-0 focus:outline-none transition-colors">
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Delete
-                        </Button>
-                        <DialogClose asChild>
-                            <Button variant="ghost" size="sm">
-                                <X className="w-4 h-4" />
-                            </Button>
-                        </DialogClose>
                     </div>
                 </div>
 
-                {/* Body Grid - Scrollable */}
-                <div className="flex-1 min-h-0 grid grid-cols-12">
-                    {/* Left Column: Metadata (25%) - Scrollable */}
-                    <div className="col-span-3 border-r border-zinc-800 bg-zinc-900/30 h-full overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:bg-zinc-800 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent">
+                {/* Body Layout */}
+                 <div className="flex-1 min-h-0 grid grid-cols-12">
+                    
+                    {/* Sidebar (Metadata) - 25% width */}
+                    <div className="col-span-12 md:col-span-3 border-r border-slate-200 bg-slate-50/50 h-full overflow-y-auto">
                         <div className="p-6 space-y-6">
-                            {/* Finding ID & Assets Count - Grid */}
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Finding ID</label>
+                            
+                            {/* Classification */}
+                             <div className="space-y-4">
+                                <h4 className="text-xs font-semibold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                                    Classification
+                                </h4>
+                                <div className="grid gap-4">
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-medium text-slate-500">Severity</label>
+                                        <select
+                                            value={localFinding.severity}
+                                            onChange={(e) => handleChange({ severity: e.target.value as any })}
+                                            className="w-full h-9 px-3 text-sm border border-slate-200 rounded-lg bg-white text-slate-900 focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 outline-none transition-shadow"
+                                        >
+                                            {['Critical', 'High', 'Medium', 'Low', 'Informational'].map(s => (
+                                                <option key={s} value={s}>{s}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                     <div className="space-y-1.5">
+                                        <label className="text-xs font-medium text-slate-500">Status</label>
+                                        <select
+                                            value={localFinding.status}
+                                            onChange={(e) => handleChange({ status: e.target.value as any })}
+                                            className="w-full h-9 px-3 text-sm border border-slate-200 rounded-lg bg-white text-slate-900 focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 outline-none transition-shadow"
+                                        >
+                                            {['Open', 'In Progress', 'Fixed', 'Accepted Risk'].map(s => (
+                                                <option key={s} value={s}>{s}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="h-px bg-slate-200" />
+
+                             {/* Technical Specs */}
+                            <div className="space-y-4">
+                                 <h4 className="text-xs font-semibold text-slate-900 uppercase tracking-wider">Technical Specs</h4>
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-medium text-slate-500">CVSS Vector</label>
                                     <Input
-                                        value={findingId}
-                                        readOnly
-                                        className="h-9 font-mono text-xs text-zinc-300 bg-zinc-900/30 border-zinc-800 cursor-default focus:ring-0"
+                                        value={localFinding.cvssVector || ''}
+                                        onChange={(e) => handleChange({ cvssVector: e.target.value })}
+                                        className="h-9 font-mono text-xs bg-white border-slate-200 focus:ring-violet-500/20 focus:border-violet-500"
+                                        placeholder="CVSS:3.1/..."
                                     />
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Assets</label>
-                                    <Input
-                                        type="number"
-                                        value={affectedAssetsCount === 0 ? '' : affectedAssetsCount}
-                                        onChange={(e) => {
-                                            const val = e.target.value;
-                                            setAffectedAssetsCount(val === '' ? 0 : parseInt(val) || 0);
-                                            setIsDirty(true);
-                                        }}
-                                        className="h-9 bg-zinc-900/30 border-zinc-800 text-zinc-300 text-sm focus:ring-1 focus:ring-zinc-600 focus:border-zinc-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                    />
-                                </div>
                             </div>
 
-                            {/* Severity & Status */}
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Severity</label>
-                                    <select
-                                        value={localFinding.severity}
-                                        onChange={(e) => handleChange({ severity: e.target.value as any })}
-                                        className="w-full h-9 px-3 py-2 text-sm border border-zinc-800 rounded-md bg-zinc-900/30 text-zinc-300 focus:ring-1 focus:ring-zinc-600 focus:border-zinc-500 outline-none appearance-none"
-                                    >
-                                        {['Critical', 'High', 'Medium', 'Low', 'Informational'].map(s => (
-                                            <option key={s} value={s} className="bg-zinc-900">{s}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Status</label>
-                                    <select
-                                        value={localFinding.status}
-                                        onChange={(e) => handleChange({ status: e.target.value as any })}
-                                        className="w-full h-9 px-3 py-2 text-sm border border-zinc-800 rounded-md bg-zinc-900/30 text-zinc-300 focus:ring-1 focus:ring-zinc-600 focus:border-zinc-500 outline-none appearance-none"
-                                    >
-                                        {['Open', 'In Progress', 'Fixed', 'Accepted Risk'].map(s => (
-                                            <option key={s} value={s} className="bg-zinc-900">{s}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
+                            <div className="h-px bg-slate-200" />
 
-                            {/* CVSS */}
-                            <div className="space-y-2">
-                                <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">CVSS Vector</label>
-                                <Input
-                                    value={localFinding.cvssVector || ''}
-                                    onChange={(e) => handleChange({ cvssVector: e.target.value })}
-                                    className="h-9 font-mono text-xs tracking-tight bg-zinc-900/30 border-zinc-800 text-zinc-300 focus:ring-1 focus:ring-zinc-600 focus:border-zinc-500"
-                                    placeholder="CVSS:3.1/..."
-                                />
-                            </div>
-
-                            {/* Affected Assets */}
-                            <div className="space-y-3">
-                                <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider flex justify-between items-center">
-                                    Affected Assets
-                                    <span className="text-zinc-400 font-normal normal-case">{localFinding.affectedAssets.length} items</span>
-                                </label>
+                            {/* Assets */}
+                             <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <h4 className="text-xs font-semibold text-slate-900 uppercase tracking-wider">Affected Assets</h4>
+                                    <Badge variant="secondary" className="bg-slate-200 text-slate-600 hover:bg-slate-200">
+                                        {localFinding.affectedAssets.length}
+                                    </Badge>
+                                </div>
                                 <div className="flex gap-2">
                                     <Input
                                         value={newAssetUrl}
                                         onChange={(e) => setNewAssetUrl(e.target.value)}
-                                        placeholder="Add URL/IP..."
-                                        className="h-9 text-sm bg-zinc-900/30 border-zinc-800 text-zinc-300 focus:ring-1 focus:ring-zinc-600 focus:border-zinc-500"
+                                        placeholder="Add URL or IP..."
+                                        className="h-8 text-xs bg-white border-slate-200 focus:ring-violet-500/20 focus:border-violet-500"
                                         onKeyDown={(e) => e.key === 'Enter' && handleAddAsset()}
                                     />
-                                    <Button size="sm" variant="outline" onClick={handleAddAsset} disabled={!newAssetUrl.trim()} className="h-9 border-zinc-800 hover:bg-zinc-800 text-zinc-300">
-                                        <Plus className="w-4 h-4" />
+                                    <Button size="sm" variant="outline" onClick={handleAddAsset} disabled={!newAssetUrl.trim()} className="h-8 w-8 p-0 shrink-0 bg-white">
+                                        <Plus className="w-3 h-3" />
                                     </Button>
                                 </div>
-                                <div className="space-y-2">
+                                 <div className="space-y-2">
                                     {localFinding.affectedAssets.map((asset, idx) => (
-                                        <div key={idx} className="flex items-center justify-between p-2 bg-zinc-900/30 border border-zinc-800 rounded text-sm group">
+                                        <div key={idx} className="flex items-center justify-between p-2 bg-white border border-slate-200 rounded-lg shadow-sm group">
                                             <div className="flex items-center gap-2 overflow-hidden">
-                                                <Globe className="w-3 h-3 text-zinc-500 flex-shrink-0" />
-                                                <span className="truncate text-zinc-300 font-mono text-xs" title={asset.url}>{asset.url}</span>
+                                                <Globe className="w-3 h-3 text-slate-400 flex-shrink-0" />
+                                                <span className="truncate text-slate-600 font-mono text-xs" title={asset.url}>{asset.url}</span>
                                             </div>
-                                            <button
-                                                onClick={() => removeAsset(idx)}
-                                                className="text-zinc-500 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                                            >
+                                            <button onClick={() => removeAsset(idx)} className="text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
                                                 <X className="w-3 h-3" />
                                             </button>
                                         </div>
@@ -306,74 +288,75 @@ export function EditFindingModal({ finding, isOpen, onClose, onUpdate, onDelete,
                         </div>
                     </div>
 
-                    {/* Right Column: Editors (75%) - Scrollable */}
-                    <div className="col-span-9 bg-zinc-950 h-full overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:bg-zinc-800 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent">
-                        <div className="p-8">
-                            <Accordion type="multiple" defaultValue={['description', 'remediation', 'poc', 'references']} className="space-y-4">
-                                {/* Description */}
-                                <AccordionItem value="description" className="border border-zinc-800 bg-zinc-900/50 rounded-lg overflow-hidden">
-                                    <AccordionTrigger className="px-4 py-3 hover:bg-zinc-900 transition-colors font-medium text-zinc-100">
+                    {/* Main Content (Editors) - 75% width */}
+                    <div className="col-span-12 md:col-span-9 h-full overflow-y-auto bg-white scroll-smooth">
+                        <div className="p-8 max-w-4xl mx-auto space-y-10 pb-20">
+                            
+                             {/* Description */}
+                            <section className="space-y-4">
+                                <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                                    <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
                                         Description
-                                    </AccordionTrigger>
-                                    <AccordionContent className="px-4 pb-4 pt-2">
-                                        <Editor
-                                            content={localFinding.description}
-                                            onChange={(html) => handleChange({ description: html })}
-                                            placeholder="Describe the vulnerability..."
-                                            className="min-h-[150px] prose-invert"
-                                        />
-                                    </AccordionContent>
-                                </AccordionItem>
+                                    </h3>
+                                </div>
+                                <div className="rounded-lg border border-slate-100 bg-slate-50/30 min-h-[150px]">
+                                    <Editor
+                                        content={localFinding.description}
+                                        onChange={(html) => handleChange({ description: html })}
+                                        placeholder="Describe the vulnerability..."
+                                        className="min-h-[150px] prose-sm max-w-none p-4"
+                                    />
+                                </div>
+                            </section>
 
-                                {/* Remediation */}
-                                <AccordionItem value="remediation" className="border border-zinc-800 bg-zinc-900/50 rounded-lg overflow-hidden">
-                                    <AccordionTrigger className="px-4 py-3 hover:bg-zinc-900 transition-colors font-medium text-zinc-100">
-                                        Remediation
-                                    </AccordionTrigger>
-                                    <AccordionContent className="px-4 pb-4 pt-2">
-                                        <Editor
-                                            content={localFinding.recommendations}
-                                            onChange={(html) => handleChange({ recommendations: html })}
-                                            placeholder="How to fix this issue..."
-                                            className="min-h-[150px] prose-invert"
-                                        />
-                                    </AccordionContent>
-                                </AccordionItem>
+                             {/* Remediation */}
+                            <section className="space-y-4">
+                                <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                                    <h3 className="text-sm font-semibold text-slate-900">Remediation</h3>
+                                </div>
+                                <div className="rounded-lg border border-slate-100 bg-slate-50/30 min-h-[150px]">
+                                    <Editor
+                                        content={localFinding.recommendations}
+                                        onChange={(html) => handleChange({ recommendations: html })}
+                                        placeholder="How to fix this issue..."
+                                        className="min-h-[150px] prose-sm max-w-none p-4"
+                                    />
+                                </div>
+                            </section>
 
-                                {/* Proof of Concept & Evidence */}
-                                <AccordionItem value="poc" className="border border-zinc-800 bg-zinc-900/50 rounded-lg overflow-hidden">
-                                    <AccordionTrigger className="px-4 py-3 hover:bg-zinc-900 transition-colors font-medium text-zinc-100">
-                                        Proof of Concept & Evidence
-                                    </AccordionTrigger>
-                                    <AccordionContent className="px-4 pb-4 pt-2">
-                                        <Editor
-                                            content={localFinding.evidence || ''}
-                                            onChange={(html) => handleChange({ evidence: html })}
-                                            placeholder="Drag & drop screenshots, paste code snippets, or write your PoC here..."
-                                            variant="evidence"
-                                            className="min-h-[400px] prose-invert"
-                                        />
-                                    </AccordionContent>
-                                </AccordionItem>
-
-                                {/* References */}
-                                <AccordionItem value="references" className="border border-zinc-800 bg-zinc-900/50 rounded-lg overflow-hidden">
-                                    <AccordionTrigger className="px-4 py-3 hover:bg-zinc-900 transition-colors font-medium text-zinc-100">
-                                        References
-                                    </AccordionTrigger>
-                                    <AccordionContent className="px-4 pb-4 pt-2">
-                                        <Editor
-                                            content={localFinding.references || ''}
-                                            onChange={(html) => handleChange({ references: html })}
-                                            placeholder="Add references (URLs, CVEs, documentation links, etc.)..."
-                                            className="min-h-[150px] prose-invert"
-                                        />
-                                    </AccordionContent>
-                                </AccordionItem>
-                            </Accordion>
+                             {/* Evidence */}
+                            <section className="space-y-4">
+                                <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                                    <h3 className="text-sm font-semibold text-slate-900">Proof of Concept & Evidence</h3>
+                                </div>
+                                <div className="rounded-lg border border-slate-100 bg-slate-50/30 min-h-[300px]">
+                                    <Editor
+                                        content={localFinding.evidence || ''}
+                                        onChange={(html) => handleChange({ evidence: html })}
+                                        placeholder="Add evidence, screenshots, or code snippets..."
+                                        variant="evidence"
+                                        className="min-h-[300px] prose-sm max-w-none p-4"
+                                    />
+                                </div>
+                            </section>
+                            
+                            {/* References */}
+                            <section className="space-y-4">
+                                <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                                    <h3 className="text-sm font-semibold text-slate-900">References</h3>
+                                </div>
+                                <div className="rounded-lg border border-slate-100 bg-slate-50/30 min-h-[100px]">
+                                    <Editor
+                                        content={localFinding.references || ''}
+                                        onChange={(html) => handleChange({ references: html })}
+                                        placeholder="Add links to CVEs or documentation..."
+                                        className="min-h-[100px] prose-sm max-w-none p-4"
+                                    />
+                                </div>
+                            </section>
                         </div>
                     </div>
-                </div>
+                 </div>
             </DialogContent>
         </Dialog>
     );

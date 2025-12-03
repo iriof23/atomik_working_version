@@ -317,13 +317,15 @@ export default function ReportBuilder() {
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'In Progress':
-                return 'bg-blue-500/10 text-blue-500 border-blue-500/20'
+                return 'bg-emerald-100 text-emerald-700 border-emerald-200'
             case 'Planning':
-                return 'bg-purple-500/10 text-purple-500 border-purple-500/20'
+                return 'bg-violet-100 text-violet-700 border-violet-200'
             case 'Completed':
-                return 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
+                return 'bg-slate-100 text-slate-700 border-slate-200'
+            case 'On Hold':
+                return 'bg-amber-100 text-amber-700 border-amber-200'
             default:
-                return 'bg-gray-500/10 text-gray-400 border-gray-500/20'
+                return 'bg-slate-100 text-slate-600 border-slate-200'
         }
     }
 
@@ -344,8 +346,8 @@ export default function ReportBuilder() {
             {/* Header */}
             <div className="flex items-center justify-between flex-shrink-0">
                 <div>
-                    <h1 className="text-2xl font-bold text-foreground">Reports</h1>
-                    <p className="text-muted-foreground mt-1">
+                    <h1 className="text-2xl font-semibold text-slate-900">Reports</h1>
+                    <p className="text-sm text-slate-500 mt-1">
                         Select a project to manage findings and generate reports
                     </p>
                 </div>
@@ -414,12 +416,12 @@ export default function ReportBuilder() {
                     {/* Search and Filters */}
                     <div className="space-y-3 flex-shrink-0">
                         <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                             <Input
                                 placeholder="Search projects..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="pl-9 h-10 bg-muted/50 border-border"
+                                className="pl-9 h-10 bg-white border-slate-200 text-slate-900 placeholder:text-slate-400"
                             />
                         </div>
                         <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
@@ -428,10 +430,10 @@ export default function ReportBuilder() {
                                     key={status}
                                     onClick={() => setStatusFilter(status as any)}
                                     className={cn(
-                                        'px-3 py-1 text-xs font-medium rounded-full transition-all whitespace-nowrap',
+                                        'px-3 py-1.5 text-xs font-medium rounded-full transition-all whitespace-nowrap',
                                         statusFilter === status
-                                            ? 'bg-zinc-800 text-white shadow-sm'
-                                            : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
+                                            ? 'bg-violet-600 text-white shadow-sm'
+                                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900'
                                     )}
                                 >
                                     {status === 'all' ? 'All' : status}
@@ -449,24 +451,30 @@ export default function ReportBuilder() {
                                     key={project.id}
                                     onClick={() => setSelectedProject(project)}
                                     className={cn(
-                                        'p-4 rounded-lg cursor-pointer transition-all duration-200 group',
+                                        'p-3 rounded-xl cursor-pointer transition-all duration-200 group',
                                         isActive
-                                            ? 'bg-zinc-800/50 text-white shadow-sm ring-1 ring-zinc-700'
-                                            : 'bg-transparent hover:bg-zinc-900/30 text-zinc-400 hover:text-zinc-200'
+                                            ? 'bg-violet-50 ring-1 ring-violet-200 shadow-sm'
+                                            : 'hover:bg-slate-50'
                                     )}
                                 >
-                                    <div className="flex items-start justify-between gap-3">
-                                        <div className="flex items-center gap-3 overflow-hidden">
-                                            <div className="min-w-0">
-                                                <h3 className={cn("font-medium text-sm truncate", isActive ? "text-zinc-100" : "text-zinc-300 group-hover:text-zinc-100")}>
-                                                    {project.name}
-                                                </h3>
-                                                <p className="text-xs text-zinc-500 truncate mt-0.5">
-                                                    {project.clientName}
-                                                </p>
-                                            </div>
+                                    <div className="flex items-center gap-3">
+                                        <Avatar className="h-10 w-10 rounded-xl flex-shrink-0">
+                                            <AvatarFallback className="rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 text-white text-xs font-semibold">
+                                                {project.name.slice(0, 2).toUpperCase()}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                        <div className="min-w-0 flex-1">
+                                            <h3 className={cn(
+                                                "text-sm font-semibold truncate",
+                                                isActive ? "text-violet-700" : "text-slate-900 group-hover:text-violet-700"
+                                            )}>
+                                                {project.name}
+                                            </h3>
+                                            <p className="text-xs text-slate-500 truncate">
+                                                {project.clientName}
+                                            </p>
                                         </div>
-                                        {isActive && <ChevronRight className="w-4 h-4 text-zinc-500" />}
+                                        {isActive && <ChevronRight className="w-4 h-4 text-violet-500 flex-shrink-0" />}
                                     </div>
                                 </div>
                             )
@@ -477,34 +485,34 @@ export default function ReportBuilder() {
                 {/* Right Column - Project Preview (8 cols) - Premium Bespoke View */}
                 <div className="lg:col-span-8 flex flex-col min-h-0">
                     {selectedProject ? (
-                        <div className="bg-zinc-950/50 border border-zinc-800 rounded-xl h-full overflow-hidden flex flex-col shadow-sm">
+                        <Card className="h-full overflow-hidden flex flex-col">
                             
                             {/* 1. The Header (Top Row) */}
-                            <div className="p-8 border-b border-zinc-800 flex flex-col sm:flex-row sm:items-start justify-between gap-6 bg-zinc-900/20">
-                                <div className="space-y-3">
+                            <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                                <div className="space-y-2">
                                     <div className="flex items-center gap-3">
-                                        <h2 className="text-2xl font-bold tracking-tight text-white">
+                                        <h2 className="text-xl font-semibold text-slate-900">
                                             {selectedProject.name}
                                         </h2>
-                                        <Badge className={cn("border bg-transparent", getStatusColor(selectedProject.status))}>
+                                        <Badge className={cn("text-xs", getStatusColor(selectedProject.status))}>
                                             {selectedProject.status}
                                         </Badge>
                                     </div>
-                                    <p className="text-zinc-400 text-sm flex items-center gap-2">
-                                        <span className="font-medium text-zinc-300">{selectedProject.clientName}</span>
-                                        <span className="w-1 h-1 rounded-full bg-zinc-700" />
+                                    <p className="text-sm text-slate-500 flex items-center gap-2">
+                                        <span className="font-medium text-slate-700">{selectedProject.clientName}</span>
+                                        <span className="w-1 h-1 rounded-full bg-slate-300" />
                                         <span>Last modified {selectedProject.lastModified.toLocaleDateString()}</span>
                                     </p>
                                 </div>
-                                <div className="flex items-center gap-3">
-                                    <Button variant="ghost" size="sm" className="text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 h-9">
+                                <div className="flex items-center gap-2">
+                                    <Button variant="outline" size="sm" className="text-slate-600 border-slate-200 h-9">
                                         <Download className="w-4 h-4 mr-2" />
                                         Export
                                     </Button>
                                     <Button 
-                                        variant="ghost" 
+                                        variant="outline" 
                                         size="sm" 
-                                        className="text-red-400 hover:text-red-300 hover:bg-red-950/50 h-9"
+                                        className="text-red-600 border-red-200 hover:bg-red-50 h-9"
                                         onClick={() => setDeleteDialogOpen(true)}
                                     >
                                         <Trash2 className="w-4 h-4 mr-2" />
@@ -513,7 +521,7 @@ export default function ReportBuilder() {
                                     <Button 
                                         onClick={() => handleOpenReport(selectedProject.id)}
                                         disabled={isOpeningEditor}
-                                        className="bg-emerald-600 hover:bg-emerald-500 text-white font-medium h-9 px-4 shadow-lg shadow-emerald-900/20"
+                                        className="bg-violet-600 hover:bg-violet-700 text-white font-medium h-9 px-4"
                                     >
                                         {isOpeningEditor ? (
                                             <>
@@ -530,152 +538,156 @@ export default function ReportBuilder() {
                                 </div>
                             </div>
 
-                            <div className="flex-1 overflow-y-auto p-8 space-y-10">
+                            <div className="flex-1 overflow-y-auto p-6 space-y-8">
                                 {(() => {
                                     const findings = projectFindingsData[selectedProject.id] || { count: 0, severity: { critical: 0, high: 0, medium: 0, low: 0 } }
                                     const viz = getVizWidths(selectedProject.id)
                                     return (
                                         <>
                                             {/* 2. Health Strip & 3. Risk Viz */}
-                                            <div className="space-y-6">
+                                            <div className="space-y-4">
                                                 {/* Health Strip */}
-                                                <div className="flex items-center py-4 border-y border-zinc-800/50 divide-x divide-zinc-800">
-                                                    <div className="px-6 first:pl-0">
-                                                        <div className="text-sm text-zinc-500 font-medium mb-1">Total Findings</div>
-                                                        <div className="text-3xl font-bold text-white">{findings.count}</div>
+                                                <div className="grid grid-cols-5 gap-4">
+                                                    <div className="bg-slate-50 rounded-xl p-4 text-center">
+                                                        <div className="text-xs text-slate-500 font-medium mb-1">Total</div>
+                                                        <div className="text-2xl font-bold text-slate-900">{findings.count}</div>
                                                     </div>
-                                                    <div className="px-6">
-                                                        <div className="text-sm text-red-500/80 font-medium mb-1">Critical</div>
-                                                        <div className="text-3xl font-bold text-red-500">{findings.severity.critical}</div>
+                                                    <div className="bg-red-50 rounded-xl p-4 text-center">
+                                                        <div className="text-xs text-red-600 font-medium mb-1">Critical</div>
+                                                        <div className="text-2xl font-bold text-red-600">{findings.severity.critical}</div>
                                                     </div>
-                                                    <div className="px-6">
-                                                        <div className="text-sm text-orange-500/80 font-medium mb-1">High</div>
-                                                        <div className="text-3xl font-bold text-orange-500">{findings.severity.high}</div>
+                                                    <div className="bg-orange-50 rounded-xl p-4 text-center">
+                                                        <div className="text-xs text-orange-600 font-medium mb-1">High</div>
+                                                        <div className="text-2xl font-bold text-orange-600">{findings.severity.high}</div>
                                                     </div>
-                                                    <div className="px-6">
-                                                        <div className="text-sm text-yellow-500/80 font-medium mb-1">Medium</div>
-                                                        <div className="text-3xl font-bold text-yellow-500">{findings.severity.medium}</div>
+                                                    <div className="bg-amber-50 rounded-xl p-4 text-center">
+                                                        <div className="text-xs text-amber-600 font-medium mb-1">Medium</div>
+                                                        <div className="text-2xl font-bold text-amber-600">{findings.severity.medium}</div>
                                                     </div>
-                                                    <div className="px-6">
-                                                        <div className="text-sm text-blue-500/80 font-medium mb-1">Low</div>
-                                                        <div className="text-3xl font-bold text-blue-500">{findings.severity.low}</div>
+                                                    <div className="bg-emerald-50 rounded-xl p-4 text-center">
+                                                        <div className="text-xs text-emerald-600 font-medium mb-1">Low</div>
+                                                        <div className="text-2xl font-bold text-emerald-600">{findings.severity.low}</div>
                                                     </div>
                                                 </div>
 
                                                 {/* Risk Viz Stacked Bar */}
                                                 <div className="space-y-2">
-                                                    <div className="flex justify-between text-xs text-zinc-500 font-medium uppercase tracking-wider">
+                                                    <div className="flex justify-between text-xs text-slate-500 font-medium uppercase tracking-wider">
                                                         <span>Risk Distribution</span>
                                                         <span>{findings.count > 0 ? 'Analysis' : 'No Data'}</span>
                                                     </div>
-                                                    <div className="h-2.5 w-full bg-zinc-900 rounded-full flex overflow-hidden ring-1 ring-zinc-800">
+                                                    <div className="h-2 w-full bg-slate-100 rounded-full flex overflow-hidden">
                                                         {findings.count > 0 ? (
                                                             <>
-                                                                <div style={{ width: `${viz.critical}%` }} className="h-full bg-red-600 transition-all duration-500" />
+                                                                <div style={{ width: `${viz.critical}%` }} className="h-full bg-red-500 transition-all duration-500" />
                                                                 <div style={{ width: `${viz.high}%` }} className="h-full bg-orange-500 transition-all duration-500" />
-                                                                <div style={{ width: `${viz.medium}%` }} className="h-full bg-yellow-500 transition-all duration-500" />
-                                                                <div style={{ width: `${viz.low}%` }} className="h-full bg-blue-500 transition-all duration-500" />
+                                                                <div style={{ width: `${viz.medium}%` }} className="h-full bg-amber-500 transition-all duration-500" />
+                                                                <div style={{ width: `${viz.low}%` }} className="h-full bg-emerald-500 transition-all duration-500" />
                                                             </>
                                                         ) : (
-                                                            <div className="w-full h-full bg-zinc-800/50" />
+                                                            <div className="w-full h-full bg-slate-200" />
                                                         )}
                                                     </div>
                                                 </div>
                                             </div>
 
                                             {/* 4. Metadata Grid */}
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
-                                                <div className="space-y-4">
-                                                    <div className="flex items-center gap-2 text-zinc-100 font-semibold text-sm uppercase tracking-wider">
-                                                        <Target className="w-4 h-4 text-zinc-500" />
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                <div className="space-y-3">
+                                                    <div className="flex items-center gap-2 text-slate-700 font-semibold text-xs uppercase tracking-wider">
+                                                        <Target className="w-4 h-4 text-slate-400" />
                                                         Scope & Methodology
                                                     </div>
-                                                    <div className="bg-zinc-900/30 p-4 rounded-lg border border-zinc-800/50 space-y-3">
+                                                    <div className="bg-slate-50 p-4 rounded-xl space-y-3">
                                                         <div>
-                                                            <label className="text-xs text-zinc-500 block mb-1">Primary Scope</label>
-                                                            <p className="text-sm text-zinc-300 leading-relaxed">{selectedProject.scope}</p>
+                                                            <label className="text-xs text-slate-500 block mb-1">Primary Scope</label>
+                                                            <p className="text-sm text-slate-700 leading-relaxed">{selectedProject.scope || 'Not specified'}</p>
                                                         </div>
                                                         <div>
-                                                            <label className="text-xs text-zinc-500 block mb-1">Methodology</label>
-                                                            <p className="text-sm text-zinc-300">OWASP Top 10, PTES</p>
+                                                            <label className="text-xs text-slate-500 block mb-1">Methodology</label>
+                                                            <p className="text-sm text-slate-700">OWASP Top 10, PTES</p>
                                                         </div>
                                                     </div>
                                                 </div>
 
-                                                <div className="space-y-4">
-                                                    <div className="flex items-center gap-2 text-zinc-100 font-semibold text-sm uppercase tracking-wider">
-                                                        <Clock className="w-4 h-4 text-zinc-500" />
+                                                <div className="space-y-3">
+                                                    <div className="flex items-center gap-2 text-slate-700 font-semibold text-xs uppercase tracking-wider">
+                                                        <Clock className="w-4 h-4 text-slate-400" />
                                                         Timeline
                                                     </div>
-                                                    <div className="bg-zinc-900/30 p-4 rounded-lg border border-zinc-800/50 space-y-4">
-                                                        <div className="flex justify-between items-center border-b border-zinc-800/50 pb-3 last:border-0 last:pb-0">
-                                                            <span className="text-sm text-zinc-400">Start Date</span>
-                                                            <span className="text-sm text-zinc-200 font-mono">{selectedProject.startDate.toLocaleDateString()}</span>
-                                                        </div>
-                                                        <div className="flex justify-between items-center border-b border-zinc-800/50 pb-3 last:border-0 last:pb-0">
-                                                            <span className="text-sm text-zinc-400">End Date</span>
-                                                            <span className="text-sm text-zinc-200 font-mono">{selectedProject.endDate.toLocaleDateString()}</span>
+                                                    <div className="bg-slate-50 p-4 rounded-xl space-y-3">
+                                                        <div className="flex justify-between items-center">
+                                                            <span className="text-sm text-slate-500">Start Date</span>
+                                                            <span className="text-sm text-slate-900 font-medium">{selectedProject.startDate.toLocaleDateString()}</span>
                                                         </div>
                                                         <div className="flex justify-between items-center">
-                                                            <span className="text-sm text-zinc-400">Duration</span>
-                                                            <span className="text-sm text-zinc-200 font-mono">3 Weeks</span>
+                                                            <span className="text-sm text-slate-500">End Date</span>
+                                                            <span className="text-sm text-slate-900 font-medium">{selectedProject.endDate.toLocaleDateString()}</span>
+                                                        </div>
+                                                        <div className="flex justify-between items-center pt-2 border-t border-slate-200">
+                                                            <span className="text-sm text-slate-500">Duration</span>
+                                                            <span className="text-sm text-slate-900 font-medium">3 Weeks</span>
                                                         </div>
                                                     </div>
                                                 </div>
 
-                                                <div className="md:col-span-2 space-y-4">
-                                                    <div className="flex items-center gap-2 text-zinc-100 font-semibold text-sm uppercase tracking-wider">
-                                                        <Users className="w-4 h-4 text-zinc-500" />
-                                                        Assigned Team
-                                                    </div>
-                                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                                        {selectedProject.teamMembers.map((member: { id: string, name: string }) => (
-                                                            <div key={member.id} className="flex items-center gap-3 p-3 rounded-lg border border-zinc-800 bg-zinc-900/20">
-                                                                <Avatar className="h-8 w-8 border border-zinc-700">
-                                                                    <AvatarFallback className="bg-zinc-800 text-zinc-300 text-xs">
-                                                                        {member.name.split(' ').map((n: string) => n[0]).join('')}
-                                                                    </AvatarFallback>
-                                                                </Avatar>
-                                                                <div>
-                                                                    <p className="text-sm font-medium text-zinc-200">{member.name}</p>
-                                                                    <p className="text-xs text-zinc-500">Security Engineer</p>
+                                                {selectedProject.teamMembers.length > 0 && (
+                                                    <div className="md:col-span-2 space-y-3">
+                                                        <div className="flex items-center gap-2 text-slate-700 font-semibold text-xs uppercase tracking-wider">
+                                                            <Users className="w-4 h-4 text-slate-400" />
+                                                            Assigned Team
+                                                        </div>
+                                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                                            {selectedProject.teamMembers.map((member: { id: string, name: string }) => (
+                                                                <div key={member.id} className="flex items-center gap-3 p-3 rounded-xl bg-slate-50">
+                                                                    <Avatar className="h-8 w-8 rounded-lg">
+                                                                        <AvatarFallback className="rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 text-white text-xs font-semibold">
+                                                                            {member.name.split(' ').map((n: string) => n[0]).join('')}
+                                                                        </AvatarFallback>
+                                                                    </Avatar>
+                                                                    <div>
+                                                                        <p className="text-sm font-semibold text-slate-900">{member.name}</p>
+                                                                        <p className="text-xs text-slate-500">Security Engineer</p>
+                                                                    </div>
                                                                 </div>
-                                                            </div>
-                                                        ))}
+                                                            ))}
+                                                        </div>
                                                     </div>
-                                                </div>
+                                                )}
                                             </div>
                                         </>
                                     )
                                 })()}
                             </div>
-                        </div>
+                        </Card>
                     ) : (
-                        <div className="h-full flex items-center justify-center bg-zinc-950/30 border border-zinc-800 rounded-xl border-dashed">
+                        <Card className="h-full flex items-center justify-center border-dashed">
                             <div className="text-center">
-                                <Shield className="w-12 h-12 text-zinc-800 mx-auto mb-4" />
-                                <h3 className="text-lg font-medium text-zinc-400">No Project Selected</h3>
-                                <p className="text-sm text-zinc-600 mt-1">Select a project from the sidebar to view details.</p>
+                                <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
+                                    <Shield className="w-6 h-6 text-slate-400" />
+                                </div>
+                                <h3 className="text-sm font-semibold text-slate-900">No Project Selected</h3>
+                                <p className="text-xs text-slate-500 mt-1">Select a project from the list to view details.</p>
                             </div>
-                        </div>
+                        </Card>
                     )}
                 </div>
             </div>
 
             {/* Delete Confirmation Dialog */}
             <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-                <AlertDialogContent className="bg-zinc-900 border-zinc-800">
+                <AlertDialogContent className="bg-white border-slate-200">
                     <AlertDialogHeader>
-                        <AlertDialogTitle className="text-zinc-100">Delete Project</AlertDialogTitle>
-                        <AlertDialogDescription className="text-zinc-400">
-                            Are you sure you want to delete <span className="font-semibold text-zinc-300">"{selectedProject?.name}"</span>? 
+                        <AlertDialogTitle className="text-slate-900">Delete Project</AlertDialogTitle>
+                        <AlertDialogDescription className="text-slate-500">
+                            Are you sure you want to delete <span className="font-semibold text-slate-700">"{selectedProject?.name}"</span>? 
                             This will permanently delete the project and all associated reports and findings. 
                             This action cannot be undone.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel 
-                            className="bg-zinc-800 border-zinc-700 text-zinc-300 hover:bg-zinc-700 hover:text-zinc-100"
+                            className="border-slate-200 text-slate-600 hover:bg-slate-50"
                             disabled={isDeleting}
                         >
                             Cancel
@@ -683,7 +695,7 @@ export default function ReportBuilder() {
                         <AlertDialogAction
                             onClick={handleDeleteProject}
                             disabled={isDeleting}
-                            className="bg-red-600 hover:bg-red-500 text-white"
+                            className="bg-red-600 hover:bg-red-700 text-white"
                         >
                             {isDeleting ? (
                                 <>

@@ -177,7 +177,8 @@ export default function ReportEditor() {
         headerText: 'Confidential',
         footerText: 'Prepared by Atomik Security',
         preparedBy: 'Security Team',
-        confidentialityLevel: 'Confidential' as const
+        confidentialityLevel: 'Confidential' as const,
+        pdfTemplate: 'classic' as 'classic' | 'apple'
     })
     
     // Update report settings when report data loads
@@ -243,13 +244,15 @@ export default function ReportEditor() {
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'In Progress':
-                return 'bg-blue-500/10 text-blue-500 border-blue-500/20'
+                return 'bg-emerald-100 text-emerald-700'
             case 'Planning':
-                return 'bg-purple-500/10 text-purple-500 border-purple-500/20'
+                return 'bg-violet-100 text-violet-700'
             case 'Completed':
-                return 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
+                return 'bg-slate-100 text-slate-700'
+            case 'On Hold':
+                return 'bg-amber-100 text-amber-700'
             default:
-                return 'bg-gray-500/10 text-gray-400 border-gray-500/20'
+                return 'bg-slate-100 text-slate-600'
         }
     }
 
@@ -266,8 +269,8 @@ export default function ReportEditor() {
         return (
             <div className="h-[calc(100vh-100px)] flex items-center justify-center">
                 <div className="text-center">
-                    <Loader2 className="h-8 w-8 animate-spin text-emerald-500 mx-auto" />
-                    <p className="text-zinc-400 mt-2">Loading report...</p>
+                    <Loader2 className="h-8 w-8 animate-spin text-violet-600 mx-auto" />
+                    <p className="text-slate-500 mt-2">Loading report...</p>
                 </div>
             </div>
         )
@@ -279,20 +282,20 @@ export default function ReportEditor() {
             <div className="flex items-center gap-2 text-sm">
                 <Link
                     to="/reports"
-                    className="flex items-center gap-1 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                    className="flex items-center gap-1 text-slate-500 hover:text-slate-900 transition-colors"
                 >
                     <ChevronLeft className="w-4 h-4" />
                     Reports
                 </Link>
-                <span className="text-gray-400">/</span>
+                <span className="text-slate-300">/</span>
                 <Link
                     to="/clients"
-                    className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                    className="text-slate-500 hover:text-slate-900 transition-colors"
                 >
                     {project.clientName}
                 </Link>
-                <span className="text-gray-400">/</span>
-                <span className="text-gray-900 dark:text-white font-medium">{project.name}</span>
+                <span className="text-slate-300">/</span>
+                <span className="text-slate-900 font-medium">{project.name}</span>
             </div>
 
             {/* Project Header */}
@@ -300,12 +303,14 @@ export default function ReportEditor() {
                 <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <div className="text-3xl">{project.clientLogoUrl}</div>
+                            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white text-sm font-semibold">
+                                {project.name.slice(0, 2).toUpperCase()}
+                            </div>
                             <div>
-                                <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+                                <h1 className="text-lg font-semibold text-slate-900">
                                     {project.name}
                                 </h1>
-                                <p className="text-sm text-gray-600 dark:text-gray-400">
+                                <p className="text-sm text-slate-500">
                                     {project.clientName}
                                 </p>
                             </div>
@@ -315,14 +320,14 @@ export default function ReportEditor() {
                                 {project.status}
                             </Badge>
                             <div className="text-right">
-                                <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                                <p className="text-sm font-semibold text-slate-900">
                                     {actualFindingsCount} Finding{actualFindingsCount !== 1 ? 's' : ''}
                                 </p>
-                                <p className="text-xs text-gray-600 dark:text-gray-400">
+                                <p className="text-xs text-slate-500">
                                     {actualFindingsCount > 0 ? Math.round((actualFindingsCount / 10) * 100) : 0}% Complete
                                 </p>
                             </div>
-                            <Button onClick={handleSave} size="sm" disabled={!hasUnsavedChanges || isSaving}>
+                            <Button onClick={handleSave} size="sm" disabled={!hasUnsavedChanges || isSaving} className="bg-violet-600 hover:bg-violet-700">
                                 {isSaving ? (
                                     <>
                                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -341,7 +346,7 @@ export default function ReportEditor() {
             </Card>
 
             {/* Tab Navigation */}
-            <div className="border-b border-gray-200 dark:border-gray-700">
+            <div className="border-b border-slate-200">
                 <div className="flex gap-1">
                     {tabs.map((tab) => {
                         const Icon = tab.icon
@@ -352,14 +357,14 @@ export default function ReportEditor() {
                                 className={cn(
                                     'flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors relative',
                                     activeTab === tab.id
-                                        ? 'text-primary'
-                                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                                        ? 'text-violet-600'
+                                        : 'text-slate-500 hover:text-slate-900'
                                 )}
                             >
                                 <Icon className="w-4 h-4" />
                                 {tab.label}
                                 {activeTab === tab.id && (
-                                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
+                                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-violet-600" />
                                 )}
                             </button>
                         )
@@ -401,7 +406,7 @@ export default function ReportEditor() {
                     <PreviewTab settings={reportSettings} project={project} />
                 )}
                 {activeTab === 'export' && reportId && (
-                    <ExportTab reportId={reportId} />
+                    <ExportTab reportId={reportId} settings={reportSettings} />
                 )}
             </div>
         </div >
@@ -512,15 +517,15 @@ function CollapsibleSection({
         <Card>
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="w-full flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors rounded-t-lg"
+                className="w-full flex items-center justify-between p-4 hover:bg-slate-50 transition-colors rounded-t-lg"
             >
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                <h2 className="text-sm font-semibold text-slate-900">
                     {title}
                 </h2>
                 {isOpen ? (
-                    <ChevronDown className="w-4 h-4 text-gray-500" />
+                    <ChevronDown className="w-4 h-4 text-slate-400" />
                 ) : (
-                    <ChevronRight className="w-4 h-4 text-gray-500" />
+                    <ChevronRight className="w-4 h-4 text-slate-400" />
                 )}
             </button>
             {isOpen && (
@@ -565,35 +570,35 @@ function SettingsTab({
     }
 
     return (
-        <div className="max-w-3xl space-y-4">
+        <div className="space-y-4">
             <Card>
-                <CardContent className="p-4">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                <CardContent className="p-5">
+                    <h3 className="text-sm font-semibold text-slate-900 mb-4">
                         Client Branding
                     </h3>
 
-                    {/* Logo Upload */}
-                    <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    {/* Logo Upload - Full Width */}
+                    <div className="mb-4 pb-4 border-b border-slate-100">
+                        <label className="block text-xs font-medium text-slate-700 mb-2">
                             Client Logo
                         </label>
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-3">
                             {settings.clientLogo ? (
                                 <div className="relative">
                                     <img
                                         src={settings.clientLogo}
                                         alt="Client logo"
-                                        className="h-16 w-auto max-w-[200px] object-contain border border-gray-300 dark:border-gray-600 rounded-lg p-2"
+                                        className="h-12 w-auto max-w-[160px] object-contain border border-slate-200 rounded-lg p-1.5"
                                     />
                                     <button
                                         onClick={() => onUpdate({ ...settings, clientLogo: '' })}
-                                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
+                                        className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs hover:bg-red-600"
                                     >
                                         ×
                                     </button>
                                 </div>
                             ) : (
-                                <div className="h-16 w-32 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center text-gray-400">
+                                <div className="h-12 w-24 border-2 border-dashed border-slate-200 rounded-lg flex items-center justify-center text-slate-400 text-xs">
                                     No logo
                                 </div>
                             )}
@@ -604,93 +609,153 @@ function SettingsTab({
                                     onChange={handleLogoUpload}
                                     className="hidden"
                                 />
-                                <div className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors">
-                                    {settings.clientLogo ? 'Change Logo' : 'Upload Logo'}
+                                <div className="px-3 py-1.5 bg-violet-600 text-white rounded-lg text-xs font-medium hover:bg-violet-700 transition-colors">
+                                    {settings.clientLogo ? 'Change' : 'Upload'}
                                 </div>
                             </label>
+                            <span className="text-xs text-slate-400">PNG, JPG, SVG · Max 2MB</span>
                         </div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                            PNG, JPG, or SVG. Max 2MB.
-                        </p>
                     </div>
 
-                    {/* Report Title */}
+                    {/* Report Title - Full Width */}
                     <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <label className="block text-xs font-medium text-slate-700 mb-1.5">
                             Report Title
                         </label>
                         <input
                             type="text"
                             value={settings.reportTitle}
                             onChange={(e) => onUpdate({ ...settings, reportTitle: e.target.value })}
-                            className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                            className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500"
                         />
                     </div>
 
-                    {/* Primary Color */}
-                    <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Primary Color
-                        </label>
-                        <div className="flex items-center gap-3">
-                            <input
-                                type="color"
-                                value={settings.primaryColor}
-                                onChange={(e) => onUpdate({ ...settings, primaryColor: e.target.value })}
-                                className="h-10 w-20 rounded-lg cursor-pointer"
-                            />
+                    {/* 2-Column Grid */}
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                        {/* Primary Color */}
+                        <div>
+                            <label className="block text-xs font-medium text-slate-700 mb-1.5">
+                                Primary Color
+                            </label>
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="color"
+                                    value={settings.primaryColor}
+                                    onChange={(e) => onUpdate({ ...settings, primaryColor: e.target.value })}
+                                    className="h-9 w-14 rounded-lg cursor-pointer border border-slate-200"
+                                />
+                                <input
+                                    type="text"
+                                    value={settings.primaryColor}
+                                    onChange={(e) => onUpdate({ ...settings, primaryColor: e.target.value })}
+                                    className="flex-1 px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500"
+                                    placeholder="#10b981"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Header Text */}
+                        <div>
+                            <label className="block text-xs font-medium text-slate-700 mb-1.5">
+                                Header Text
+                            </label>
                             <input
                                 type="text"
-                                value={settings.primaryColor}
-                                onChange={(e) => onUpdate({ ...settings, primaryColor: e.target.value })}
-                                className="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
-                                placeholder="#10b981"
+                                value={settings.headerText}
+                                onChange={(e) => onUpdate({ ...settings, headerText: e.target.value })}
+                                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500"
+                                placeholder="e.g., Confidential"
                             />
+                        </div>
+
+                        {/* Footer Text */}
+                        <div>
+                            <label className="block text-xs font-medium text-slate-700 mb-1.5">
+                                Footer Text
+                            </label>
+                            <input
+                                type="text"
+                                value={settings.footerText}
+                                onChange={(e) => onUpdate({ ...settings, footerText: e.target.value })}
+                                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500"
+                                placeholder="e.g., Prepared by Atomik Security"
+                            />
+                        </div>
+
+                        {/* Confidentiality Level */}
+                        <div>
+                            <label className="block text-xs font-medium text-slate-700 mb-1.5">
+                                Confidentiality Level
+                            </label>
+                            <select
+                                value={settings.confidentialityLevel}
+                                onChange={(e) => onUpdate({ ...settings, confidentialityLevel: e.target.value })}
+                                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500"
+                            >
+                                <option value="Public">Public</option>
+                                <option value="Confidential">Confidential</option>
+                                <option value="Strictly Confidential">Strictly Confidential</option>
+                            </select>
                         </div>
                     </div>
 
-                    {/* Header Text */}
-                    <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Header Text
+                    {/* PDF Template Style - Full Width with visual selector */}
+                    <div className="pt-4 border-t border-slate-100">
+                        <label className="block text-xs font-medium text-slate-700 mb-2">
+                            PDF Template Style
                         </label>
-                        <input
-                            type="text"
-                            value={settings.headerText}
-                            onChange={(e) => onUpdate({ ...settings, headerText: e.target.value })}
-                            className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
-                            placeholder="e.g., Confidential"
-                        />
-                    </div>
-
-                    {/* Footer Text */}
-                    <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Footer Text
-                        </label>
-                        <input
-                            type="text"
-                            value={settings.footerText}
-                            onChange={(e) => onUpdate({ ...settings, footerText: e.target.value })}
-                            className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
-                            placeholder="e.g., Prepared by Atomik Security"
-                        />
-                    </div>
-
-                    {/* Confidentiality Level */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Confidentiality Level
-                        </label>
-                        <select
-                            value={settings.confidentialityLevel}
-                            onChange={(e) => onUpdate({ ...settings, confidentialityLevel: e.target.value })}
-                            className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
-                        >
-                            <option value="Public">Public</option>
-                            <option value="Confidential">Confidential</option>
-                            <option value="Strictly Confidential">Strictly Confidential</option>
-                        </select>
+                        <div className="grid grid-cols-2 gap-3">
+                            <button
+                                type="button"
+                                onClick={() => onUpdate({ ...settings, pdfTemplate: 'classic' })}
+                                className={`p-3 rounded-lg border-2 text-left transition-all ${
+                                    (settings.pdfTemplate || 'classic') === 'classic'
+                                        ? 'border-violet-500 bg-violet-50'
+                                        : 'border-slate-200 hover:border-slate-300 bg-white'
+                                }`}
+                            >
+                                <div className="flex items-center gap-2 mb-1">
+                                    <div className={`w-3 h-3 rounded-full border-2 ${
+                                        (settings.pdfTemplate || 'classic') === 'classic'
+                                            ? 'border-violet-500 bg-violet-500'
+                                            : 'border-slate-300'
+                                    }`}>
+                                        {(settings.pdfTemplate || 'classic') === 'classic' && (
+                                            <div className="w-full h-full flex items-center justify-center">
+                                                <div className="w-1 h-1 bg-white rounded-full" />
+                                            </div>
+                                        )}
+                                    </div>
+                                    <span className="text-sm font-medium text-slate-900">Classic Premium</span>
+                                </div>
+                                <p className="text-xs text-slate-500 ml-5">Dark headers, structured cards</p>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => onUpdate({ ...settings, pdfTemplate: 'apple' })}
+                                className={`p-3 rounded-lg border-2 text-left transition-all ${
+                                    settings.pdfTemplate === 'apple'
+                                        ? 'border-violet-500 bg-violet-50'
+                                        : 'border-slate-200 hover:border-slate-300 bg-white'
+                                }`}
+                            >
+                                <div className="flex items-center gap-2 mb-1">
+                                    <div className={`w-3 h-3 rounded-full border-2 ${
+                                        settings.pdfTemplate === 'apple'
+                                            ? 'border-violet-500 bg-violet-500'
+                                            : 'border-slate-300'
+                                    }`}>
+                                        {settings.pdfTemplate === 'apple' && (
+                                            <div className="w-full h-full flex items-center justify-center">
+                                                <div className="w-1 h-1 bg-white rounded-full" />
+                                            </div>
+                                        )}
+                                    </div>
+                                    <span className="text-sm font-medium text-slate-900">Apple Minimal</span>
+                                </div>
+                                <p className="text-xs text-slate-500 ml-5">Clean, spacious layout</p>
+                            </button>
+                        </div>
                     </div>
                 </CardContent>
             </Card>
@@ -703,9 +768,9 @@ function PreviewTab({ settings, project }: { settings: any; project: any }) {
     return (
         <Card>
             <CardContent className="p-8">
-                <div className="max-w-4xl mx-auto bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-8 shadow-lg">
+                <div className="max-w-4xl mx-auto bg-white border border-slate-200 rounded-xl p-8 shadow-sm">
                     {/* Report Header */}
-                    <div className="border-b pb-6 mb-6" style={{ borderColor: settings.primaryColor }}>
+                    <div className="border-b border-slate-200 pb-6 mb-6">
                         <div className="flex items-center justify-between mb-4">
                             {settings.clientLogo && (
                                 <img
@@ -715,15 +780,15 @@ function PreviewTab({ settings, project }: { settings: any; project: any }) {
                                 />
                             )}
                             <div className="text-right">
-                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                <p className="text-xs text-slate-500">
                                     {settings.headerText}
                                 </p>
                             </div>
                         </div>
-                        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                        <h1 className="text-xl font-semibold text-slate-900 mb-2">
                             {settings.reportTitle}
                         </h1>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                        <p className="text-sm text-slate-500">
                             {project.clientName}
                         </p>
                     </div>
@@ -731,42 +796,42 @@ function PreviewTab({ settings, project }: { settings: any; project: any }) {
                     {/* Report Content Preview */}
                     <div className="space-y-6">
                         <div>
-                            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2" style={{ color: settings.primaryColor }}>
+                            <h2 className="text-sm font-semibold text-slate-900 mb-2" style={{ color: settings.primaryColor }}>
                                 Executive Summary
                             </h2>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                            <p className="text-sm text-slate-500">
                                 This is a preview of your report. The actual content will appear here based on your findings and narrative.
                             </p>
                         </div>
 
                         <div>
-                            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2" style={{ color: settings.primaryColor }}>
+                            <h2 className="text-sm font-semibold text-slate-900 mb-3" style={{ color: settings.primaryColor }}>
                                 Findings Summary
                             </h2>
                             <div className="grid grid-cols-4 gap-3">
-                                <div className="text-center p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
-                                    <p className="text-2xl font-bold text-red-600">{project.findingsBySeverity.critical}</p>
-                                    <p className="text-xs text-gray-600 dark:text-gray-400">Critical</p>
+                                <div className="text-center p-3 bg-red-50 rounded-xl">
+                                    <p className="text-xl font-bold text-red-600">{project.findingsBySeverity.critical}</p>
+                                    <p className="text-xs text-slate-500">Critical</p>
                                 </div>
-                                <div className="text-center p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
-                                    <p className="text-2xl font-bold text-orange-600">{project.findingsBySeverity.high}</p>
-                                    <p className="text-xs text-gray-600 dark:text-gray-400">High</p>
+                                <div className="text-center p-3 bg-orange-50 rounded-xl">
+                                    <p className="text-xl font-bold text-orange-600">{project.findingsBySeverity.high}</p>
+                                    <p className="text-xs text-slate-500">High</p>
                                 </div>
-                                <div className="text-center p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
-                                    <p className="text-2xl font-bold text-yellow-600">{project.findingsBySeverity.medium}</p>
-                                    <p className="text-xs text-gray-600 dark:text-gray-400">Medium</p>
+                                <div className="text-center p-3 bg-amber-50 rounded-xl">
+                                    <p className="text-xl font-bold text-amber-600">{project.findingsBySeverity.medium}</p>
+                                    <p className="text-xs text-slate-500">Medium</p>
                                 </div>
-                                <div className="text-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                                    <p className="text-2xl font-bold text-green-600">{project.findingsBySeverity.low}</p>
-                                    <p className="text-xs text-gray-600 dark:text-gray-400">Low</p>
+                                <div className="text-center p-3 bg-emerald-50 rounded-xl">
+                                    <p className="text-xl font-bold text-emerald-600">{project.findingsBySeverity.low}</p>
+                                    <p className="text-xs text-slate-500">Low</p>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     {/* Report Footer */}
-                    <div className="border-t mt-8 pt-4 text-center" style={{ borderColor: settings.primaryColor }}>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                    <div className="border-t border-slate-200 mt-8 pt-4 text-center">
+                        <p className="text-xs text-slate-500">
                             {settings.footerText}
                         </p>
                     </div>
@@ -776,24 +841,9 @@ function PreviewTab({ settings, project }: { settings: any; project: any }) {
     )
 }
 
-// PDF Template options
-const PDF_TEMPLATES = [
-    {
-        id: 'classic',
-        name: 'Classic Premium',
-        description: 'Dark header, structured cards, professional look'
-    },
-    {
-        id: 'apple',
-        name: 'Apple Minimal',
-        description: 'Clean, spacious, Apple-inspired design'
-    }
-]
-
 // Export Tab Component
-function ExportTab({ reportId }: { reportId: string }) {
+function ExportTab({ reportId, settings }: { reportId: string, settings: any }) {
     const [exportFormat, setExportFormat] = useState<'pdf' | 'docx'>('pdf')
-    const [pdfTemplate, setPdfTemplate] = useState<string>('classic')
     const [isExporting, setIsExporting] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const { getToken } = useAuth()
@@ -810,6 +860,7 @@ function ExportTab({ reportId }: { reportId: string }) {
             }
 
             // Build the export URL with template parameter for PDF
+            const pdfTemplate = settings.pdfTemplate || 'classic'
             const templateParam = exportFormat === 'pdf' ? `&template=${pdfTemplate}` : ''
             
             // Call the export API
@@ -868,15 +919,15 @@ function ExportTab({ reportId }: { reportId: string }) {
 
     return (
         <div className="max-w-2xl mx-auto">
-            <Card className="bg-zinc-900 border-zinc-800">
+            <Card>
                 <CardContent className="p-6">
-                    <h3 className="text-lg font-semibold text-white mb-4">
+                    <h3 className="text-sm font-semibold text-slate-900 mb-6">
                         Export Report
                     </h3>
 
                     {/* Format Selection */}
                     <div className="mb-6">
-                        <label className="block text-sm font-medium text-zinc-300 mb-3">
+                        <label className="block text-xs font-medium text-slate-700 mb-3">
                             Export Format
                         </label>
                         <div className="grid grid-cols-2 gap-3">
@@ -885,16 +936,16 @@ function ExportTab({ reportId }: { reportId: string }) {
                                     key={format}
                                     onClick={() => setExportFormat(format)}
                                     className={cn(
-                                        'p-4 border-2 rounded-lg text-center transition-all',
+                                        'p-4 border-2 rounded-xl text-center transition-all',
                                         exportFormat === format
-                                            ? 'border-emerald-500 bg-emerald-500/10 text-emerald-400'
-                                            : 'border-zinc-700 hover:border-zinc-600 text-zinc-300'
+                                            ? 'border-violet-500 bg-violet-50 text-violet-700'
+                                            : 'border-slate-200 hover:border-slate-300 text-slate-600'
                                     )}
                                 >
                                     <p className="text-sm font-semibold uppercase">
                                         {format}
                                     </p>
-                                    <p className="text-xs text-zinc-500 mt-1">
+                                    <p className="text-xs text-slate-500 mt-1">
                                         {format === 'pdf' ? 'Print-ready document' : 'Editable document'}
                                     </p>
                                 </button>
@@ -902,43 +953,10 @@ function ExportTab({ reportId }: { reportId: string }) {
                         </div>
                     </div>
 
-                    {/* PDF Template Selection - Only show when PDF is selected */}
-                    {exportFormat === 'pdf' && (
-                        <div className="mb-6">
-                            <label className="block text-sm font-medium text-zinc-300 mb-3">
-                                PDF Template Style
-                            </label>
-                            <div className="grid grid-cols-2 gap-3">
-                                {PDF_TEMPLATES.map((template) => (
-                                    <button
-                                        key={template.id}
-                                        onClick={() => setPdfTemplate(template.id)}
-                                        className={cn(
-                                            'p-4 border-2 rounded-lg text-left transition-all',
-                                            pdfTemplate === template.id
-                                                ? 'border-emerald-500 bg-emerald-500/10'
-                                                : 'border-zinc-700 hover:border-zinc-600'
-                                        )}
-                                    >
-                                        <p className={cn(
-                                            'text-sm font-semibold',
-                                            pdfTemplate === template.id ? 'text-emerald-400' : 'text-zinc-300'
-                                        )}>
-                                            {template.name}
-                                        </p>
-                                        <p className="text-xs text-zinc-500 mt-1">
-                                            {template.description}
-                                        </p>
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
                     {/* Error Message */}
                     {error && (
-                        <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
-                            <p className="text-sm text-red-400">{error}</p>
+                        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl">
+                            <p className="text-sm text-red-600">{error}</p>
                         </div>
                     )}
 
@@ -946,7 +964,7 @@ function ExportTab({ reportId }: { reportId: string }) {
                     <Button
                         onClick={handleExport}
                         disabled={isExporting}
-                        className="w-full bg-emerald-600 hover:bg-emerald-500 text-white"
+                        className="w-full bg-violet-600 hover:bg-violet-700 text-white"
                         size="lg"
                     >
                         {isExporting ? (
@@ -963,9 +981,9 @@ function ExportTab({ reportId }: { reportId: string }) {
                     </Button>
 
                     {/* Export Info */}
-                    <div className="mt-6 p-4 bg-zinc-800/50 border border-zinc-700 rounded-lg">
-                        <p className="text-sm text-zinc-400">
-                            <strong className="text-zinc-300">Note:</strong> Your report will include all findings, narrative sections, and client branding.
+                    <div className="mt-6 p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                        <p className="text-sm text-slate-600">
+                            <strong className="text-slate-700">Note:</strong> Your report will include all findings, narrative sections, and client branding.
                         </p>
                     </div>
                 </CardContent>

@@ -82,42 +82,41 @@ export function ClientCard({
     }
 
     const hasLogo = typeof client.logoUrl === 'string' && (client.logoUrl.startsWith('http://') || client.logoUrl.startsWith('https://'))
-    console.log('🔥 ClientCard rendering with initials logic, hasLogo:', hasLogo, 'client:', client.name)
 
     return (
         <div
             onClick={() => onView(client)}
-            className="group bg-card rounded-lg border border-border hover:border-primary/50 hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden flex flex-col h-full"
+            className="group bg-card rounded-xl border border-slate-200 hover:border-violet-300 hover:shadow-card-hover transition-all duration-200 cursor-pointer overflow-hidden flex flex-col h-full"
         >
             {/* Header */}
-            <div className="p-4 border-b border-border flex items-start justify-between bg-muted/50">
+            <div className="p-4 border-b border-slate-100 flex items-start justify-between">
                 <div className="flex items-center gap-3">
-                    <Avatar className="h-12 w-12 rounded-md">
+                    <Avatar className="h-10 w-10 rounded-xl">
                         {hasLogo && <AvatarImage src={client.logoUrl} alt={client.name} />}
-                        <AvatarFallback className="rounded-md bg-muted text-muted-foreground font-semibold">
+                        <AvatarFallback className="rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 text-white text-xs font-semibold">
                             {client.name.slice(0, 2).toUpperCase()}
                         </AvatarFallback>
                     </Avatar>
-                    <div>
-                        <h3 className="font-semibold text-foreground leading-tight group-hover:text-primary transition-colors">
+                    <div className="min-w-0">
+                        <h3 className="text-sm font-semibold text-slate-900 leading-tight group-hover:text-violet-700 transition-colors truncate">
                             {client.name}
                         </h3>
-                        <p className="text-sm text-muted-foreground mt-0.5">
-                            {client.primaryContact}
+                        <p className="text-xs text-slate-500 mt-0.5 truncate">
+                            {client.primaryContact || 'No contact'}
                         </p>
                     </div>
                 </div>
 
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                        <button className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100">
-                            <MoreHorizontal className="w-5 h-5" />
+                        <button className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100">
+                            <MoreHorizontal className="w-4 h-4" />
                         </button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuContent align="end" className="w-44">
                         <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit(client) }}>
                             <Edit className="w-4 h-4 mr-2" />
-                            Edit Client
+                            Edit
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDuplicate(client) }}>
                             <Copy className="w-4 h-4 mr-2" />
@@ -126,77 +125,75 @@ export function ClientCard({
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                             onClick={(e) => { e.stopPropagation(); onDelete(client) }}
-                            className="text-red-500 focus:text-red-400 focus:bg-red-950/20 dark:focus:bg-red-950/20"
+                            className="text-red-600 focus:text-red-600 focus:bg-red-50"
                         >
                             <Trash2 className="w-4 h-4 mr-2" />
-                            Delete Client
+                            Delete
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
             </div>
 
             {/* Body */}
-            <div className="p-4 space-y-3 flex-1">
-                <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Mail className="w-4 h-4" />
-                        <span className="truncate">{client.email}</span>
+            <div className="p-4 space-y-2.5 flex-1">
+                <div className="flex items-center gap-2 text-sm text-slate-500">
+                    <Mail className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                    <span className="truncate">{client.email || '—'}</span>
+                </div>
+                {client.phone && (
+                    <div className="flex items-center gap-2 text-sm text-slate-500">
+                        <Phone className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                        <span>{client.phone}</span>
                     </div>
-                    {client.phone && (
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <Phone className="w-4 h-4" />
-                            <span>{client.phone}</span>
-                        </div>
+                )}
+                <div className="flex items-center gap-2 text-sm text-slate-500">
+                    <Building2 className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                    <span className="truncate">{client.industry}</span>
+                    {client.hasPortalAccess && (
+                        <span className="ml-auto inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-100 text-emerald-700">
+                            <Globe className="w-3 h-3" />
+                            Portal
+                        </span>
                     )}
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Building2 className="w-4 h-4" />
-                        <span className="truncate">{client.industry} • {client.companySize}</span>
-                        {client.hasPortalAccess && (
-                            <span className="ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
-                                <Globe className="w-3 h-3" />
-                                Portal
-                            </span>
-                        )}
-                    </div>
                 </div>
             </div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-3 border-t border-border divide-x divide-border bg-muted/50">
+            <div className="grid grid-cols-3 border-t border-slate-100 divide-x divide-slate-100 bg-slate-50/50">
                 <div className="p-3 text-center">
-                    <div className="text-lg font-semibold text-foreground leading-none mb-1">
+                    <div className="text-lg font-bold text-slate-900 leading-none mb-1">
                         {client.projectsCount}
                     </div>
-                    <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Projects</div>
+                    <div className="text-[10px] uppercase tracking-wider text-slate-400 font-medium">Projects</div>
                 </div>
                 <div className="p-3 text-center">
-                    <div className="text-lg font-semibold text-foreground leading-none mb-1">
+                    <div className="text-lg font-bold text-slate-900 leading-none mb-1">
                         {client.reportsCount}
                     </div>
-                    <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Reports</div>
+                    <div className="text-[10px] uppercase tracking-wider text-slate-400 font-medium">Reports</div>
                 </div>
                 <div className="p-3 text-center">
-                    <div className="flex items-center justify-center gap-1 mb-1">
-                        <span className="text-lg font-semibold text-foreground leading-none">
+                    <div className="flex items-center justify-center gap-1.5 mb-1">
+                        <span className="text-lg font-bold text-slate-900 leading-none">
                             {client.totalFindings}
                         </span>
                         {client.findingsBySeverity.critical > 0 && (
-                            <span className="flex h-2 w-2 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]" title={`${client.findingsBySeverity.critical} Critical`} />
+                            <span className="flex h-2 w-2 rounded-full bg-red-500 animate-pulse" title={`${client.findingsBySeverity.critical} Critical`} />
                         )}
                     </div>
-                    <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Findings</div>
+                    <div className="text-[10px] uppercase tracking-wider text-slate-400 font-medium">Findings</div>
                 </div>
             </div>
 
             {/* Footer */}
-            <div className="px-4 py-3 border-t border-border flex items-center justify-between text-xs text-muted-foreground bg-muted/50">
+            <div className="px-4 py-2.5 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 bg-slate-50/50">
                 <div className="flex items-center gap-1.5">
-                    <Clock className="w-3.5 h-3.5" />
-                    <span>Active: {client.lastActivity}</span>
+                    <Clock className="w-3.5 h-3.5 text-slate-400" />
+                    <span>{client.lastActivity}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                     <span className={cn("w-2 h-2 rounded-full", getStatusColor(client.status))} />
-                    <span className="font-medium">{client.status}</span>
+                    <span className="font-medium text-slate-600">{client.status}</span>
                 </div>
             </div>
         </div>

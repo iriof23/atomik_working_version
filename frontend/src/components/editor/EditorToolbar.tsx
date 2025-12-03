@@ -133,8 +133,8 @@ export const EditorToolbar = ({ editor }: EditorToolbarProps) => {
             onMouseDown={(e) => e.preventDefault()}
             disabled={disabled}
             className={cn(
-                'p-2 rounded-md transition-colors hover:bg-zinc-800',
-                isActive ? 'bg-zinc-800 text-white' : 'text-zinc-400',
+                'p-1.5 rounded-md transition-colors hover:bg-slate-100',
+                isActive ? 'bg-slate-100 text-slate-900' : 'text-slate-500',
                 disabled && 'opacity-50 cursor-not-allowed',
                 className
             )}
@@ -145,7 +145,7 @@ export const EditorToolbar = ({ editor }: EditorToolbarProps) => {
     );
 
     return (
-        <div className="flex items-center gap-1 p-2 border-b border-zinc-800/50 bg-transparent sticky top-0 z-20 backdrop-blur-sm">
+        <div className="flex items-center gap-0.5 p-2 border-b border-slate-100 bg-slate-50/50 sticky top-0 z-20 rounded-t-lg">
             {/* Formatting */}
             <ToolbarButton
                 onClick={() => editor.chain().focus().toggleBold().run()}
@@ -170,7 +170,7 @@ export const EditorToolbar = ({ editor }: EditorToolbarProps) => {
             </ToolbarButton>
 
             {/* Divider */}
-            <div className="w-px h-6 bg-zinc-800 mx-1" />
+            <div className="w-px h-4 bg-slate-200 mx-1" />
 
             {/* Structure */}
             <ToolbarButton
@@ -203,7 +203,7 @@ export const EditorToolbar = ({ editor }: EditorToolbarProps) => {
             </ToolbarButton>
 
             {/* Divider */}
-            <div className="w-px h-6 bg-zinc-800 mx-1" />
+            <div className="w-px h-4 bg-slate-200 mx-1" />
 
             {/* Premium Blocks */}
             <ToolbarButton
@@ -222,14 +222,14 @@ export const EditorToolbar = ({ editor }: EditorToolbarProps) => {
             </ToolbarButton>
 
             {/* Divider */}
-            <div className="w-px h-6 bg-zinc-800 mx-1" />
+            <div className="w-px h-4 bg-slate-200 mx-1" />
 
             {/* AI Generate Button */}
             <ToolbarButton
                 onClick={handleAiGenerate}
                 disabled={isGenerating}
                 title="Improve with AI (1 credit)"
-                className="text-purple-400 hover:text-purple-300"
+                className="text-violet-500 hover:text-violet-600 hover:bg-violet-50"
             >
                 {isGenerating ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -239,7 +239,7 @@ export const EditorToolbar = ({ editor }: EditorToolbarProps) => {
             </ToolbarButton>
 
             {/* Divider */}
-            <div className="w-px h-6 bg-zinc-800 mx-1" />
+            <div className="w-px h-4 bg-slate-200 mx-1" />
 
             {/* Clear Formatting */}
             <ToolbarButton

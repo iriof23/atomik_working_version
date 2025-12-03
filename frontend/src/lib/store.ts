@@ -71,7 +71,7 @@ interface ThemeState {
 export const useThemeStore = create<ThemeState>()(
     persist(
         (set, get) => ({
-            theme: 'system',
+            theme: 'light',  // Default to light mode for Apple/Linear aesthetic
 
             setTheme: (theme: Theme) => {
                 set({ theme })
@@ -84,7 +84,7 @@ export const useThemeStore = create<ThemeState>()(
             },
         }),
         {
-            name: 'theme-storage',
+            name: 'atomik-theme-v2',  // New key to reset all users to light mode
         }
     )
 )

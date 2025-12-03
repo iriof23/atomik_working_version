@@ -19,6 +19,7 @@ import {
     AlertTriangle,
     Clock,
     TrendingUp,
+    TrendingDown,
     CheckCircle2,
     Plus,
     Search,
@@ -30,7 +31,17 @@ import {
     Activity,
     Shield,
     Loader2,
-    ScrollText
+    ScrollText,
+    FolderKanban,
+    Flag,
+    ChevronRight,
+    Sparkles,
+    BarChart3,
+    MessageSquare,
+    GitCommit,
+    ExternalLink,
+    Eye,
+    Pencil
 } from 'lucide-react'
 
 // --- Helper Functions ---
@@ -50,6 +61,11 @@ function formatRelativeTime(date: Date): string {
     if (diffDays < 7) return `${diffDays}d ago`
     
     return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+}
+
+function formatDate(dateString: string): string {
+    const date = new Date(dateString)
+    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: '2-digit' })
 }
 
 // --- Types ---
@@ -101,6 +117,7 @@ const useDashboardStore = (getToken: () => Promise<string | null>) => {
         },
         recentActivity: []
     })
+    const [allProjects, setAllProjects] = useState<Project[]>([])
     const [isLoading, setIsLoading] = useState(true)
 
     useEffect(() => {
@@ -171,65 +188,65 @@ const useDashboardStore = (getToken: () => Promise<string | null>) => {
             }
 
             // Calculate Stats from localStorage findings (for each project)
-        let totalFindings = 0
-        let criticalFindings = 0
+            let totalFindings = 0
+            let criticalFindings = 0
 
-        projects.forEach((p: any) => {
-            const findingsKey = `findings_${p.id}`
-            const storedFindings = localStorage.getItem(findingsKey)
-            if (storedFindings) {
-                try {
-                    const findings = JSON.parse(storedFindings)
-                    totalFindings += findings.length
-                    findings.forEach((f: any) => {
-                        if (f.severity === 'Critical') criticalFindings++
-                    })
-                } catch (e) { }
-            }
-        })
+            projects.forEach((p: any) => {
+                const findingsKey = `findings_${p.id}`
+                const storedFindings = localStorage.getItem(findingsKey)
+                if (storedFindings) {
+                    try {
+                        const findings = JSON.parse(storedFindings)
+                        totalFindings += findings.length
+                        findings.forEach((f: any) => {
+                            if (f.severity === 'Critical') criticalFindings++
+                        })
+                    } catch (e) { }
+                }
+            })
 
-        // Active Project (Most recently updated 'In Progress' project)
+            // Active Project (Most recently updated 'In Progress' project)
             const activeProjects = projects.filter(p => 
                 p.status === 'In Progress' || p.status === 'IN_PROGRESS' || p.status === 'In Review'
             )
-        const sortedActive = [...activeProjects].sort((a, b) =>
-            new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-        )
-        const activeProject = sortedActive.length > 0 ? sortedActive[0] : (projects[0] || null)
+            const sortedActive = [...activeProjects].sort((a, b) =>
+                new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+            )
+            const activeProject = sortedActive.length > 0 ? sortedActive[0] : (projects[0] || null)
 
             // Upcoming Deadlines - Projects with future end dates, not completed
-        const upcoming = [...projects]
+            const upcoming = [...projects]
                 .filter(p => p.status !== 'Completed' && p.status !== 'COMPLETED' && new Date(p.endDate) > new Date())
-            .sort((a, b) => new Date(a.endDate).getTime() - new Date(b.endDate).getTime())
-            .slice(0, 3)
+                .sort((a, b) => new Date(a.endDate).getTime() - new Date(b.endDate).getTime())
+                .slice(0, 3)
 
-        // Recent Activity - Build comprehensive activity feed
-        const activityList: Array<any> = []
-        
-        // Add project activities
-        projects.forEach(p => {
-            activityList.push({
-                id: `proj-${p.id}`,
-                type: 'project' as const,
+            // Recent Activity - Build comprehensive activity feed
+            const activityList: Array<any> = []
+            
+            // Add project activities
+            projects.forEach(p => {
+                activityList.push({
+                    id: `proj-${p.id}`,
+                    type: 'project' as const,
                     title: p.status === 'Completed' || p.status === 'COMPLETED' ? 'Project Completed' : 
                            p.status === 'In Progress' || p.status === 'IN_PROGRESS' ? 'Project In Progress' :
                            'Project Created',
-                description: `${p.name} • ${p.clientName}`,
-                timestamp: new Date(p.updatedAt).toISOString(),
-                timestampText: formatRelativeTime(new Date(p.updatedAt)),
-                icon: <Activity className="w-4 h-4 text-blue-400" />,
-                severity: p.status
+                    description: `${p.name} • ${p.clientName}`,
+                    timestamp: new Date(p.updatedAt).toISOString(),
+                    timestampText: formatRelativeTime(new Date(p.updatedAt)),
+                    icon: <Activity className="w-4 h-4 text-blue-400" />,
+                    severity: p.status
+                })
             })
-        })
-        
+            
             // Add findings from all projects (from localStorage)
-        projects.forEach(p => {
-            const findingsKey = `findings_${p.id}`
-            const storedFindings = localStorage.getItem(findingsKey)
-            if (storedFindings) {
-                try {
-                    const findings = JSON.parse(storedFindings)
-                    findings.forEach((f: any) => {
+            projects.forEach(p => {
+                const findingsKey = `findings_${p.id}`
+                const storedFindings = localStorage.getItem(findingsKey)
+                if (storedFindings) {
+                    try {
+                        const findings = JSON.parse(storedFindings)
+                        findings.forEach((f: any) => {
                             activityList.push({
                                 id: `find-${f.id}`,
                                 type: 'finding' as const,
@@ -244,24 +261,24 @@ const useDashboardStore = (getToken: () => Promise<string | null>) => {
                                       <Shield className="w-4 h-4 text-yellow-400" />,
                                 severity: f.severity
                             })
-                    })
-                } catch (e) { }
-            }
-        })
-        
-        // Add client activities
-        clients.forEach((c: any) => {
-            activityList.push({
-                id: `client-${c.id}`,
-                type: 'client' as const,
+                        })
+                    } catch (e) { }
+                }
+            })
+            
+            // Add client activities
+            clients.forEach((c: any) => {
+                activityList.push({
+                    id: `client-${c.id}`,
+                    type: 'client' as const,
                     title: 'Client Added',
-                description: `${c.name} added to portfolio`,
+                    description: `${c.name} added to portfolio`,
                     timestamp: c.created_at || c.createdAt || new Date().toISOString(),
                     timestampText: formatRelativeTime(new Date(c.created_at || c.createdAt || new Date())),
-                icon: <Users className="w-4 h-4 text-emerald-400" />,
-                severity: c.status
+                    icon: <Users className="w-4 h-4 text-emerald-400" />,
+                    severity: c.status
+                })
             })
-        })
             
             // Add report activities
             reports.forEach((r: any) => {
@@ -276,19 +293,20 @@ const useDashboardStore = (getToken: () => Promise<string | null>) => {
                     severity: r.status
                 })
             })
-        
-        // Sort by most recent and take top 5
-        const activity = activityList
-            .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-            .slice(0, 5)
+            
+            // Sort by most recent and take top 5
+            const activity = activityList
+                .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+                .slice(0, 5)
 
-        setData({
-            activeProject,
-            upcomingProjects: upcoming,
-            stats: {
-                totalFindings,
-                criticalFindings,
-                activeClients: clients.length,
+            setAllProjects(projects)
+            setData({
+                activeProject,
+                upcomingProjects: upcoming,
+                stats: {
+                    totalFindings,
+                    criticalFindings,
+                    activeClients: clients.length,
                     completedProjects: projects.filter(p => p.status === 'Completed' || p.status === 'COMPLETED').length
                 },
                 recentActivity: activity
@@ -300,433 +318,357 @@ const useDashboardStore = (getToken: () => Promise<string | null>) => {
         fetchDashboardData()
     }, [getToken])
 
-    return { data, isLoading }
+    return { data, allProjects, isLoading }
 }
 
-// --- Components ---
+// --- NEW COMPONENTS (Apple/Linear Style) ---
 
-const HeroCard = ({ 
-    project, 
-    criticalCount,
-    onStartProject,
-    onResumeReport,
-    onViewDetails
-}: { 
-    project: Project | null
-    criticalCount: number
-    onStartProject: () => void
-    onResumeReport?: (project: Project) => void
-    onViewDetails?: (project: Project) => void
-}) => {
-    const { user: storeUser } = useAuthStore()
-    const { user: clerkUser } = useUser()
-    const displayName = clerkUser?.firstName || storeUser?.name || 'Commander'
+// Stat Widget Card (like screenshot's "Task Status" and "Comments")
+interface StatWidgetProps {
+    title: string
+    icon: React.ReactNode
+    children: React.ReactNode
+    actions?: React.ReactNode
+}
 
-    // Calculate days until due
-    const getDaysUntilDue = (endDate: string) => {
-        const end = new Date(endDate)
-        const now = new Date()
-        const diffTime = end.getTime() - now.getTime()
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-        return diffDays
-    }
-
-    // Get critical findings count for this project from localStorage
-    const getProjectCriticalCount = (projectId: string) => {
-        const findingsKey = `findings_${projectId}`
-        const stored = localStorage.getItem(findingsKey)
-        if (stored) {
-            try {
-                const findings = JSON.parse(stored)
-                return findings.filter((f: any) => f.severity === 'Critical').length
-            } catch (e) { }
-        }
-        return 0
-    }
-
-    if (!project) return (
-        <Card className="col-span-1 lg:col-span-2 relative overflow-hidden bg-gradient-to-br from-primary/5 via-card to-card border-primary/20">
-            <CardContent className="p-8 flex flex-col justify-center h-full min-h-[300px]">
-                <h2 className="text-3xl font-bold tracking-tight mb-2">Welcome back, {displayName}</h2>
-                <p className="text-muted-foreground mb-6">Ready to start your next mission?</p>
-                <Button size="lg" className="w-fit gap-2" onClick={onStartProject}>
-                    <Plus className="w-5 h-5" /> Start New Project
-                </Button>
-            </CardContent>
-        </Card>
-    )
-
-    const projectCriticalCount = getProjectCriticalCount(project.id)
-    const daysUntilDue = getDaysUntilDue(project.endDate)
-
-    return (
-        <Card className="col-span-1 lg:col-span-2 relative overflow-hidden bg-gradient-to-br from-primary/10 via-card to-card border-primary/20 shadow-lg group">
-            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                <Zap className="w-32 h-32 text-primary" />
+const StatWidget = ({ title, icon, children, actions }: StatWidgetProps) => (
+    <Card className="hover:shadow-card-hover transition-shadow">
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <div className="flex items-center gap-2 text-slate-600">
+                {icon}
+                <span className="text-sm font-medium">{title}</span>
             </div>
+            {actions && <div className="flex items-center gap-1">{actions}</div>}
+        </CardHeader>
+        <CardContent>{children}</CardContent>
+    </Card>
+)
 
-            <CardContent className="p-8 flex flex-col justify-between h-full relative z-10">
-                <div>
-                    <div className="flex items-center gap-2 text-primary mb-2">
-                        <Activity className="w-4 h-4 animate-pulse" />
-                        <span className="text-sm font-medium uppercase tracking-wider">Current Mission</span>
+// Mini Sparkline Bar Chart
+const SparklineBar = ({ values, color = 'bg-violet-400' }: { values: number[], color?: string }) => {
+    const max = Math.max(...values, 1)
+    return (
+        <div className="flex items-end gap-0.5 h-8">
+            {values.map((v, i) => (
+                <div
+                    key={i}
+                    className={cn("w-1.5 rounded-t transition-all", color)}
+                    style={{ height: `${(v / max) * 100}%`, opacity: 0.4 + (i / values.length) * 0.6 }}
+                />
+            ))}
+        </div>
+    )
+}
+
+// Project Status Overview Card
+const ProjectStatusCard = ({ projects }: { projects: Project[] }) => {
+    const planning = projects.filter(p => p.status === 'Planning').length
+    const inProgress = projects.filter(p => p.status === 'In Progress' || p.status === 'IN_PROGRESS').length
+    const inReview = projects.filter(p => p.status === 'In Review' || p.status === 'REVIEW').length
+    const completed = projects.filter(p => p.status === 'Completed' || p.status === 'COMPLETED').length
+    const total = projects.length
+
+    // Generate fake sparkline data based on actual counts
+    const sparklineData = [planning * 2, inProgress * 3, inReview * 2, completed, planning, inProgress * 2, completed * 2]
+
+    return (
+        <StatWidget 
+            title="Project Status" 
+            icon={<FolderKanban className="w-4 h-4" />}
+            actions={
+                <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-slate-400 hover:text-slate-600">
+                    <MoreHorizontal className="w-4 h-4" />
+                </Button>
+            }
+        >
+            <div className="space-y-4">
+                {/* Stats Row */}
+                <div className="flex items-baseline gap-6">
+                    <div>
+                        <span className="text-3xl font-bold text-slate-900">{planning}</span>
+                        <span className="text-sm text-slate-500 ml-2">Planning <FolderKanban className="w-3 h-3 inline text-slate-400" /></span>
                     </div>
-                    <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground mb-1">
-                        {project.name}
-                    </h2>
-                    <p className="text-muted-foreground text-lg flex items-center gap-2">
-                        {project.clientName}
-                    </p>
+                    <div>
+                        <span className="text-3xl font-bold text-slate-900">{inProgress}</span>
+                        <span className="text-sm text-slate-500 ml-2">In Progress <Zap className="w-3 h-3 inline text-violet-500" /></span>
+                    </div>
+                    <div>
+                        <span className="text-3xl font-bold text-slate-900">{inReview}</span>
+                        <span className="text-sm text-slate-500 ml-2">Review <Sparkles className="w-3 h-3 inline text-amber-500" /></span>
+                    </div>
                 </div>
 
-                <div className="mt-8 space-y-6">
-                    <div className="flex flex-wrap gap-3">
-                        {projectCriticalCount > 0 && (
-                        <Badge variant="destructive" className="px-3 py-1 text-sm gap-1.5">
-                            <AlertTriangle className="w-3.5 h-3.5" />
-                                {projectCriticalCount} Critical Issue{projectCriticalCount !== 1 ? 's' : ''}
-                        </Badge>
-                        )}
-                        {daysUntilDue <= 7 && daysUntilDue > 0 && (
-                        <Badge variant="secondary" className="px-3 py-1 text-sm gap-1.5 bg-orange-500/10 text-orange-500 hover:bg-orange-500/20 border-orange-500/20">
-                            <Clock className="w-3.5 h-3.5" />
-                                Due in {daysUntilDue} Day{daysUntilDue !== 1 ? 's' : ''}
-                        </Badge>
-                        )}
-                        {daysUntilDue <= 0 && (
-                            <Badge variant="destructive" className="px-3 py-1 text-sm gap-1.5">
-                                <Clock className="w-3.5 h-3.5" />
-                                Overdue
-                            </Badge>
-                        )}
-                        {projectCriticalCount === 0 && daysUntilDue > 7 && (
-                            <Badge variant="secondary" className="px-3 py-1 text-sm gap-1.5 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 border-emerald-500/20">
-                                <CheckCircle2 className="w-3.5 h-3.5" />
-                                On Track
-                            </Badge>
-                        )}
-                    </div>
-
-                    <div className="space-y-2">
-                        <div className="flex justify-between text-sm font-medium">
-                            <span>Mission Progress</span>
-                            <span>{project.progress}%</span>
-                        </div>
-                        <div className="h-3 w-full bg-secondary/50 rounded-full overflow-hidden backdrop-blur-sm">
-                            <div
-                                className="h-full bg-gradient-to-r from-primary to-purple-500 transition-all duration-1000 ease-out"
-                                style={{ width: `${project.progress}%` }}
+                {/* Progress Bar */}
+                <div className="space-y-2">
+                    <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden flex">
+                        {planning > 0 && (
+                            <div 
+                                className="h-full bg-slate-400 transition-all" 
+                                style={{ width: `${(planning / Math.max(total, 1)) * 100}%` }} 
                             />
-                        </div>
+                        )}
+                        {inProgress > 0 && (
+                            <div 
+                                className="h-full bg-gradient-to-r from-violet-500 to-purple-500 transition-all" 
+                                style={{ width: `${(inProgress / Math.max(total, 1)) * 100}%` }} 
+                            />
+                        )}
+                        {inReview > 0 && (
+                            <div 
+                                className="h-full bg-amber-400 transition-all" 
+                                style={{ width: `${(inReview / Math.max(total, 1)) * 100}%` }} 
+                            />
+                        )}
+                        {completed > 0 && (
+                            <div 
+                                className="h-full bg-emerald-500 transition-all" 
+                                style={{ width: `${(completed / Math.max(total, 1)) * 100}%` }} 
+                            />
+                        )}
                     </div>
-
-                    <div className="flex gap-4 pt-2">
-                        <Button 
-                            size="lg" 
-                            className="gap-2 text-base px-8 shadow-primary/25 shadow-lg hover:shadow-primary/40 transition-all"
-                            onClick={() => onResumeReport?.(project)}
-                        >
-                            <Play className="w-5 h-5 fill-current" />
-                            Resume Report
-                        </Button>
-                        <Button 
-                            size="lg" 
-                            variant="outline" 
-                            className="gap-2"
-                            onClick={() => onViewDetails?.(project)}
-                        >
-                            View Details <ArrowRight className="w-4 h-4" />
-                        </Button>
+                    <div className="flex justify-between text-xs text-slate-400">
+                        <span>1d</span>
+                        <span>7d</span>
                     </div>
                 </div>
-            </CardContent>
-        </Card>
+            </div>
+        </StatWidget>
     )
 }
 
-const DeadlineList = ({ projects }: { projects: Project[] }) => {
+// Findings Overview Widget
+const FindingsWidget = ({ stats }: { stats: DashboardData['stats'] }) => {
+    const change = stats.criticalFindings > 0 ? -10.2 : 0
+    
     return (
-        <Card className="col-span-1 h-full flex flex-col bg-card/50 backdrop-blur-sm">
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                    <Calendar className="w-5 h-5 text-primary" />
-                    Upcoming Deadlines
-                </CardTitle>
-            </CardHeader>
-            <CardContent className="flex-1">
-                <div className="space-y-6 relative">
-                    {/* Vertical connector line */}
-                    <div className="absolute left-[7px] top-2 bottom-2 w-[2px] bg-border/50" />
+        <StatWidget 
+            title="Findings" 
+            icon={<Shield className="w-4 h-4" />}
+            actions={
+                <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-slate-400 hover:text-slate-600">
+                    <MoreHorizontal className="w-4 h-4" />
+                </Button>
+            }
+        >
+            <div className="flex items-center justify-between">
+                <div>
+                    <div className="text-3xl font-bold text-slate-900">{stats.totalFindings}</div>
+                    <div className={cn(
+                        "text-sm flex items-center gap-1 mt-1",
+                        change < 0 ? "text-red-500" : "text-emerald-500"
+                    )}>
+                        {change < 0 ? <TrendingDown className="w-3 h-3" /> : <TrendingUp className="w-3 h-3" />}
+                        {Math.abs(change)}% (7d)
+                    </div>
+                </div>
+                <SparklineBar values={[3, 5, 2, 8, 4, 6, 5]} color="bg-violet-400" />
+            </div>
+        </StatWidget>
+    )
+}
 
-                    {projects.map((project, i) => (
-                        <div key={project.id} className="relative pl-6 group cursor-pointer">
-                            <div className={cn(
-                                "absolute left-0 top-1.5 w-4 h-4 rounded-full border-2 bg-background transition-colors",
-                                i === 0 ? "border-red-500 group-hover:bg-red-500/20" :
-                                    i === 1 ? "border-orange-500 group-hover:bg-orange-500/20" :
-                                        "border-blue-500 group-hover:bg-blue-500/20"
-                            )} />
-                            <div className="space-y-1">
-                                <h4 className="font-medium leading-none group-hover:text-primary transition-colors">
-                                    {project.name}
-                                </h4>
-                                <div className="flex justify-between items-center text-sm text-muted-foreground">
-                                    <span>{project.clientName}</span>
-                                    <span className={cn(
-                                        "text-xs font-medium px-2 py-0.5 rounded-full",
-                                        i === 0 ? "bg-red-500/10 text-red-500" : "bg-secondary text-secondary-foreground"
-                                    )}>
-                                        {new Date(project.endDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    ))}
-
-                    {projects.length === 0 && (
-                        <div className="text-center text-muted-foreground py-8">
-                            No upcoming deadlines
-                        </div>
+// Critical Issues Widget
+const CriticalWidget = ({ count }: { count: number }) => (
+    <StatWidget 
+        title="Critical Issues" 
+        icon={<AlertTriangle className="w-4 h-4" />}
+        actions={
+            <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-slate-400 hover:text-slate-600">
+                <MoreHorizontal className="w-4 h-4" />
+            </Button>
+        }
+    >
+        <div className="flex items-center justify-between">
+            <div>
+                <div className={cn(
+                    "text-3xl font-bold",
+                    count > 0 ? "text-red-600" : "text-emerald-600"
+                )}>{count}</div>
+                <div className="text-sm text-slate-500 mt-1 flex items-center gap-1">
+                    {count > 0 ? (
+                        <>
+                            <span className="text-red-500">▼</span> 2.9% (7d)
+                        </>
+                    ) : (
+                        <>
+                            <CheckCircle2 className="w-3 h-3 text-emerald-500" /> All clear
+                        </>
                     )}
                 </div>
-            </CardContent>
-        </Card>
-    )
-}
+            </div>
+            <SparklineBar 
+                values={[2, 1, 3, 1, 2, 1, count]} 
+                color={count > 0 ? "bg-red-400" : "bg-emerald-400"} 
+            />
+        </div>
+    </StatWidget>
+)
 
-const QuickStats = ({ stats }: { stats: DashboardData['stats'] }) => {
-    return (
-        <>
-            <Card className="bg-card/50 backdrop-blur-sm hover:bg-card/80 transition-colors cursor-pointer group">
-                <CardContent className="p-6">
-                    <div className="flex justify-between items-start mb-4">
-                        <div className="p-2 bg-primary/10 rounded-lg text-primary group-hover:scale-110 transition-transform">
-                            <AlertTriangle className="w-5 h-5" />
-                        </div>
-                        <span className="text-xs font-medium text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded-full flex items-center gap-1">
-                            <TrendingUp className="w-3 h-3" /> +12%
-                        </span>
-                    </div>
-                    <div className="space-y-1">
-                        <h3 className="text-2xl font-bold tracking-tight">{stats.totalFindings}</h3>
-                        <p className="text-sm text-muted-foreground">Total Findings</p>
-                    </div>
-                </CardContent>
-            </Card>
-
-            <Card className="bg-card/50 backdrop-blur-sm hover:bg-card/80 transition-colors cursor-pointer group border-red-500/20">
-                <CardContent className="p-6">
-                    <div className="flex justify-between items-start mb-4">
-                        <div className="p-2 bg-red-500/10 rounded-lg text-red-500 group-hover:scale-110 transition-transform">
-                            <Zap className="w-5 h-5" />
-                        </div>
-                        <span className="text-xs font-medium text-red-500 bg-red-500/10 px-2 py-1 rounded-full">
-                            Action Required
-                        </span>
-                    </div>
-                    <div className="space-y-1">
-                        <h3 className="text-2xl font-bold tracking-tight text-red-500">{stats.criticalFindings}</h3>
-                        <p className="text-sm text-muted-foreground">Critical Issues</p>
-                    </div>
-                </CardContent>
-            </Card>
-
-            <Card className="bg-card/50 backdrop-blur-sm hover:bg-card/80 transition-colors cursor-pointer group">
-                <CardContent className="p-6">
-                    <div className="flex justify-between items-start mb-4">
-                        <div className="p-2 bg-blue-500/10 rounded-lg text-blue-500 group-hover:scale-110 transition-transform">
-                            <Users className="w-5 h-5" />
-                        </div>
-                    </div>
-                    <div className="space-y-1">
-                        <h3 className="text-2xl font-bold tracking-tight">{stats.activeClients}</h3>
-                        <p className="text-sm text-muted-foreground">Active Clients</p>
-                    </div>
-                </CardContent>
-            </Card>
-        </>
-    )
-}
-
-const QuickActions = ({ onNewFinding, onNewClient, onNewReport, onSearch }: { 
-    onNewFinding: () => void
-    onNewClient: () => void
-    onNewReport: () => void
-    onSearch: () => void
+// Project Kanban Card
+const ProjectCard = ({ 
+    project, 
+    onViewDetails,
+    onResumeReport 
+}: { 
+    project: Project
+    onViewDetails: (p: Project) => void
+    onResumeReport: (p: Project) => void
 }) => {
-    const actions = [
-        { 
-            icon: <Shield className="w-5 h-5" />, 
-            label: 'New Finding', 
-            color: 'text-red-500',
-            onClick: onNewFinding,
-            description: 'Add vulnerability'
-        },
-        { 
-            icon: <Users className="w-5 h-5" />, 
-            label: 'New Client', 
-            color: 'text-blue-500',
-            onClick: onNewClient,
-            description: 'Add organization'
-        },
-        { 
-            icon: <FileText className="w-5 h-5" />, 
-            label: 'New Report', 
-            color: 'text-purple-500',
-            onClick: onNewReport,
-            description: 'Generate document'
-        },
-        { 
-            icon: <Search className="w-5 h-5" />, 
-            label: 'Search', 
-            color: 'text-cyan-500',
-            onClick: onSearch,
-            description: 'Find anything'
-        },
-    ]
+    const getPriorityBadge = (priority: string) => {
+        switch (priority?.toLowerCase()) {
+            case 'high':
+            case 'urgent':
+                return <Badge variant="urgent" className="text-[10px] px-1.5 py-0">Urgent</Badge>
+            case 'low':
+                return <Badge variant="low" className="text-[10px] px-1.5 py-0">Low</Badge>
+            default:
+                return <Badge variant="normal" className="text-[10px] px-1.5 py-0">Normal</Badge>
+        }
+    }
 
     return (
-        <Card className="bg-card/50 backdrop-blur-sm">
-            <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Quick Actions</CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0">
-                <div className="grid grid-cols-2 gap-3">
-                    {actions.map((action, i) => (
-                        <Button
-                            key={i}
-                            variant="outline"
-                            onClick={action.onClick}
-                            className="h-24 flex flex-col gap-2 hover:bg-accent/50 hover:border-primary/50 transition-all group"
+        <Card className="group hover:shadow-card-hover hover:border-slate-300 transition-all cursor-pointer">
+            <CardContent className="p-4">
+                {/* Header */}
+                <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-2 text-xs text-slate-500">
+                        <span className="font-mono">PRJ-{project.id.slice(0, 4).toUpperCase()}</span>
+                        {getPriorityBadge(project.priority)}
+                    </div>
+                </div>
+
+                {/* Title */}
+                <h4 className="font-semibold text-slate-900 mb-1 group-hover:text-violet-700 transition-colors">
+                    {project.name}
+                </h4>
+                <p className="text-sm text-slate-500 flex items-center gap-1 mb-3">
+                    <Users className="w-3 h-3" />
+                    {project.clientName}
+                </p>
+
+                {/* Due Date */}
+                <div className="flex items-center gap-1 text-xs text-slate-500 mb-4">
+                    <Calendar className="w-3 h-3" />
+                    Due: {formatDate(project.endDate)}
+                </div>
+
+                {/* Progress */}
+                <div className="space-y-1.5 mb-4">
+                    <div className="flex justify-between text-xs">
+                        <span className="text-slate-500">Progress</span>
+                        <span className="font-medium text-slate-700">{project.progress}%</span>
+                    </div>
+                    <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                        <div
+                            className="h-full bg-gradient-to-r from-violet-500 to-purple-500 rounded-full transition-all"
+                            style={{ width: `${project.progress}%` }}
+                        />
+                    </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+                    <div className="flex items-center gap-1 text-xs text-slate-400">
+                        <Clock className="w-3 h-3" />
+                        {formatRelativeTime(new Date(project.updatedAt))}
+                    </div>
+                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-7 px-2 text-xs"
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                onViewDetails(project)
+                            }}
                         >
-                            <div className={cn(action.color, "group-hover:scale-110 transition-transform")}>
-                                {action.icon}
-                            </div>
-                            <div className="text-center">
-                                <div className="text-xs font-medium">{action.label}</div>
-                                <div className="text-[10px] text-muted-foreground mt-0.5">{action.description}</div>
-                            </div>
+                            <Eye className="w-3 h-3 mr-1" />
+                            View
                         </Button>
-                    ))}
+                        <Button 
+                            variant="default" 
+                            size="sm" 
+                            className="h-7 px-2 text-xs"
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                onResumeReport(project)
+                            }}
+                        >
+                            <Play className="w-3 h-3 mr-1" />
+                            Report
+                        </Button>
+                    </div>
                 </div>
             </CardContent>
         </Card>
     )
 }
 
-// Activity Log Feed Component (View-only log of all actions)
-const PulseFeed = () => {
-    const [activityLog, setActivityLog] = useState<ActivityEvent[]>([])
-    
-    // Load activity log on mount and refresh periodically
-    useEffect(() => {
-        const loadLog = () => {
-            setActivityLog(getActivityLog())
-        }
-        
-        loadLog()
-        
-        // Refresh every 2 seconds to show new entries
-        const interval = setInterval(loadLog, 2000)
-        return () => clearInterval(interval)
-    }, [])
-    
-    // Get icon based on event type and action
-    const getEventIcon = (event: ActivityEvent) => {
-        switch (event.type) {
-            case 'client':
-                return <Users className="w-4 h-4 text-emerald-400" />
-            case 'project':
-                if (event.action === 'completed') return <CheckCircle2 className="w-4 h-4 text-green-400" />
-                if (event.action === 'deleted') return <AlertTriangle className="w-4 h-4 text-red-400" />
-                return <Activity className="w-4 h-4 text-blue-400" />
-            case 'finding':
-                const severity = event.metadata?.severity
-                if (severity === 'Critical') return <AlertTriangle className="w-4 h-4 text-red-400" />
-                if (severity === 'High') return <AlertTriangle className="w-4 h-4 text-orange-400" />
-                return <Shield className="w-4 h-4 text-yellow-400" />
-            case 'report':
-                if (event.action === 'generated') return <FileText className="w-4 h-4 text-green-400" />
-                return <FileText className="w-4 h-4 text-purple-400" />
-            default:
-                return <Activity className="w-4 h-4 text-gray-400" />
-        }
-    }
-    
-    // Get type badge color
-    const getTypeBadgeClass = (type: string) => {
-        switch (type) {
-            case 'client': return "border-emerald-500/50 text-emerald-500 bg-emerald-500/5"
-            case 'project': return "border-blue-500/50 text-blue-500 bg-blue-500/5"
-            case 'finding': return "border-orange-500/50 text-orange-500 bg-orange-500/5"
-            case 'report': return "border-purple-500/50 text-purple-500 bg-purple-500/5"
-            default: return "border-gray-500/50 text-gray-500 bg-gray-500/5"
-        }
-    }
-    
-    return (
-        <Card className="col-span-1 lg:col-span-3 bg-card/50 backdrop-blur-sm">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="flex items-center gap-2">
-                    <ScrollText className="w-5 h-5 text-primary" />
-                    Mission Pulse
-                </CardTitle>
-                <Badge variant="outline" className="text-xs text-muted-foreground">
-                    Activity Log
-                </Badge>
-            </CardHeader>
-            <CardContent>
-                <div className="space-y-0.5 max-h-[320px] overflow-y-auto pr-2 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-zinc-700 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent hover:[&::-webkit-scrollbar-thumb]:bg-zinc-600">
-                    {activityLog.slice(0, 10).map((event) => (
-                        <div
-                            key={event.id}
-                            className="flex items-center gap-3 p-2.5 rounded-md hover:bg-accent/30 transition-colors border-l-2 border-transparent hover:border-primary/30"
-                        >
-                            {/* Icon */}
-                            <div className="p-1.5 rounded-full bg-background/80 border border-border/50 flex-shrink-0">
-                                {getEventIcon(event)}
-                            </div>
-                            
-                            {/* Content */}
-                            <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                                    <h4 className="font-medium text-sm truncate">
-                                        {event.title}
-                                    </h4>
-                                <Badge 
-                                    variant="outline" 
-                                    className={cn(
-                                            "text-[9px] px-1.5 py-0 capitalize flex-shrink-0",
-                                            getTypeBadgeClass(event.type)
-                                    )}
-                                >
-                                        {event.type}
-                                </Badge>
-                            </div>
-                                <p className="text-muted-foreground text-xs truncate mt-0.5">
-                                    {event.description}
-                                </p>
-                            </div>
-                            
-                            {/* Timestamp */}
-                            <div className="text-right flex-shrink-0">
-                                <span className="text-[10px] text-muted-foreground whitespace-nowrap font-mono">
-                                    {formatRelativeTime(new Date(event.timestamp))}
-                                </span>
-                            </div>
-                        </div>
-                    ))}
-                    
-                    {activityLog.length === 0 && (
-                        <div className="text-center py-10 text-muted-foreground">
-                            <ScrollText className="w-10 h-10 mx-auto mb-3 opacity-30" />
-                            <p className="text-sm font-medium">No activity yet</p>
-                            <p className="text-xs mt-1">Actions will appear here as you work</p>
-                        </div>
-                    )}
+// Kanban Column
+const KanbanColumn = ({ 
+    title, 
+    count, 
+    icon,
+    projects,
+    onViewDetails,
+    onResumeReport
+}: { 
+    title: string
+    count: number
+    icon: React.ReactNode
+    projects: Project[]
+    onViewDetails: (p: Project) => void
+    onResumeReport: (p: Project) => void
+}) => (
+    <div className="flex-1 min-w-[280px]">
+        <div className="flex items-center gap-2 mb-4 px-1">
+            {icon}
+            <span className="font-medium text-slate-700">{title}</span>
+            <span className="text-sm text-slate-400 ml-1">{count}</span>
+        </div>
+        <div className="space-y-3">
+            {projects.map(project => (
+                <ProjectCard 
+                    key={project.id} 
+                    project={project} 
+                    onViewDetails={onViewDetails}
+                    onResumeReport={onResumeReport}
+                />
+            ))}
+            {projects.length === 0 && (
+                <div className="text-center py-8 text-slate-400 text-sm border-2 border-dashed border-slate-200 rounded-xl">
+                    No projects
                 </div>
-            </CardContent>
-        </Card>
+            )}
+        </div>
+    </div>
+)
+
+// Activity Item
+const ActivityItem = ({ event }: { event: any }) => {
+    const getTypeColor = (type: string) => {
+        switch (type) {
+            case 'client': return 'bg-emerald-100 text-emerald-700'
+            case 'project': return 'bg-blue-100 text-blue-700'
+            case 'finding': return 'bg-orange-100 text-orange-700'
+            case 'report': return 'bg-purple-100 text-purple-700'
+            default: return 'bg-slate-100 text-slate-700'
+        }
+    }
+
+    return (
+        <div className="flex items-center gap-3 py-3 border-b border-slate-100 last:border-0">
+            <div className={cn("p-2 rounded-lg", getTypeColor(event.type))}>
+                {event.icon}
+            </div>
+            <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-slate-900 truncate">{event.title}</p>
+                <p className="text-xs text-slate-500 truncate">{event.description}</p>
+            </div>
+            <span className="text-xs text-slate-400 whitespace-nowrap">
+                {event.timestampText}
+            </span>
+        </div>
     )
 }
 
@@ -736,7 +678,7 @@ export default function Dashboard() {
     const navigate = useNavigate()
     const { toast } = useToast()
     const { getToken } = useAuth()
-    const { data, isLoading } = useDashboardStore(getToken)
+    const { data, allProjects, isLoading } = useDashboardStore(getToken)
     
     // Dialog states
     const [showClientDialog, setShowClientDialog] = useState(false)
@@ -762,8 +704,8 @@ export default function Dashboard() {
             } catch (e) {
                 console.error('Failed to fetch clients:', e)
                 // Fallback to localStorage
-        const storedClients = JSON.parse(localStorage.getItem('clients') || '[]')
-        setClients(storedClients)
+                const storedClients = JSON.parse(localStorage.getItem('clients') || '[]')
+                setClients(storedClients)
             }
         }
         
@@ -772,36 +714,22 @@ export default function Dashboard() {
         }
     }, [showProjectDialog, getToken])
     
-    // Handlers
-    const handleNewClient = () => {
-        setShowClientDialog(true)
-    }
-    
-    const handleNewFinding = () => {
-        setShowFindingDialog(true)
-    }
-    
-    const handleNewReport = () => {
-        navigate('/report-builder')
-    }
+    // Handlers (PRESERVED - no changes)
+    const handleNewClient = () => setShowClientDialog(true)
+    const handleNewFinding = () => setShowFindingDialog(true)
+    const handleNewReport = () => navigate('/report-builder')
     
     const handleSearch = () => {
-        // Navigate to a global search page or show search command palette
         toast({
             title: "Global Search",
             description: "Search across reports, clients, and projects (coming soon)",
         })
-        // TODO: Implement global search modal or navigate to search page
-        // For now, navigate to projects page which has search functionality
         navigate('/projects')
     }
     
-    const handleStartProject = () => {
-        setShowProjectDialog(true)
-    }
+    const handleStartProject = () => setShowProjectDialog(true)
     
     const handleResumeReport = async (project: Project) => {
-        
         try {
             const token = await getToken()
             if (!token) {
@@ -813,14 +741,12 @@ export default function Dashboard() {
                 return
             }
             
-            // First, check if a report already exists for this project
             try {
                 const reportsResponse = await api.get(`/v1/reports/?project_id=${project.id}`, {
                     headers: { Authorization: `Bearer ${token}` }
                 })
                 
                 if (reportsResponse.data && reportsResponse.data.length > 0) {
-                    // Report exists - navigate to the most recent one
                     const sortedReports = reportsResponse.data.sort((a: any, b: any) => 
                         new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
                     )
@@ -829,9 +755,8 @@ export default function Dashboard() {
                 }
             } catch (e) {
                 console.log('No existing reports found, will create new one')
-        }
+            }
             
-            // No report exists - create one
             const response = await api.post('/v1/reports/', {
                 project_id: project.id,
                 title: `${project.name} Report`,
@@ -840,25 +765,22 @@ export default function Dashboard() {
                 headers: { Authorization: `Bearer ${token}` }
             })
             
-            // Navigate to the new report
             navigate(`/reports/${response.data.id}`)
         } catch (error: any) {
             console.error('Failed to open/create report:', error)
-        toast({
+            toast({
                 title: 'Error',
                 description: error.response?.data?.detail || 'Failed to open report',
                 variant: 'destructive',
-        })
+            })
         }
     }
     
     const handleViewDetails = (project: Project) => {
-        // Load full project data from localStorage
         const storedProjects = JSON.parse(localStorage.getItem('projects') || '[]')
         const fullProject = storedProjects.find((p: any) => p.id === project.id)
         
         if (fullProject) {
-            // Convert date strings back to Date objects
             setViewingProject({
                 ...fullProject,
                 startDate: new Date(fullProject.startDate),
@@ -866,15 +788,12 @@ export default function Dashboard() {
                 lastActivityDate: fullProject.lastActivityDate ? new Date(fullProject.lastActivityDate) : new Date(),
                 createdAt: fullProject.createdAt ? new Date(fullProject.createdAt) : new Date(),
                 updatedAt: fullProject.updatedAt ? new Date(fullProject.updatedAt) : new Date(),
-                // Ensure arrays exist
                 scope: fullProject.scope || [],
                 teamMembers: fullProject.teamMembers || [],
                 complianceFrameworks: fullProject.complianceFrameworks || [],
-                // Ensure findingsBySeverity exists
                 findingsBySeverity: fullProject.findingsBySeverity || { critical: 0, high: 0, medium: 0, low: 0 }
             })
         } else {
-            // Fallback to basic project data if not found in localStorage
             setViewingProject({
                 ...project,
                 type: 'External',
@@ -899,21 +818,15 @@ export default function Dashboard() {
     }
     
     const handleClientAdded = (client: any) => {
-        // Update clients list in state
         setClients(prev => [...prev, client])
-        
-        // Log activity
         logClientCreated(client.name, client.id)
-        
-        // Show success toast
         toast({
-            title: "✓ Client Created Successfully",
-            description: `${client.name} has been added to your portfolio.`,
+            title: "✓ Client Created",
+            description: `${client.name} has been added.`,
         })
     }
     
     const handleFindingAdded = (finding: any) => {
-        // Save finding to customFindings in localStorage (same key used by Findings.tsx)
         const existingFindings = JSON.parse(localStorage.getItem('customFindings') || '[]')
         const updatedFindings = [{
             ...finding,
@@ -921,81 +834,184 @@ export default function Dashboard() {
             createdAt: new Date().toISOString()
         }, ...existingFindings]
         localStorage.setItem('customFindings', JSON.stringify(updatedFindings))
-        
-        // Dispatch event to notify Findings page
         window.dispatchEvent(new Event('custom-findings-updated'))
-        
-        // Log activity
         logFindingAdded(finding.title, finding.severity || 'Medium', 'Library', finding.id)
-        
-        // Show success toast
         toast({
-            title: "✓ Finding Template Created",
-            description: `${finding.title} has been added to your custom templates in the Findings Database.`,
+            title: "✓ Finding Created",
+            description: `${finding.title} has been added.`,
         })
     }
     
     const handleProjectAdded = (project: any) => {
-        // Log activity
         logProjectCreated(project.name, project.client_name || project.clientName || 'Unknown', project.id)
-        
-        // Show success toast
         toast({
-            title: "✓ Project Created Successfully",
-            description: `${project.name} has been created and is ready for work.`,
+            title: "✓ Project Created",
+            description: `${project.name} is ready.`,
         })
     }
 
-    // Count total projects for the header
-    const activeProjectsCount = data.upcomingProjects.length + (data.activeProject ? 1 : 0)
+    // Group projects by status for Kanban
+    const planningProjects = allProjects.filter(p => p.status === 'Planning')
+    const inProgressProjects = allProjects.filter(p => p.status === 'In Progress' || p.status === 'IN_PROGRESS')
+    const reviewProjects = allProjects.filter(p => p.status === 'In Review' || p.status === 'REVIEW')
+    const completedProjects = allProjects.filter(p => p.status === 'Completed' || p.status === 'COMPLETED')
 
     if (isLoading) {
         return (
             <div className="h-[calc(100vh-100px)] flex items-center justify-center">
                 <div className="text-center">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
-                    <p className="text-muted-foreground mt-2">Loading dashboard...</p>
+                    <Loader2 className="h-8 w-8 animate-spin text-violet-600 mx-auto" />
+                    <p className="text-slate-500 mt-3 text-sm">Loading dashboard...</p>
                 </div>
             </div>
         )
     }
 
     return (
-        <div className="space-y-6 animate-in fade-in duration-500">
-            {/* Header */}
-            <div className="flex justify-between items-end">
+        <div className="space-y-6 animate-in fade-in duration-300">
+            {/* Page Header */}
+            <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-foreground">Mission Control</h1>
-                    <p className="text-muted-foreground mt-1">
-                        {activeProjectsCount} active project{activeProjectsCount !== 1 ? 's' : ''} • {data.stats.criticalFindings > 0 ? `${data.stats.criticalFindings} critical finding${data.stats.criticalFindings !== 1 ? 's' : ''} require attention` : 'All systems nominal'}
+                    <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
+                    <p className="text-slate-500 text-sm mt-0.5">
+                        Overview of your security assessments and projects
                     </p>
                 </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground bg-card/50 px-3 py-1 rounded-full border border-border/50">
-                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                    System Operational
+                <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" onClick={handleNewClient}>
+                        <Users className="w-4 h-4 mr-1.5" />
+                        Add Client
+                    </Button>
+                    <Button size="sm" onClick={handleStartProject}>
+                        <Plus className="w-4 h-4 mr-1.5" />
+                        New Project
+                    </Button>
                 </div>
             </div>
 
-            {/* Bento Grid Layout */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Row 1: Focus Zone + Horizon */}
-                <HeroCard 
-                    project={data.activeProject} 
-                    criticalCount={data.stats.criticalFindings}
-                    onStartProject={handleStartProject}
-                    onResumeReport={handleResumeReport}
-                    onViewDetails={handleViewDetails}
-                />
-                <DeadlineList projects={data.upcomingProjects} />
+            {/* Stats Row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <ProjectStatusCard projects={allProjects} />
+                <FindingsWidget stats={data.stats} />
+                <CriticalWidget count={data.stats.criticalFindings} />
+            </div>
 
-                {/* Row 2: Quick Stats */}
-                <QuickStats stats={data.stats} />
+            {/* Kanban Board */}
+            <div className="pt-4">
+                <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                        <h2 className="text-lg font-semibold text-slate-900">Projects</h2>
+                        <Badge variant="secondary" className="text-xs">
+                            {allProjects.length} total
+                        </Badge>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Button variant="ghost" size="sm" className="text-slate-500">
+                            <BarChart3 className="w-4 h-4 mr-1.5" />
+                            Board
+                        </Button>
+                        <Link to="/projects">
+                            <Button variant="ghost" size="sm" className="text-slate-500">
+                                View all
+                                <ChevronRight className="w-4 h-4 ml-0.5" />
+                            </Button>
+                        </Link>
+                    </div>
+                </div>
 
-                {/* Row 3: Activity Log (Mission Pulse) */}
-                <PulseFeed />
+                <div className="flex gap-4 overflow-x-auto pb-4 -mx-2 px-2">
+                    <KanbanColumn 
+                        title="Planning" 
+                        count={planningProjects.length}
+                        icon={<FolderKanban className="w-4 h-4 text-slate-400" />}
+                        projects={planningProjects}
+                        onViewDetails={handleViewDetails}
+                        onResumeReport={handleResumeReport}
+                    />
+                    <KanbanColumn 
+                        title="In Progress" 
+                        count={inProgressProjects.length}
+                        icon={<Zap className="w-4 h-4 text-violet-500" />}
+                        projects={inProgressProjects}
+                        onViewDetails={handleViewDetails}
+                        onResumeReport={handleResumeReport}
+                    />
+                    <KanbanColumn 
+                        title="Review" 
+                        count={reviewProjects.length}
+                        icon={<Sparkles className="w-4 h-4 text-amber-500" />}
+                        projects={reviewProjects}
+                        onViewDetails={handleViewDetails}
+                        onResumeReport={handleResumeReport}
+                    />
+                    <KanbanColumn 
+                        title="Completed" 
+                        count={completedProjects.length}
+                        icon={<CheckCircle2 className="w-4 h-4 text-emerald-500" />}
+                        projects={completedProjects}
+                        onViewDetails={handleViewDetails}
+                        onResumeReport={handleResumeReport}
+                    />
+                </div>
+            </div>
+
+            {/* Recent Activity */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 pt-2">
+                <Card className="lg:col-span-2">
+                    <CardHeader className="pb-3">
+                        <CardTitle className="text-base font-semibold flex items-center gap-2">
+                            <Activity className="w-4 h-4 text-violet-600" />
+                            Recent Activity
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        {data.recentActivity.length > 0 ? (
+                            <div className="space-y-0">
+                                {data.recentActivity.map((event) => (
+                                    <ActivityItem key={event.id} event={event} />
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="text-center py-8 text-slate-400">
+                                <Activity className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                                <p className="text-sm">No recent activity</p>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+
+                {/* Quick Stats */}
+                <Card>
+                    <CardHeader className="pb-3">
+                        <CardTitle className="text-base font-semibold">Overview</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="flex items-center justify-between py-2 border-b border-slate-100">
+                            <div className="flex items-center gap-2 text-slate-600">
+                                <Users className="w-4 h-4" />
+                                <span className="text-sm">Active Clients</span>
+                            </div>
+                            <span className="text-lg font-semibold text-slate-900">{data.stats.activeClients}</span>
+                        </div>
+                        <div className="flex items-center justify-between py-2 border-b border-slate-100">
+                            <div className="flex items-center gap-2 text-slate-600">
+                                <CheckCircle2 className="w-4 h-4" />
+                                <span className="text-sm">Completed</span>
+                            </div>
+                            <span className="text-lg font-semibold text-slate-900">{data.stats.completedProjects}</span>
+                        </div>
+                        <div className="flex items-center justify-between py-2">
+                            <div className="flex items-center gap-2 text-slate-600">
+                                <Shield className="w-4 h-4" />
+                                <span className="text-sm">Total Findings</span>
+                            </div>
+                            <span className="text-lg font-semibold text-slate-900">{data.stats.totalFindings}</span>
+                        </div>
+                    </CardContent>
+                </Card>
             </div>
             
-            {/* Dialogs */}
+            {/* Dialogs (PRESERVED - no changes) */}
             <AddClientDialog
                 open={showClientDialog}
                 onOpenChange={setShowClientDialog}
@@ -1015,14 +1031,12 @@ export default function Dashboard() {
                 clients={clients}
             />
             
-            {/* Project Detail Modal */}
             <ProjectDetailModal
                 project={viewingProject}
                 open={!!viewingProject}
                 onClose={() => setViewingProject(null)}
                 onEdit={(project) => {
                     setViewingProject(null)
-                    // TODO: Implement edit project
                     toast({
                         title: "Edit Project",
                         description: "Project editing will be available soon.",
@@ -1034,7 +1048,6 @@ export default function Dashboard() {
                 }}
                 onDelete={(project) => {
                     setViewingProject(null)
-                    // TODO: Implement delete project
                     toast({
                         title: "Delete Project",
                         description: "Project deletion will be available soon.",

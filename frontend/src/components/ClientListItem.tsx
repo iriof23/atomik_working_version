@@ -1,12 +1,10 @@
 import {
     MoreVertical,
-    Archive,
     Trash2,
     Pencil,
-    Plus,
-    Mail,
-    StickyNote,
-    ChevronRight
+    ChevronRight,
+    FolderOpen,
+    Shield
 } from 'lucide-react'
 import {
     DropdownMenu,
@@ -18,7 +16,9 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Card, CardContent } from '@/components/ui/card'
 import { Client } from './ClientCard'
+import { cn } from '@/lib/utils'
 
 interface ClientListItemProps {
     client: Client
@@ -36,130 +36,100 @@ export function ClientListItem({
     onDelete
 }: ClientListItemProps) {
 
-    const getStatusColor = (status: string) => {
+    const getStatusBadge = (status: string) => {
         switch (status) {
-            case 'Active': return 'bg-emerald-500'
-            case 'Inactive': return 'bg-yellow-500'
-            case 'Prospect': return 'bg-blue-500'
-            case 'Archived': return 'bg-zinc-500'
-            default: return 'bg-zinc-500'
-        }
-    }
-
-    const getRiskColor = (risk: string) => {
-        switch (risk) {
-            case 'High': return 'border-red-500 text-red-500'
-            case 'Medium': return 'border-orange-500 text-orange-500'
-            case 'Low': return 'border-emerald-500 text-emerald-500'
-            default: return 'border-zinc-500 text-zinc-500'
+            case 'Active': return <Badge variant="success" className="text-[10px]">{status}</Badge>
+            case 'Inactive': return <Badge variant="secondary" className="text-[10px]">{status}</Badge>
+            case 'Prospect': return <Badge variant="info" className="text-[10px]">{status}</Badge>
+            case 'Archived': return <Badge variant="outline" className="text-[10px]">{status}</Badge>
+            default: return <Badge variant="secondary" className="text-[10px]">{status}</Badge>
         }
     }
 
     const hasLogo = typeof client.logoUrl === 'string' && (client.logoUrl.startsWith('http://') || client.logoUrl.startsWith('https://'))
 
     return (
-        <div
-            className="group flex flex-row items-center justify-between h-20 px-4 bg-transparent hover:bg-muted/50 border-b border-border transition-colors cursor-pointer"
+        <Card 
+            className="hover:shadow-card-hover hover:border-slate-300 transition-all cursor-pointer group"
             onClick={() => onView(client)}
         >
-            {/* Left Section: Avatar + Identity */}
-            <div className="flex items-center gap-4 flex-1 min-w-0">
-                {/* Avatar - Square */}
-                <Avatar className="h-10 w-10 rounded-md flex-shrink-0">
-                    {hasLogo && <AvatarImage src={client.logoUrl} alt={client.name} />}
-                    <AvatarFallback className="rounded-md bg-muted text-muted-foreground font-semibold text-xs">
-                        {client.name.slice(0, 2).toUpperCase()}
-                    </AvatarFallback>
-                </Avatar>
+            <CardContent className="p-4">
+                <div className="flex items-center gap-4">
+                    {/* Avatar */}
+                    <Avatar className="h-10 w-10 rounded-xl flex-shrink-0">
+                        {hasLogo && <AvatarImage src={client.logoUrl} alt={client.name} />}
+                        <AvatarFallback className="rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 text-white text-xs font-semibold">
+                            {client.name.slice(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                    </Avatar>
 
-                {/* Text Info */}
-                <div className="flex flex-col min-w-0">
-                    {/* Top Line: Name + Status + Risk + Tags */}
-                    <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold text-sm text-foreground truncate">
-                            {client.name}
-                        </h3>
-
-                        {/* Status Badge */}
-                        <Badge className={`${getStatusColor(client.status)} text-white text-[10px] px-2 py-0 h-5`}>
-                            {client.status}
-                        </Badge>
-
-                        {/* Risk Badge */}
-                        <Badge variant="outline" className={`${getRiskColor(client.riskLevel)} text-[10px] px-2 py-0 h-5 border`}>
-                            {client.riskLevel}
-                        </Badge>
-
-                        {/* Tags */}
-                        {client.tags && client.tags.slice(0, 2).map(tag => (
-                            <span key={tag} className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border">
-                                #{tag}
-                            </span>
-                        ))}
+                    {/* Main Info */}
+                    <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                            <h3 className="text-sm font-semibold text-slate-900 truncate group-hover:text-violet-700 transition-colors">
+                                {client.name}
+                            </h3>
+                            {getStatusBadge(client.status)}
+                        </div>
+                        <p className="text-xs text-slate-500 truncate">
+                            {client.industry} • {client.primaryContact || 'No contact'} • {client.email || 'No email'}
+                        </p>
                     </div>
 
-                    {/* Bottom Line: Industry • Contact */}
-                    <div className="text-xs text-muted-foreground truncate">
-                        {client.industry} • {client.primaryContact}
+                    {/* Stats */}
+                    <div className="hidden md:flex items-center gap-6">
+                        <div className="text-center px-4">
+                            <div className="text-sm font-semibold text-slate-900">{client.projectsCount}</div>
+                            <div className="text-xs text-slate-500">Projects</div>
+                        </div>
+                        <div className="text-center px-4">
+                            <div className="flex items-center justify-center gap-1">
+                                <span className="text-sm font-semibold text-slate-900">{client.totalFindings}</span>
+                                {client.findingsBySeverity.critical > 0 && (
+                                    <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                                )}
+                            </div>
+                            <div className="text-xs text-slate-500">Findings</div>
+                        </div>
                     </div>
-                </div>
-            </div>
 
-            {/* Right Section: Stats + Risk + Actions */}
-            <div className="flex items-center gap-8">
-                {/* Stats Text */}
-                <div className="hidden lg:block text-sm text-muted-foreground">
-                    {client.projectsCount} Projects • {client.reportsCount} Reports
-                </div>
-
-                {/* Findings Group - Text Only */}
-                <div className="text-right">
-                    <div className="text-xs text-muted-foreground mb-1">
-                        {client.totalFindings} Findings
+                    {/* Actions */}
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-8 px-3 text-slate-600"
+                            onClick={(e) => { e.stopPropagation(); onEdit(client) }}
+                        >
+                            <Pencil className="w-4 h-4 mr-1" />
+                            Edit
+                        </Button>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                    <MoreVertical className="h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-44">
+                                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onArchive(client) }}>
+                                    Archive
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                    className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                                    onClick={(e) => { e.stopPropagation(); onDelete(client) }}
+                                >
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Delete
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </div>
-                    <div className="text-xs">
-                        {client.findingsBySeverity.critical > 0 && (
-                            <span className="text-red-500 font-medium">{client.findingsBySeverity.critical} Crit</span>
-                        )}
-                        {client.findingsBySeverity.critical > 0 && client.findingsBySeverity.high > 0 && (
-                            <span className="text-muted-foreground mx-1">•</span>
-                        )}
-                        {client.findingsBySeverity.high > 0 && (
-                            <span className="text-orange-500">{client.findingsBySeverity.high} High</span>
-                        )}
-                        {client.findingsBySeverity.critical === 0 && client.findingsBySeverity.high === 0 && (
-                            <span className="text-emerald-500">Secure</span>
-                        )}
-                    </div>
-                </div>
 
-                {/* Actions */}
-                <div className="flex items-center gap-2">
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <MoreVertical className="h-4 w-4" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48">
-                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit(client) }}>
-                                <Pencil className="h-4 w-4 mr-2" />
-                                Edit Client
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                                className="text-red-500 focus:text-red-400 focus:bg-red-950/20 dark:focus:bg-red-950/20"
-                                onClick={(e) => { e.stopPropagation(); onDelete(client) }}
-                            >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Delete Client
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-
-                    <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+                    {/* Chevron */}
+                    <ChevronRight className="h-5 w-5 text-slate-400 group-hover:text-slate-600 transition-colors flex-shrink-0" />
                 </div>
-            </div>
-        </div>
+            </CardContent>
+        </Card>
     )
 }

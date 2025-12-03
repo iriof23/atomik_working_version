@@ -5,11 +5,12 @@ import { cn } from '@/lib/utils'
 interface StatCardProps {
     icon: React.ReactNode
     label: string
-    value: number
+    value: number | string
     trend?: string
     trendUp?: boolean
     badge?: number
     badgeLabel?: string
+    subtitle?: string
     variant?: 'default' | 'warning' | 'destructive' | 'success'
 }
 
@@ -21,92 +22,82 @@ export function StatCard({
     trendUp,
     badge,
     badgeLabel,
+    subtitle,
     variant = 'default'
 }: StatCardProps) {
 
-    const getVariantStyles = () => {
-        switch (variant) {
-            case 'destructive':
-                return {
-                    iconBg: 'bg-red-500/10 dark:bg-red-500/20',
-                    iconColor: 'text-red-500',
-                    iconBorder: 'border-red-500/20',
-                }
-            case 'warning':
-                return {
-                    iconBg: 'bg-orange-500/10 dark:bg-orange-500/20',
-                    iconColor: 'text-orange-500',
-                    iconBorder: 'border-orange-500/20',
-                }
-            case 'success':
-                return {
-                    iconBg: 'bg-emerald-500/10 dark:bg-emerald-500/20',
-                    iconColor: 'text-emerald-500',
-                    iconBorder: 'border-emerald-500/20',
-                }
-            case 'default':
-            default:
-                return {
-                    iconBg: 'bg-muted',
-                    iconColor: 'text-primary',
-                    iconBorder: 'border-border',
-                }
-        }
+    // Subtle colored backgrounds matching the new Apple/Linear design
+    const variantStyles = {
+        default: {
+            iconBg: 'bg-slate-100',
+            iconColor: 'text-slate-600',
+        },
+        success: {
+            iconBg: 'bg-emerald-100',
+            iconColor: 'text-emerald-600',
+        },
+        warning: {
+            iconBg: 'bg-amber-100',
+            iconColor: 'text-amber-600',
+        },
+        destructive: {
+            iconBg: 'bg-red-100',
+            iconColor: 'text-red-600',
+        },
     }
 
-    const styles = getVariantStyles()
+    const styles = variantStyles[variant]
 
     return (
-        <Card
-            className={cn(
-                "relative overflow-hidden",
-                "bg-card/50 backdrop-blur-sm",
-                "transition-all duration-200 hover:border-primary/50",
-                "border"
-            )}
-        >
-            <CardContent className="p-6">
+        <Card className="hover:shadow-card-hover transition-shadow">
+            <CardContent className="p-5">
                 {/* Top Section: Icon and Trend/Badge */}
-                <div className="flex items-start justify-between mb-4">
-                    {/* Icon */}
-                    <div className={cn("p-2 rounded-lg border", styles.iconBg, styles.iconBorder, styles.iconColor)}>
+                <div className="flex items-start justify-between">
+                    {/* Icon with colored background */}
+                    <div className={cn("p-2.5 rounded-xl", styles.iconBg, styles.iconColor)}>
                         {icon}
                     </div>
 
-                    {/* Trend or Badge */}
+                    {/* Trend indicator */}
                     {trend && (
                         <div
                             className={cn(
-                                "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border border-transparent",
+                                "flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full",
                                 trendUp
-                                    ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
-                                    : "bg-red-500/10 text-red-500 border-red-500/20"
+                                    ? "bg-emerald-50 text-emerald-600"
+                                    : "bg-red-50 text-red-600"
                             )}
                         >
                             {trendUp ? (
-                                <TrendingUp className="w-3.5 h-3.5" />
+                                <TrendingUp className="w-3 h-3" />
                             ) : (
-                                <TrendingDown className="w-3.5 h-3.5" />
+                                <TrendingDown className="w-3 h-3" />
                             )}
                             {trend}
                         </div>
                     )}
 
+                    {/* Critical badge */}
                     {badge !== undefined && badge > 0 && (
-                        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-red-500/10 text-red-500 border border-red-500/20 animate-pulse">
+                        <div className="flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full bg-red-50 text-red-600">
                             {badge} {badgeLabel}
                         </div>
                     )}
                 </div>
 
                 {/* Bottom Section: Value and Label */}
-                <div>
-                    <h3 className="text-3xl font-bold tracking-tight text-foreground mb-1">
+                <div className="mt-4">
+                    <p className="text-2xl font-bold text-slate-900 tracking-tight">
                         {value}
-                    </h3>
-                    <p className="text-sm font-medium text-muted-foreground">
+                    </p>
+                    <p className="text-sm font-medium text-slate-500 mt-1">
                         {label}
                     </p>
+                    {subtitle && (
+                        <p className="text-xs text-slate-400 mt-1.5">
+                            {subtitle}
+                        </p>
+                    )}
                 </div>
             </CardContent>
         </Card>

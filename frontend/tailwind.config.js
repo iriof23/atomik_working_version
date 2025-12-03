@@ -50,6 +50,27 @@ export default {
                     DEFAULT: "hsl(var(--card))",
                     foreground: "hsl(var(--card-foreground))",
                 },
+                /* Sidebar colors */
+                sidebar: {
+                    DEFAULT: "hsl(var(--sidebar-bg))",
+                    border: "hsl(var(--sidebar-border))",
+                    hover: "hsl(var(--sidebar-hover))",
+                    active: "hsl(var(--sidebar-active))",
+                    "active-text": "hsl(var(--sidebar-active-text))",
+                },
+                /* Severity colors for findings */
+                severity: {
+                    critical: "hsl(var(--critical))",
+                    high: "hsl(var(--high))",
+                    medium: "hsl(var(--medium))",
+                    low: "hsl(var(--low))",
+                    info: "hsl(var(--info))",
+                },
+            },
+            /* Box shadows for cards */
+            boxShadow: {
+                'card': '0 1px 3px 0 rgb(0 0 0 / 0.05), 0 1px 2px -1px rgb(0 0 0 / 0.05)',
+                'card-hover': '0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.05)',
             },
             borderRadius: {
                 lg: "var(--radius)",
