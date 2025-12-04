@@ -3,34 +3,111 @@ Rich Text Service for Report Generation
 
 Converts Markdown content to sanitized HTML for PDF generation
 and plain text for DOCX/summary fields.
+
+SECURITY: This service is critical for preventing XSS attacks.
+All HTML output from rich text editors must be sanitized here.
 """
 import markdown
 import bleach
 import re
-from typing import Optional
+from typing import Optional, Callable
+from urllib.parse import urlparse
 
 
 class RichTextService:
     """Service for converting and sanitizing rich text content."""
     
     # Allowed HTML tags for PDF rendering
+    # SECURITY: img tag is allowed but with strict attribute filtering
     ALLOWED_TAGS = [
         'p', 'b', 'i', 'strong', 'em', 
         'ul', 'ol', 'li', 
         'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
         'code', 'pre', 'br', 'hr',
         'blockquote', 'a', 'table', 'thead', 'tbody', 'tr', 'th', 'td',
-        'span', 'div'
+        'span', 'div',
+        'img',  # Images allowed with strict attribute filtering
     ]
     
     # Allowed attributes for HTML tags
+    # SECURITY: NO event handlers (onerror, onload, onclick, etc.)
     ALLOWED_ATTRIBUTES = {
         '*': ['class', 'id'],
-        'a': ['href', 'title', 'target'],
-        'img': ['src', 'alt', 'title', 'width', 'height'],
+        'a': ['href', 'title', 'target', 'rel'],
+        # img: Safe attributes only - NO onerror, onload, onclick, etc.
+        'img': ['src', 'alt', 'title', 'width', 'height', 'data-align', 'data-caption'],
         'td': ['colspan', 'rowspan'],
         'th': ['colspan', 'rowspan'],
     }
+    
+    # Allowed URL schemes for links and images
+    ALLOWED_PROTOCOLS = ['http', 'https', 'mailto', 'data']
+    
+    @staticmethod
+    def _filter_img_src(tag: str, name: str, value: str) -> bool:
+        """
+        Custom filter to validate image sources.
+        
+        SECURITY: Prevents javascript: URLs and other dangerous schemes.
+        Only allows:
+        - http:// and https:// URLs
+        - /uploads/ paths (our own uploads)
+        - data:image/ URLs (base64 images, only image types)
+        """
+        if tag != 'img' or name != 'src':
+            return True  # Let other attributes pass through normally
+        
+        if not value:
+            return False
+        
+        value = value.strip().lower()
+        
+        # Allow our uploads path
+        if value.startswith('/uploads/'):
+            return True
+        
+        # Allow http/https URLs
+        if value.startswith(('http://', 'https://')):
+            return True
+        
+        # Allow base64 image data URLs (only actual image types)
+        if value.startswith('data:image/'):
+            # Ensure it's a valid image type
+            valid_types = ['data:image/png', 'data:image/jpeg', 'data:image/jpg', 
+                          'data:image/gif', 'data:image/webp', 'data:image/svg+xml']
+            if any(value.startswith(t) for t in valid_types):
+                return True
+        
+        # Block everything else (javascript:, vbscript:, etc.)
+        return False
+    
+    @classmethod
+    def _get_attribute_filter(cls) -> Callable:
+        """
+        Returns an attribute filter function for bleach.
+        Combines allowed attributes with custom src validation.
+        """
+        def filter_attributes(tag: str, name: str, value: str) -> bool:
+            # First check if attribute is in allowed list
+            allowed_for_tag = cls.ALLOWED_ATTRIBUTES.get(tag, [])
+            allowed_for_all = cls.ALLOWED_ATTRIBUTES.get('*', [])
+            
+            if name not in allowed_for_tag and name not in allowed_for_all:
+                return False
+            
+            # Special handling for img src
+            if tag == 'img' and name == 'src':
+                return cls._filter_img_src(tag, name, value)
+            
+            # Special handling for href - block javascript: URLs
+            if name == 'href':
+                value_lower = value.strip().lower()
+                if value_lower.startswith(('javascript:', 'vbscript:', 'data:')):
+                    return False
+            
+            return True
+        
+        return filter_attributes
     
     # Markdown extensions for enhanced parsing
     MARKDOWN_EXTENSIONS = [
@@ -42,8 +119,8 @@ class RichTextService:
         'sane_lists',      # Better list handling
     ]
 
-    @staticmethod
-    def to_html(text: str, strip_unsafe: bool = True) -> str:
+    @classmethod
+    def to_html(cls, text: str, strip_unsafe: bool = True) -> str:
         """
         Converts Markdown to sanitized HTML for the PDF engine.
         
@@ -71,10 +148,12 @@ class RichTextService:
         
         if strip_unsafe:
             # Sanitize HTML to prevent XSS
+            # SECURITY: Uses custom attribute filter to validate img src URLs
             html = bleach.clean(
                 html, 
                 tags=RichTextService.ALLOWED_TAGS, 
-                attributes=RichTextService.ALLOWED_ATTRIBUTES,
+                attributes=cls._get_attribute_filter(),
+                protocols=cls.ALLOWED_PROTOCOLS,
                 strip=True
             )
         
@@ -105,24 +184,32 @@ class RichTextService:
         
         return plain
 
-    @staticmethod
-    def sanitize_html(html: str) -> str:
+    @classmethod
+    def sanitize_html(cls, html: str) -> str:
         """
         Sanitizes existing HTML content (e.g., from rich text editor).
+        
+        SECURITY: This is the primary sanitization point for user-submitted HTML.
+        All content from the rich text editor should pass through here before storage.
         
         Args:
             html: Raw HTML string
             
         Returns:
-            Sanitized HTML string
+            Sanitized HTML string with:
+            - Dangerous tags stripped (script, iframe, object, etc.)
+            - Event handlers removed (onerror, onload, onclick, etc.)
+            - Image URLs validated (no javascript: or vbscript:)
+            - Link URLs validated (no javascript: schemes)
         """
         if not html:
             return ""
         
         return bleach.clean(
             html,
-            tags=RichTextService.ALLOWED_TAGS,
-            attributes=RichTextService.ALLOWED_ATTRIBUTES,
+            tags=cls.ALLOWED_TAGS,
+            attributes=cls._get_attribute_filter(),
+            protocols=cls.ALLOWED_PROTOCOLS,
             strip=True
         )
 

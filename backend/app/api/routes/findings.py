@@ -1,5 +1,8 @@
 """
 Finding management routes
+
+SECURITY: Evidence fields contain HTML from rich text editor.
+All HTML content is sanitized before storage to prevent XSS.
 """
 import logging
 from typing import Optional
@@ -8,6 +11,7 @@ from pydantic import BaseModel
 
 from app.api.routes.auth import get_current_user
 from app.db import db
+from app.services.rich_text_service import RichTextService
 
 logger = logging.getLogger(__name__)
 
@@ -212,11 +216,16 @@ async def create_finding(
     reference_id = await generate_finding_reference_id(project.clientId)
     logger.info(f"Generated Finding ID: {reference_id} for client {project.clientId}")
     
+    # SECURITY: Sanitize HTML fields from rich text editor
+    sanitized_description = RichTextService.sanitize_html(finding_data.description) if finding_data.description else None
+    sanitized_evidence = RichTextService.sanitize_html(finding_data.evidence) if finding_data.evidence else None
+    sanitized_remediation = RichTextService.sanitize_html(finding_data.remediation) if finding_data.remediation else None
+    
     finding = await db.finding.create(
         data={
             "referenceId": reference_id,  # The professional Finding ID
             "title": finding_data.title,
-            "description": finding_data.description,
+            "description": sanitized_description,
             "severity": severity_upper,
             "projectId": finding_data.project_id,
             "createdById": current_user.id,
@@ -226,8 +235,8 @@ async def create_finding(
             "affectedSystems": finding_data.affected_systems,
             "affectedAssetsJson": finding_data.affected_assets_json,
             "affectedAssetsCount": finding_data.affected_assets_count or 0,
-            "evidence": finding_data.evidence,
-            "remediation": finding_data.remediation,
+            "evidence": sanitized_evidence,
+            "remediation": sanitized_remediation,
             "references": finding_data.references,
             "templateId": finding_data.template_id,
             "status": "OPEN",
@@ -365,7 +374,8 @@ async def update_finding(
         if finding_data.title is not None:
             update_data["title"] = finding_data.title
         if finding_data.description is not None:
-            update_data["description"] = finding_data.description
+            # SECURITY: Sanitize HTML content
+            update_data["description"] = RichTextService.sanitize_html(finding_data.description)
         if finding_data.severity is not None:
             # Convert severity to uppercase for database enum
             update_data["severity"] = finding_data.severity.upper()
@@ -382,9 +392,11 @@ async def update_finding(
         if finding_data.affected_assets_count is not None:
             update_data["affectedAssetsCount"] = finding_data.affected_assets_count
         if finding_data.evidence is not None:
-            update_data["evidence"] = finding_data.evidence
+            # SECURITY: Sanitize HTML from rich text editor before storage
+            update_data["evidence"] = RichTextService.sanitize_html(finding_data.evidence)
         if finding_data.remediation is not None:
-            update_data["remediation"] = finding_data.remediation
+            # SECURITY: Sanitize HTML content
+            update_data["remediation"] = RichTextService.sanitize_html(finding_data.remediation)
         if finding_data.references is not None:
             update_data["references"] = finding_data.references
         if finding_data.status is not None:

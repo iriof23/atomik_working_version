@@ -1,7 +1,11 @@
 """
 File upload routes for evidence and attachments
+
+SECURITY: This module handles file uploads which is a critical attack vector.
+All uploaded files, especially SVGs, are sanitized before storage.
 """
 import os
+import re
 import uuid
 from pathlib import Path
 from typing import Optional
@@ -26,6 +30,80 @@ def get_file_extension(filename: str) -> str:
     return filename.rsplit('.', 1)[1].lower() if '.' in filename else ''
 
 
+def sanitize_svg(content: bytes) -> bytes:
+    """
+    Remove dangerous elements from SVG files.
+    
+    SECURITY: SVG files can contain embedded JavaScript that executes
+    when the image is rendered. This function strips:
+    - <script> tags
+    - Event handler attributes (onclick, onerror, onload, etc.)
+    - javascript: URLs
+    - External references that could leak data
+    
+    Args:
+        content: Raw SVG file bytes
+        
+    Returns:
+        Sanitized SVG bytes
+    """
+    try:
+        text = content.decode('utf-8', errors='ignore')
+        
+        # Remove script tags and their content
+        text = re.sub(r'<script[^>]*>.*?</script>', '', text, flags=re.IGNORECASE | re.DOTALL)
+        
+        # Remove event handler attributes (on*)
+        # Matches: onclick="...", onerror='...', onload=..., etc.
+        text = re.sub(
+            r'\s+on\w+\s*=\s*["\'][^"\']*["\']',
+            '',
+            text,
+            flags=re.IGNORECASE
+        )
+        text = re.sub(
+            r'\s+on\w+\s*=\s*[^\s>]+',
+            '',
+            text,
+            flags=re.IGNORECASE
+        )
+        
+        # Remove javascript: URLs in any attribute
+        text = re.sub(
+            r'(href|src|xlink:href)\s*=\s*["\']?\s*javascript:[^"\'>\s]*["\']?',
+            r'\1=""',
+            text,
+            flags=re.IGNORECASE
+        )
+        
+        # Remove data: URLs except for images (could contain scripts)
+        text = re.sub(
+            r'(href|xlink:href)\s*=\s*["\']?\s*data:(?!image)[^"\'>\s]*["\']?',
+            r'\1=""',
+            text,
+            flags=re.IGNORECASE
+        )
+        
+        # Remove <foreignObject> which can embed HTML/JS
+        text = re.sub(r'<foreignObject[^>]*>.*?</foreignObject>', '', text, flags=re.IGNORECASE | re.DOTALL)
+        
+        # Remove <use> with external references (potential SSRF/data exfiltration)
+        text = re.sub(
+            r'<use[^>]*xlink:href\s*=\s*["\']?(https?://|//)[^"\'>\s]*["\']?[^>]*>',
+            '',
+            text,
+            flags=re.IGNORECASE
+        )
+        
+        return text.encode('utf-8')
+    except Exception as e:
+        # If sanitization fails, reject the file
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to process SVG file: {str(e)}"
+        )
+
+
 def validate_file(filename: str, filesize: int) -> None:
     """Validate file extension and size"""
     ext = get_file_extension(filename)
@@ -47,7 +125,11 @@ def validate_file(filename: str, filesize: int) -> None:
 async def upload_screenshot(
     file: UploadFile = File(...)
 ):
-    """Upload a screenshot and return permanent URL (public endpoint for demo)"""
+    """
+    Upload a screenshot and return permanent URL (public endpoint for demo).
+    
+    SECURITY: SVG files are sanitized to remove embedded scripts and event handlers.
+    """
     # Read file content to get size
     content = await file.read()
     filesize = len(content)
@@ -66,6 +148,10 @@ async def upload_screenshot(
     ext = get_file_extension(file.filename)
     unique_filename = f"{uuid.uuid4()}.{ext}"
     filepath = os.path.join(settings.UPLOAD_DIR, unique_filename)
+    
+    # SECURITY: Sanitize SVG files to remove embedded scripts
+    if file.content_type == 'image/svg+xml' or ext == 'svg':
+        content = sanitize_svg(content)
     
     # Save file
     async with aiofiles.open(filepath, 'wb') as f:
