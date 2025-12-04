@@ -7,7 +7,6 @@ import { useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { EditorToolbar } from './EditorToolbar';
 import { ResizableImage } from './ResizableImage';
-import { Upload } from 'lucide-react';
 
 interface EditorProps {
     content: string;
@@ -29,7 +28,6 @@ export const Editor = ({
     frameless = false,
 }: EditorProps) => {
     const isInternalChange = useRef(false);
-    const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Upload image to backend API
     const uploadImage = async (file: File): Promise<string> => {
@@ -80,7 +78,9 @@ export const Editor = ({
                 },
             }),
             Placeholder.configure({
-                placeholder: variant === 'evidence' ? '' : placeholder,
+                placeholder: variant === 'evidence' 
+                    ? "Type reproduction steps, paste code snippets, or drag & drop screenshots here..." 
+                    : placeholder,
                 includeChildren: true,
             }),
             DropCursor.configure({
@@ -221,37 +221,6 @@ export const Editor = ({
         }
     }, [content, editor]);
 
-    // Handle file input change
-    const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file && editor) {
-            if (!file.type.startsWith('image/')) {
-                alert('Please select an image file');
-                return;
-            }
-
-            if (file.size > 5 * 1024 * 1024) {
-                alert('Image size must be less than 5MB');
-                return;
-            }
-
-            uploadImage(file).then(url => {
-                // Insert at end for evidence variant, at cursor for default
-                if (variant === 'evidence') {
-                    editor.chain().focus('end').setImage({ src: url }).run();
-                } else {
-                    editor.chain().focus().setImage({ src: url }).run();
-                }
-            }).catch(error => {
-                console.error('Failed to upload image:', error);
-                alert('Failed to upload image. Please try again.');
-            });
-
-            // Reset input
-            e.target.value = '';
-        }
-    };
-
     // Handle drops in the "dead zone" (empty space in container)
     const handleWrapperDragOver = (e: React.DragEvent) => {
         e.preventDefault(); // Allow drop event to fire
@@ -272,8 +241,12 @@ export const Editor = ({
             }
 
             uploadImage(imageFile).then(url => {
-                // Append to end of document
-                editor.chain().focus('end').setImage({ src: url }).run();
+                // Insert at cursor position or end if not focused
+                if (editor.isFocused) {
+                    editor.chain().focus().setImage({ src: url }).run();
+                } else {
+                    editor.chain().focus('end').setImage({ src: url }).run();
+                }
             }).catch(error => {
                 console.error('Failed to upload image:', error);
                 alert('Failed to upload image. Please try again.');
@@ -284,10 +257,6 @@ export const Editor = ({
     if (!editor) {
         return null;
     }
-
-    const isEmpty = !content || content === '<p></p>' || content === '';
-    const isEvidenceVariant = variant === 'evidence';
-    const showDropZone = isEvidenceVariant && isEmpty;
 
     // Focus editor on single click anywhere in the container
     const handleContainerClick = (e: React.MouseEvent) => {
@@ -308,9 +277,8 @@ export const Editor = ({
                     ? 'bg-transparent border-0 shadow-none rounded-none'
                     : cn(
                         'rounded-lg border bg-white',
-                        showDropZone
-                            ? 'min-h-[200px] border-dashed border-2 border-slate-300 hover:border-slate-400'
-                            : 'min-h-[150px] h-auto border-slate-200 focus-within:border-emerald-500 focus-within:ring-1 focus-within:ring-emerald-500/20'
+                        // Unified style for all variants - no more special "drop zone" style
+                        'min-h-[150px] h-auto border-slate-200 focus-within:border-emerald-500 focus-within:ring-1 focus-within:ring-emerald-500/20'
                     ),
                 'p-0',
                 className
@@ -319,28 +287,6 @@ export const Editor = ({
             onDrop={handleWrapperDrop}
             onDragOver={handleWrapperDragOver}
         >
-            {showDropZone && !frameless && (
-                <div
-                    className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none"
-                    onClick={() => fileInputRef.current?.click()}
-                >
-                    <Upload className="w-10 h-10 text-slate-400 mb-3" />
-                    <p className="text-slate-500 text-sm font-medium">
-                        Drag & drop proof, screenshots, or code snippets here
-                    </p>
-                    <p className="text-slate-400 text-xs mt-1">
-                        or paste from clipboard
-                    </p>
-                </div>
-            )}
-            {/* Hidden file input */}
-            <input
-                ref={fileInputRef}
-                type="file"
-                className="hidden"
-                accept="image/*"
-                onChange={handleFileInputChange}
-            />
             {editable && <EditorToolbar editor={editor} frameless={frameless} />}
             <div className={cn("w-full", frameless ? "p-0" : "p-4")}>
                 <EditorContent editor={editor} className="w-full" />
