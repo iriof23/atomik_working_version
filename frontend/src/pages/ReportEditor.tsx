@@ -1,10 +1,20 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '@clerk/clerk-react'
-import { ChevronLeft, FileText, BookOpen, Settings, Download, Save, ChevronDown, ChevronRight, Loader2 } from 'lucide-react'
+import { ChevronLeft, FileText, BookOpen, Settings, Download, Save, ChevronDown, ChevronRight, Loader2, AlertTriangle } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { cn } from '@/lib/utils'
 import FindingsTabContent from '@/components/FindingsTabContent'
 import { Editor } from '@/components/editor/Editor'
@@ -48,6 +58,7 @@ export default function ReportEditor() {
     
     const [activeTab, setActiveTab] = useState<TabType>('narrative')
     const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+    const [showUnsavedDialog, setShowUnsavedDialog] = useState(false)
     const [actualFindingsCount, setActualFindingsCount] = useState(0)
     const [isLoading, setIsLoading] = useState(true)
     const [isSaving, setIsSaving] = useState(false)
@@ -194,13 +205,17 @@ export default function ReportEditor() {
 
     const handleBack = () => {
         if (hasUnsavedChanges) {
-            if (window.confirm('You have unsaved changes. Are you sure you want to leave?')) {
-                navigate('/reports')
-            }
+            setShowUnsavedDialog(true);
         } else {
-            navigate('/reports')
+            navigate('/reports');
         }
-    }
+    };
+
+    const handleDiscardAndLeave = () => {
+        setShowUnsavedDialog(false);
+        setHasUnsavedChanges(false);
+        navigate('/reports');
+    };
 
     const handleSave = async () => {
         if (!reportId || !reportData) return
@@ -405,6 +420,39 @@ export default function ReportEditor() {
                     <ExportTab reportId={reportId} settings={reportSettings} />
                 )}
             </div>
+
+            {/* Unsaved Changes Warning */}
+            <AlertDialog open={showUnsavedDialog} onOpenChange={setShowUnsavedDialog}>
+                <AlertDialogContent className="bg-white border-slate-200 shadow-2xl sm:rounded-2xl">
+                    <AlertDialogHeader>
+                        <div className="flex items-center gap-3 mb-2">
+                            <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
+                                <AlertTriangle className="w-5 h-5 text-amber-600" />
+                            </div>
+                            <AlertDialogTitle className="text-lg font-semibold text-slate-900">
+                                Unsaved Report Changes
+                            </AlertDialogTitle>
+                        </div>
+                        <AlertDialogDescription className="text-sm text-slate-500 leading-relaxed pl-13">
+                            You have unsaved changes to this report. If you leave now, your changes will be lost.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter className="gap-2">
+                        <AlertDialogCancel 
+                            className="border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                            onClick={handleDiscardAndLeave}
+                        >
+                            Leave Anyway
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={() => setShowUnsavedDialog(false)}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                        >
+                            Stay & Save
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div >
     )
 }

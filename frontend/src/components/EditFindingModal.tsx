@@ -16,6 +16,16 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import CVSSCalculator from './CVSSCalculator';
 
 export interface ProjectFinding {
@@ -68,6 +78,7 @@ export function EditFindingModal({ finding, isOpen, onClose, onUpdate, onDelete,
     const [localFinding, setLocalFinding] = useState<ProjectFinding | null>(finding);
     const [isDirty, setIsDirty] = useState(false);
     const [newAssetUrl, setNewAssetUrl] = useState('');
+    const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
     const [cvssMeta, setCvssMeta] = useState<{ vector: string; score: string }>({
         vector: finding?.cvssVector || '',
         score: formatCvssScore(finding?.cvssScore),
@@ -132,12 +143,16 @@ export function EditFindingModal({ finding, isOpen, onClose, onUpdate, onDelete,
 
     const handleClose = () => {
         if (isDirty) {
-            if (window.confirm('You have unsaved changes. Are you sure you want to close?')) {
-                onClose();
-            }
+            setShowUnsavedDialog(true);
         } else {
             onClose();
         }
+    };
+
+    const handleDiscardChanges = () => {
+        setShowUnsavedDialog(false);
+        setIsDirty(false);
+        onClose();
     };
 
     const handleAddAsset = () => {
@@ -165,7 +180,21 @@ export function EditFindingModal({ finding, isOpen, onClose, onUpdate, onDelete,
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-            <DialogContent className="max-w-[90vw] w-full h-[90vh] p-0 gap-0 bg-white border-slate-200 shadow-2xl flex flex-col overflow-hidden [&>button]:hidden sm:rounded-2xl">
+            <DialogContent 
+                className="max-w-[90vw] w-full h-[90vh] p-0 gap-0 bg-white border-slate-200 shadow-2xl flex flex-col overflow-hidden [&>button]:hidden sm:rounded-2xl"
+                onInteractOutside={(e) => {
+                    if (isDirty) {
+                        e.preventDefault();
+                        setShowUnsavedDialog(true);
+                    }
+                }}
+                onEscapeKeyDown={(e) => {
+                    if (isDirty) {
+                        e.preventDefault();
+                        setShowUnsavedDialog(true);
+                    }
+                }}
+            >
                 
                 {/* Premium Header */}
                 <div className="border-b border-slate-100 bg-gradient-to-b from-slate-50/80 to-white shrink-0">
@@ -488,6 +517,39 @@ export function EditFindingModal({ finding, isOpen, onClose, onUpdate, onDelete,
                     </div>
                 </div>
             </DialogContent>
+
+            {/* Unsaved Changes Warning */}
+            <AlertDialog open={showUnsavedDialog} onOpenChange={setShowUnsavedDialog}>
+                <AlertDialogContent className="bg-white border-slate-200 shadow-2xl sm:rounded-2xl">
+                    <AlertDialogHeader>
+                        <div className="flex items-center gap-3 mb-2">
+                            <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
+                                <AlertTriangle className="w-5 h-5 text-amber-600" />
+                            </div>
+                            <AlertDialogTitle className="text-lg font-semibold text-slate-900">
+                                Unsaved Changes
+                            </AlertDialogTitle>
+                        </div>
+                        <AlertDialogDescription className="text-sm text-slate-500 leading-relaxed pl-13">
+                            You have unsaved changes to this finding. If you close now, your changes will be lost.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter className="gap-2">
+                        <AlertDialogCancel 
+                            className="border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                            onClick={handleDiscardChanges}
+                        >
+                            Discard Changes
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={() => setShowUnsavedDialog(false)}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                        >
+                            Keep Editing
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </Dialog>
     );
 }

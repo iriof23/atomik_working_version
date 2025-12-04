@@ -1,8 +1,18 @@
 import { useState, useRef } from 'react'
-import { Upload, X, Plus } from 'lucide-react'
+import { Upload, X, Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { cn } from '@/lib/utils'
 
 interface Screenshot {
@@ -19,6 +29,8 @@ interface ScreenshotUploaderProps {
 export default function ScreenshotUploader({ screenshots, onUpdate }: ScreenshotUploaderProps) {
     const fileInputRef = useRef<HTMLInputElement>(null)
     const [isDragging, setIsDragging] = useState(false)
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+    const [screenshotToDelete, setScreenshotToDelete] = useState<string | null>(null)
 
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
@@ -68,10 +80,17 @@ export default function ScreenshotUploader({ screenshots, onUpdate }: Screenshot
     }
 
     const removeScreenshot = (id: string) => {
-        if (window.confirm('Remove this screenshot?')) {
-            onUpdate(screenshots.filter(s => s.id !== id))
+        setScreenshotToDelete(id);
+        setShowDeleteDialog(true);
+    };
+
+    const confirmRemoveScreenshot = () => {
+        if (screenshotToDelete) {
+            onUpdate(screenshots.filter(s => s.id !== screenshotToDelete));
         }
-    }
+        setShowDeleteDialog(false);
+        setScreenshotToDelete(null);
+    };
 
     return (
         <div className="space-y-4">
@@ -152,6 +171,38 @@ export default function ScreenshotUploader({ screenshots, onUpdate }: Screenshot
                     </Card>
                 ))}
             </div>
+
+            {/* Delete Screenshot Confirmation */}
+            <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                <AlertDialogContent className="bg-white border-slate-200 shadow-2xl sm:rounded-2xl">
+                    <AlertDialogHeader>
+                        <div className="flex items-center gap-3 mb-2">
+                            <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center">
+                                <Trash2 className="w-5 h-5 text-red-600" />
+                            </div>
+                            <AlertDialogTitle className="text-lg font-semibold text-slate-900">
+                                Remove Screenshot?
+                            </AlertDialogTitle>
+                        </div>
+                        <AlertDialogDescription className="text-sm text-slate-500 leading-relaxed pl-13">
+                            This will permanently remove this screenshot from the evidence. This action cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter className="gap-2">
+                        <AlertDialogCancel 
+                            className="border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                        >
+                            Cancel
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={confirmRemoveScreenshot}
+                            className="bg-red-600 hover:bg-red-700 text-white"
+                        >
+                            Remove Screenshot
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     )
 }

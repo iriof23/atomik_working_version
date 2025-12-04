@@ -17,6 +17,16 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import CVSSCalculator from './CVSSCalculator';
 
 // Define types locally for now, ideally should be shared
@@ -68,6 +78,7 @@ export function EditFindingSheet({ finding, isOpen, onClose, onUpdate, onDelete 
     const [localFinding, setLocalFinding] = useState<ProjectFinding | null>(finding);
     const [isDirty, setIsDirty] = useState(false);
     const [newAssetUrl, setNewAssetUrl] = useState('');
+    const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
     const [cvssMeta, setCvssMeta] = useState<{ vector: string; score: string }>({
         vector: finding?.cvssVector || '',
         score: formatCvssScore(finding?.cvssScore),
@@ -117,12 +128,16 @@ export function EditFindingSheet({ finding, isOpen, onClose, onUpdate, onDelete 
 
     const handleClose = () => {
         if (isDirty) {
-            if (window.confirm('You have unsaved changes. Are you sure you want to close?')) {
-                onClose();
-            }
+            setShowUnsavedDialog(true);
         } else {
             onClose();
         }
+    };
+
+    const handleDiscardChanges = () => {
+        setShowUnsavedDialog(false);
+        setIsDirty(false);
+        onClose();
     };
 
     const getSeverityColor = (severity: string) => {
@@ -162,7 +177,23 @@ export function EditFindingSheet({ finding, isOpen, onClose, onUpdate, onDelete 
 
     return (
         <Sheet open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-            <SheetContent side="right" hideCloseButton className="w-[90vw] max-w-[90vw] p-0 overflow-hidden border-l border-slate-200 bg-white">
+            <SheetContent 
+                side="right" 
+                hideCloseButton 
+                className="w-[90vw] max-w-[90vw] p-0 overflow-hidden border-l border-slate-200 bg-white"
+                onInteractOutside={(e) => {
+                    if (isDirty) {
+                        e.preventDefault();
+                        setShowUnsavedDialog(true);
+                    }
+                }}
+                onEscapeKeyDown={(e) => {
+                    if (isDirty) {
+                        e.preventDefault();
+                        setShowUnsavedDialog(true);
+                    }
+                }}
+            >
                 <div className="flex flex-col h-full w-full">
                     {/* Premium Header - Consistent with EditFindingModal */}
                     <div className="border-b border-slate-100 bg-gradient-to-b from-slate-50/80 to-white shrink-0">
@@ -478,6 +509,39 @@ export function EditFindingSheet({ finding, isOpen, onClose, onUpdate, onDelete 
                     </div>
                 </div>
             </SheetContent>
+
+            {/* Unsaved Changes Warning */}
+            <AlertDialog open={showUnsavedDialog} onOpenChange={setShowUnsavedDialog}>
+                <AlertDialogContent className="bg-white border-slate-200 shadow-2xl sm:rounded-2xl">
+                    <AlertDialogHeader>
+                        <div className="flex items-center gap-3 mb-2">
+                            <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
+                                <AlertTriangle className="w-5 h-5 text-amber-600" />
+                            </div>
+                            <AlertDialogTitle className="text-lg font-semibold text-slate-900">
+                                Unsaved Changes
+                            </AlertDialogTitle>
+                        </div>
+                        <AlertDialogDescription className="text-sm text-slate-500 leading-relaxed pl-13">
+                            You have unsaved changes to this finding. If you close now, your changes will be lost.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter className="gap-2">
+                        <AlertDialogCancel 
+                            className="border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                            onClick={handleDiscardChanges}
+                        >
+                            Discard Changes
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={() => setShowUnsavedDialog(false)}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                        >
+                            Keep Editing
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </Sheet>
     );
 }

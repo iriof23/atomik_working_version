@@ -3,6 +3,16 @@ import {
     Dialog,
     DialogContent,
 } from "@/components/ui/dialog"
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Editor } from '@/components/editor/Editor'
@@ -42,6 +52,8 @@ export function AddFindingDialog({ open, onOpenChange, onFindingAdded }: AddFind
         owasp_reference: '',
         cvss_vector: ''
     })
+    const [isDirty, setIsDirty] = useState(false)
+    const [showUnsavedDialog, setShowUnsavedDialog] = useState(false)
 
     useEffect(() => {
         if (open) {
@@ -55,8 +67,14 @@ export function AddFindingDialog({ open, onOpenChange, onFindingAdded }: AddFind
                 owasp_reference: '',
                 cvss_vector: ''
             })
+            setIsDirty(false)
         }
     }, [open])
+
+    const handleFormChange = (updates: Partial<typeof formData>) => {
+        setFormData(prev => ({ ...prev, ...updates }))
+        setIsDirty(true)
+    }
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
@@ -65,14 +83,43 @@ export function AddFindingDialog({ open, onOpenChange, onFindingAdded }: AddFind
             ...formData
         }
         onFindingAdded(newFinding)
+        setIsDirty(false)
+        onOpenChange(false)
+    }
+
+    const handleClose = () => {
+        if (isDirty) {
+            setShowUnsavedDialog(true)
+        } else {
+            onOpenChange(false)
+        }
+    }
+
+    const handleDiscardChanges = () => {
+        setShowUnsavedDialog(false)
+        setIsDirty(false)
         onOpenChange(false)
     }
 
     const currentSeverity = severityConfig[formData.severity as keyof typeof severityConfig] || severityConfig.Medium
 
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-4xl h-[85vh] flex flex-col gap-0 p-0 bg-white border-slate-200 overflow-hidden [&>button]:hidden sm:rounded-2xl shadow-2xl">
+        <Dialog open={open} onOpenChange={(opening) => !opening && handleClose()}>
+            <DialogContent 
+                className="max-w-4xl h-[85vh] flex flex-col gap-0 p-0 bg-white border-slate-200 overflow-hidden [&>button]:hidden sm:rounded-2xl shadow-2xl"
+                onInteractOutside={(e) => {
+                    if (isDirty) {
+                        e.preventDefault()
+                        setShowUnsavedDialog(true)
+                    }
+                }}
+                onEscapeKeyDown={(e) => {
+                    if (isDirty) {
+                        e.preventDefault()
+                        setShowUnsavedDialog(true)
+                    }
+                }}
+            >
                 {/* Premium Header */}
                 <div className="px-6 py-5 border-b border-slate-100 bg-gradient-to-b from-slate-50/80 to-white shrink-0">
                     <div className="flex items-start justify-between">
@@ -106,7 +153,7 @@ export function AddFindingDialog({ open, onOpenChange, onFindingAdded }: AddFind
                                 </label>
                                 <Input
                                     value={formData.title}
-                                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                                    onChange={(e) => handleFormChange({ title: e.target.value })}
                                     placeholder="e.g. SQL Injection"
                                     className="h-9 bg-white border-slate-200 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus-visible:ring-emerald-500/20 focus-visible:border-emerald-500"
                                     autoFocus
@@ -120,7 +167,7 @@ export function AddFindingDialog({ open, onOpenChange, onFindingAdded }: AddFind
                                 </label>
                                 <Select
                                     value={formData.severity}
-                                    onValueChange={(value) => setFormData({ ...formData, severity: value })}
+                                    onValueChange={(value) => handleFormChange({ severity: value })}
                                 >
                                     <SelectTrigger className="h-9 bg-white border-slate-200 text-sm font-medium text-slate-900">
                                         <SelectValue placeholder="Select severity" />
@@ -155,7 +202,7 @@ export function AddFindingDialog({ open, onOpenChange, onFindingAdded }: AddFind
                                 </label>
                                 <Select
                                     value={formData.category}
-                                    onValueChange={(value) => setFormData({ ...formData, category: value })}
+                                    onValueChange={(value) => handleFormChange({ category: value })}
                                 >
                                     <SelectTrigger className="h-9 bg-white border-slate-200 text-sm text-slate-900">
                                         <SelectValue />
@@ -182,7 +229,7 @@ export function AddFindingDialog({ open, onOpenChange, onFindingAdded }: AddFind
                                     <label className="text-[10px] text-slate-500 mb-1.5 block">OWASP ID</label>
                                     <Input
                                         value={formData.owasp_reference}
-                                        onChange={(e) => setFormData({ ...formData, owasp_reference: e.target.value })}
+                                        onChange={(e) => handleFormChange({ owasp_reference: e.target.value })}
                                         placeholder="A01:2021"
                                         className="h-8 bg-white border-slate-200 text-xs font-mono text-slate-700 placeholder:text-slate-400"
                                     />
@@ -195,15 +242,14 @@ export function AddFindingDialog({ open, onOpenChange, onFindingAdded }: AddFind
                                         <Input
                                             key={`cvss-${formData.cvss_vector?.slice(-10) || 'empty'}`}
                                             value={formData.cvss_vector}
-                                            onChange={(e) => setFormData({ ...formData, cvss_vector: e.target.value })}
+                                            onChange={(e) => handleFormChange({ cvss_vector: e.target.value })}
                                             placeholder="CVSS:3.1/AV:N/AC:L/..."
                                             className="h-8 bg-white border-slate-200 text-[10px] font-mono text-slate-700 placeholder:text-slate-400 flex-1"
                                         />
                                         <CVSSCalculator
                                             vector={formData.cvss_vector}
                                             onUpdate={(vector, _score, severity) => {
-                                                setFormData({ 
-                                                    ...formData, 
+                                                handleFormChange({ 
                                                     cvss_vector: vector, 
                                                     severity: severity 
                                                 });
@@ -255,7 +301,7 @@ export function AddFindingDialog({ open, onOpenChange, onFindingAdded }: AddFind
                                 </div>
                                 <Editor
                                     content={formData.description}
-                                    onChange={(html) => setFormData({ ...formData, description: html })}
+                                    onChange={(html) => handleFormChange({ description: html })}
                                     placeholder="Describe the vulnerability, its impact, and how it was discovered..."
                                     frameless
                                     className="min-h-[180px]"
@@ -271,7 +317,7 @@ export function AddFindingDialog({ open, onOpenChange, onFindingAdded }: AddFind
                                 </div>
                                 <Editor
                                     content={formData.remediation}
-                                    onChange={(html) => setFormData({ ...formData, remediation: html })}
+                                    onChange={(html) => handleFormChange({ remediation: html })}
                                     placeholder="Provide clear steps to fix or mitigate this vulnerability..."
                                     frameless
                                     className="min-h-[150px]"
@@ -290,7 +336,7 @@ export function AddFindingDialog({ open, onOpenChange, onFindingAdded }: AddFind
                                 <div className="border-2 border-dashed border-emerald-100 bg-emerald-50/20 rounded-xl p-1 hover:border-emerald-200 transition-colors">
                                     <Editor
                                         content={formData.evidence}
-                                        onChange={(html) => setFormData({ ...formData, evidence: html })}
+                                        onChange={(html) => handleFormChange({ evidence: html })}
                                         placeholder="Add screenshots, code snippets, or step-by-step reproduction..."
                                         variant="evidence"
                                         className="min-h-[160px]"
@@ -311,7 +357,7 @@ export function AddFindingDialog({ open, onOpenChange, onFindingAdded }: AddFind
                             type="button" 
                             variant="ghost"
                             size="sm"
-                            onClick={() => onOpenChange(false)}
+                            onClick={handleClose}
                             className="text-slate-500 hover:text-slate-900 hover:bg-slate-100 text-xs"
                         >
                             Cancel
@@ -328,6 +374,39 @@ export function AddFindingDialog({ open, onOpenChange, onFindingAdded }: AddFind
                     </div>
                 </div>
             </DialogContent>
+
+            {/* Unsaved Changes Warning */}
+            <AlertDialog open={showUnsavedDialog} onOpenChange={setShowUnsavedDialog}>
+                <AlertDialogContent className="bg-white border-slate-200 shadow-2xl sm:rounded-2xl">
+                    <AlertDialogHeader>
+                        <div className="flex items-center gap-3 mb-2">
+                            <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
+                                <AlertTriangle className="w-5 h-5 text-amber-600" />
+                            </div>
+                            <AlertDialogTitle className="text-lg font-semibold text-slate-900">
+                                Unsaved Changes
+                            </AlertDialogTitle>
+                        </div>
+                        <AlertDialogDescription className="text-sm text-slate-500 leading-relaxed pl-13">
+                            You have unsaved changes to this finding. If you close now, your changes will be lost.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter className="gap-2">
+                        <AlertDialogCancel 
+                            className="border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                            onClick={handleDiscardChanges}
+                        >
+                            Discard Changes
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={() => setShowUnsavedDialog(false)}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                        >
+                            Keep Editing
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </Dialog>
     )
 }
