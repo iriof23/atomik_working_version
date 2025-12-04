@@ -275,12 +275,12 @@ export function EditFindingModal({ finding, isOpen, onClose, onUpdate, onDelete,
                     </div>
                 </div>
 
-                {/* Body Layout */}
-                <div className="flex-1 min-h-0 flex">
+                {/* Body Layout - Centered with balanced spacing */}
+                <div className="flex-1 min-h-0 flex bg-slate-50/50">
                     
-                    {/* Sidebar (Metadata) - Wider for better balance */}
-                    <div className="w-80 shrink-0 border-r border-slate-100 bg-slate-50/80 overflow-y-auto scrollbar-thin">
-                        <div className="p-5 space-y-6">
+                    {/* Sidebar (Metadata) - Centered panel design */}
+                    <div className="w-[340px] shrink-0 overflow-y-auto scrollbar-thin">
+                        <div className="m-6 mr-3 p-6 bg-white rounded-2xl border border-slate-200/80 shadow-sm space-y-6">
                             
                             {/* Classification */}
                             <div className="space-y-4">
@@ -333,7 +333,7 @@ export function EditFindingModal({ finding, isOpen, onClose, onUpdate, onDelete,
                                 </div>
                             </div>
 
-                            <div className="border-t border-slate-200" />
+                            <div className="border-t border-slate-100" />
 
                             {/* Technical Specs */}
                             <div className="space-y-4">
@@ -370,7 +370,7 @@ export function EditFindingModal({ finding, isOpen, onClose, onUpdate, onDelete,
                                 </div>
                             </div>
 
-                            <div className="border-t border-slate-200" />
+                            <div className="border-t border-slate-100" />
 
                             {/* Affected Assets */}
                             <div className="space-y-3">
@@ -418,7 +418,7 @@ export function EditFindingModal({ finding, isOpen, onClose, onUpdate, onDelete,
                             </div>
 
                             {/* Live Preview - Full severity color */}
-                            <div className="border-t border-slate-200 pt-5">
+                            <div className="border-t border-slate-100 pt-5">
                                 <h4 className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-3">
                                     Preview
                                 </h4>
@@ -450,34 +450,38 @@ export function EditFindingModal({ finding, isOpen, onClose, onUpdate, onDelete,
                         </div>
                     </div>
 
-                    {/* Main Content (Editors) */}
-                    <div className="flex-1 overflow-y-auto bg-white scrollbar-thin">
-                        <div className="p-10 max-w-3xl mx-auto space-y-10 pb-24">
+                    {/* Main Content (Editors) - Centered card design */}
+                    <div className="flex-1 overflow-y-auto scrollbar-thin">
+                        <div className="m-6 ml-3 p-8 bg-white rounded-2xl border border-slate-200/80 shadow-sm space-y-8 mb-6">
                             
-                                {/* Description */}
+                            {/* Description */}
                             <section>
-                                <div className="flex items-center gap-2 mb-4">
-                                    <FileText className="w-4 h-4 text-slate-400" />
+                                <div className="flex items-center gap-2 mb-3">
+                                    <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center">
+                                        <FileText className="w-3.5 h-3.5 text-slate-500" />
+                                    </div>
                                     <h3 className="text-sm font-semibold text-slate-900">Description</h3>
                                 </div>
-                                        <Editor
-                                            content={localFinding.description}
-                                            onChange={(html) => handleChange({ description: html })}
+                                <Editor
+                                    content={localFinding.description}
+                                    onChange={(html) => handleChange({ description: html })}
                                     placeholder="Describe the vulnerability, its impact, and how it was discovered..."
                                     frameless
                                     className="min-h-[120px]"
-                                        />
+                                />
                             </section>
 
-                                {/* Remediation */}
-                            <section className="pt-8 border-t border-slate-100">
-                                <div className="flex items-center gap-2 mb-4">
-                                    <Wrench className="w-4 h-4 text-slate-400" />
+                            {/* Remediation */}
+                            <section className="pt-6 border-t border-slate-100">
+                                <div className="flex items-center gap-2 mb-3">
+                                    <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center">
+                                        <Wrench className="w-3.5 h-3.5 text-slate-500" />
+                                    </div>
                                     <h3 className="text-sm font-semibold text-slate-900">Remediation</h3>
                                 </div>
-                                        <Editor
-                                            content={localFinding.recommendations}
-                                            onChange={(html) => handleChange({ recommendations: html })}
+                                <Editor
+                                    content={localFinding.recommendations}
+                                    onChange={(html) => handleChange({ recommendations: html })}
                                     placeholder="Provide clear steps to fix or mitigate this vulnerability..."
                                     frameless
                                     className="min-h-[120px]"
@@ -486,42 +490,46 @@ export function EditFindingModal({ finding, isOpen, onClose, onUpdate, onDelete,
 
                             {/* Evidence - Only show for custom findings */}
                             {!isSystemLibrary && (
-                                <section className="pt-8 border-t border-slate-100">
-                                    <div className="flex items-center justify-between mb-4">
+                                <section className="pt-6 border-t border-slate-100">
+                                    <div className="flex items-center justify-between mb-3">
                                         <div className="flex items-center gap-2">
-                                            <Camera className="w-4 h-4 text-slate-400" />
+                                            <div className="w-7 h-7 rounded-lg bg-emerald-50 flex items-center justify-center">
+                                                <Camera className="w-3.5 h-3.5 text-emerald-600" />
+                                            </div>
                                             <h3 className="text-sm font-semibold text-slate-900">Proof of Concept & Evidence</h3>
                                         </div>
-                                        <span className="text-[10px] text-slate-400 uppercase tracking-wide">Optional</span>
+                                        <span className="text-[10px] text-slate-400 uppercase tracking-wide font-medium">Optional</span>
                                     </div>
-                                    <div className="border-2 border-dashed border-emerald-100 bg-emerald-50/20 rounded-xl p-1 hover:border-emerald-200 transition-colors">
-                                            <Editor
-                                                content={localFinding.evidence || ''}
-                                                onChange={(html) => handleChange({ evidence: html })}
+                                    <div className="border border-emerald-100 bg-emerald-50/30 rounded-xl p-1 hover:border-emerald-200 transition-colors">
+                                        <Editor
+                                            content={localFinding.evidence || ''}
+                                            onChange={(html) => handleChange({ evidence: html })}
                                             placeholder="Add screenshots, code snippets, or step-by-step reproduction..."
-                                                variant="evidence"
+                                            variant="evidence"
                                             className="min-h-[150px]"
-                                            />
+                                        />
                                     </div>
                                 </section>
                             )}
 
-                                {/* References */}
-                            <section className="pt-8 border-t border-slate-100">
-                                <div className="flex items-center justify-between mb-4">
+                            {/* References */}
+                            <section className="pt-6 border-t border-slate-100">
+                                <div className="flex items-center justify-between mb-3">
                                     <div className="flex items-center gap-2">
-                                        <Link2 className="w-4 h-4 text-slate-400" />
+                                        <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center">
+                                            <Link2 className="w-3.5 h-3.5 text-slate-500" />
+                                        </div>
                                         <h3 className="text-sm font-semibold text-slate-900">References</h3>
                                     </div>
-                                    <span className="text-[10px] text-slate-400 uppercase tracking-wide">Optional</span>
+                                    <span className="text-[10px] text-slate-400 uppercase tracking-wide font-medium">Optional</span>
                                 </div>
-                                        <Editor
-                                            content={localFinding.references || ''}
-                                            onChange={(html) => handleChange({ references: html })}
+                                <Editor
+                                    content={localFinding.references || ''}
+                                    onChange={(html) => handleChange({ references: html })}
                                     placeholder="Add links to OWASP, CVE, or other relevant resources..."
                                     frameless
                                     className="min-h-[80px]"
-                                        />
+                                />
                             </section>
                         </div>
                     </div>

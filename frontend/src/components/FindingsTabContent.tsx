@@ -55,7 +55,8 @@ export default function FindingsTabContent({ projectId: propProjectId, onUpdate 
     const [selectedFinding, setSelectedFinding] = useState<ProjectFinding | null>(null)
     const [showAddModal, setShowAddModal] = useState(false)
     const [showDeleteDialog, setShowDeleteDialog] = useState(false)
-    const [searchQuery, setSearchQuery] = useState('')
+    const [findingsSearch, setFindingsSearch] = useState('')  // For filtering displayed findings
+    const [modalSearchQuery, setModalSearchQuery] = useState('')  // For searching in add modal
     const [selectedVulns, setSelectedVulns] = useState<Vulnerability[]>([])
     const [isLoading, setIsLoading] = useState(false)
     const [isDeleting, setIsDeleting] = useState(false)
@@ -236,7 +237,7 @@ export default function FindingsTabContent({ projectId: propProjectId, onUpdate 
         // Reset modal state
         setShowAddModal(false)
         setSelectedVulns([])
-        setSearchQuery('')
+        setModalSearchQuery('')
 
             // Log activity for each finding
             newFindings.forEach((finding, index) => {
@@ -368,13 +369,26 @@ export default function FindingsTabContent({ projectId: propProjectId, onUpdate 
 
 
 
-    // Group findings by severity
+    // Filter findings based on search query
+    const filteredFindings = findings.filter(f => {
+        if (!findingsSearch.trim()) return true
+        const query = findingsSearch.toLowerCase()
+        return (
+            f.title.toLowerCase().includes(query) ||
+            f.severity.toLowerCase().includes(query) ||
+            f.status.toLowerCase().includes(query) ||
+            f.description?.toLowerCase().includes(query) ||
+            f.referenceId?.toLowerCase().includes(query)
+        )
+    })
+
+    // Group filtered findings by severity
     const groupedFindings = {
-        Critical: findings.filter(f => f.severity === 'Critical'),
-        High: findings.filter(f => f.severity === 'High'),
-        Medium: findings.filter(f => f.severity === 'Medium'),
-        Low: findings.filter(f => f.severity === 'Low'),
-        Informational: findings.filter(f => f.severity === 'Informational')
+        Critical: filteredFindings.filter(f => f.severity === 'Critical'),
+        High: filteredFindings.filter(f => f.severity === 'High'),
+        Medium: filteredFindings.filter(f => f.severity === 'Medium'),
+        Low: filteredFindings.filter(f => f.severity === 'Low'),
+        Informational: filteredFindings.filter(f => f.severity === 'Informational')
     }
 
     const getSeverityColor = (severity: string) => {
@@ -438,8 +452,8 @@ export default function FindingsTabContent({ projectId: propProjectId, onUpdate 
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <Input
                             placeholder="Search findings..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
+                            value={findingsSearch}
+                            onChange={(e) => setFindingsSearch(e.target.value)}
                             className="pl-9"
                         />
                     </div>
@@ -494,6 +508,26 @@ export default function FindingsTabContent({ projectId: propProjectId, onUpdate 
                                             Create Custom
                                         </button>
                                     </div>
+                                </div>
+                            </div>
+                        ) : filteredFindings.length === 0 ? (
+                            <div className="h-96 rounded-lg border border-dashed border-border bg-muted/30 flex flex-col items-center justify-center relative overflow-hidden">
+                                <div className="relative z-10 flex flex-col items-center text-center p-6">
+                                    <div className="w-16 h-16 rounded-2xl bg-muted border border-border flex items-center justify-center mb-6 shadow-xl">
+                                        <Search className="w-8 h-8 text-muted-foreground" />
+                                    </div>
+                                    <h3 className="text-lg font-medium text-foreground mb-2">
+                                        No findings match your search
+                                    </h3>
+                                    <p className="text-sm text-muted-foreground max-w-md mb-6">
+                                        Try adjusting your search terms or clear the filter to see all {findings.length} finding{findings.length !== 1 ? 's' : ''}.
+                                    </p>
+                                    <button
+                                        onClick={() => setFindingsSearch('')}
+                                        className="text-primary hover:text-primary/80 font-medium hover:underline transition-all"
+                                    >
+                                        Clear Search
+                                    </button>
                                 </div>
                             </div>
                         ) : (
@@ -572,8 +606,8 @@ export default function FindingsTabContent({ projectId: propProjectId, onUpdate 
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                                     <Input
                                         placeholder="Search vulnerabilities..."
-                                        value={searchQuery}
-                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        value={modalSearchQuery}
+                                        onChange={(e) => setModalSearchQuery(e.target.value)}
                                         className="pl-9"
                                     />
                                 </div>
@@ -582,8 +616,8 @@ export default function FindingsTabContent({ projectId: propProjectId, onUpdate 
                                 <div className="space-y-2 pr-2">
                                     {vulnerabilityDatabase
                                         .filter(v =>
-                                            v.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                                            v.description.toLowerCase().includes(searchQuery.toLowerCase())
+                                            v.title.toLowerCase().includes(modalSearchQuery.toLowerCase()) ||
+                                            v.description.toLowerCase().includes(modalSearchQuery.toLowerCase())
                                         )
                                         .map((vuln) => {
                                             const isSelected = selectedVulns.some(sv => sv.id === vuln.id)
@@ -700,7 +734,7 @@ export default function FindingsTabContent({ projectId: propProjectId, onUpdate 
                             onClick={() => {
                                 setShowAddModal(false)
                                 setSelectedVulns([])
-                                setSearchQuery('')
+                                setModalSearchQuery('')
                             }}
                         >
                             Cancel

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@clerk/clerk-react'
 import { ChevronLeft, FileText, BookOpen, Settings, Download, Save, ChevronDown, ChevronRight, Loader2, AlertTriangle } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
@@ -53,10 +53,22 @@ interface ReportData {
 export default function ReportEditor() {
     const { projectId: reportId } = useParams() // This is actually the report ID
     const navigate = useNavigate()
+    const [searchParams, setSearchParams] = useSearchParams()
     const { getToken } = useAuth()
     const { toast } = useToast()
     
-    const [activeTab, setActiveTab] = useState<TabType>('narrative')
+    // Get initial tab from URL params, default to 'narrative'
+    const tabFromUrl = searchParams.get('tab') as TabType | null
+    const validTabs: TabType[] = ['findings', 'narrative', 'settings', 'export']
+    const initialTab = tabFromUrl && validTabs.includes(tabFromUrl) ? tabFromUrl : 'narrative'
+    
+    const [activeTab, setActiveTabState] = useState<TabType>(initialTab)
+    
+    // Custom setter that also updates URL params
+    const setActiveTab = (tab: TabType) => {
+        setActiveTabState(tab)
+        setSearchParams({ tab }, { replace: true })
+    }
     const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
     const [showUnsavedDialog, setShowUnsavedDialog] = useState(false)
     const [actualFindingsCount, setActualFindingsCount] = useState(0)
