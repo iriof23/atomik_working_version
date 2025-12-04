@@ -1,13 +1,23 @@
 """
 Client management routes
+
+SECURITY: Input validation on all client data fields.
 """
 import re
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, field_validator
 from prisma import Prisma
 
 from app.api.routes.auth import get_current_user
+from app.core.validators import (
+    sanitize_string, 
+    validate_phone, 
+    validate_url,
+    MAX_TITLE_LENGTH,
+    MAX_SHORT_TEXT_LENGTH,
+    MAX_URL_LENGTH
+)
 from app.db import db
 
 
@@ -82,6 +92,35 @@ class ClientCreate(BaseModel):
     risk_level: Optional[str] = "Medium"
     tags: Optional[str] = None  # JSON array as string
     notes: Optional[str] = None
+    
+    # Input validation
+    @field_validator('name')
+    @classmethod
+    def validate_name(cls, v):
+        if not v or not v.strip():
+            raise ValueError('Client name is required')
+        return sanitize_string(v, MAX_TITLE_LENGTH)
+    
+    @field_validator('contact_phone')
+    @classmethod
+    def validate_contact_phone(cls, v):
+        if v:
+            return validate_phone(v)
+        return v
+    
+    @field_validator('website_url')
+    @classmethod
+    def validate_website(cls, v):
+        if v:
+            return validate_url(v)
+        return v
+    
+    @field_validator('contact_name', 'address', 'industry', 'company_size', 'notes')
+    @classmethod
+    def sanitize_text_fields(cls, v):
+        if v:
+            return sanitize_string(v, MAX_SHORT_TEXT_LENGTH)
+        return v
 
 
 class ClientUpdate(BaseModel):
@@ -98,6 +137,35 @@ class ClientUpdate(BaseModel):
     risk_level: Optional[str] = None
     tags: Optional[str] = None
     notes: Optional[str] = None
+    
+    # Input validation (same as ClientCreate but name is optional)
+    @field_validator('name')
+    @classmethod
+    def validate_name(cls, v):
+        if v:
+            return sanitize_string(v, MAX_TITLE_LENGTH)
+        return v
+    
+    @field_validator('contact_phone')
+    @classmethod
+    def validate_contact_phone(cls, v):
+        if v:
+            return validate_phone(v)
+        return v
+    
+    @field_validator('website_url')
+    @classmethod
+    def validate_website(cls, v):
+        if v:
+            return validate_url(v)
+        return v
+    
+    @field_validator('contact_name', 'address', 'industry', 'company_size', 'notes')
+    @classmethod
+    def sanitize_text_fields(cls, v):
+        if v:
+            return sanitize_string(v, MAX_SHORT_TEXT_LENGTH)
+        return v
 
 
 class ClientResponse(BaseModel):

@@ -2,11 +2,16 @@
 File upload routes for evidence and attachments
 
 SECURITY: This module handles file uploads which is a critical attack vector.
-All uploaded files, especially SVGs, are sanitized before storage.
+All uploaded files are validated using:
+1. Extension whitelist
+2. Magic byte verification (content-based type detection)
+3. SVG sanitization (removes embedded scripts)
+4. File size limits
 """
 import os
 import re
 import uuid
+import logging
 from pathlib import Path
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
@@ -15,7 +20,10 @@ import aiofiles
 
 from app.api.routes.auth import get_current_user
 from app.core.config import settings
+from app.core.file_validation import validate_upload, is_safe_image
 from app.db import db
+
+logger = logging.getLogger(__name__)
 
 
 router = APIRouter()
@@ -128,24 +136,38 @@ async def upload_screenshot(
     """
     Upload a screenshot and return permanent URL (public endpoint for demo).
     
-    SECURITY: SVG files are sanitized to remove embedded scripts and event handlers.
+    SECURITY:
+    - Extension whitelist validation
+    - Magic byte verification (prevents extension spoofing)
+    - SVG sanitization (removes embedded scripts and event handlers)
+    - File size limits
     """
     # Read file content to get size
     content = await file.read()
     filesize = len(content)
     
-    # Validate file
+    # Basic validation (extension and size)
     validate_file(file.filename, filesize)
     
-    # Validate it's an image
+    # Validate it's an image by content-type header
     if not file.content_type or not file.content_type.startswith('image/'):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="File must be an image"
         )
     
-    # Generate unique filename
     ext = get_file_extension(file.filename)
+    
+    # SECURITY: Magic byte validation - verify file content matches extension
+    is_safe, reason = is_safe_image(content, ext)
+    if not is_safe:
+        logger.warning(f"Image upload rejected: {reason} (filename: {file.filename})")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid image file: {reason}"
+        )
+    
+    # Generate unique filename
     unique_filename = f"{uuid.uuid4()}.{ext}"
     filepath = os.path.join(settings.UPLOAD_DIR, unique_filename)
     
@@ -156,6 +178,8 @@ async def upload_screenshot(
     # Save file
     async with aiofiles.open(filepath, 'wb') as f:
         await f.write(content)
+    
+    logger.info(f"Screenshot uploaded: {unique_filename} ({filesize} bytes)")
     
     # Return URL (relative to the uploads directory)
     return {

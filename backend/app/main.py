@@ -1,5 +1,12 @@
 """
 FastAPI application entry point
+
+SECURITY: This application includes multiple security layers:
+- Rate limiting middleware (prevents abuse)
+- CORS configuration (prevents unauthorized cross-origin requests)
+- Input validation (Pydantic models)
+- HTML sanitization (prevents XSS)
+- File validation (magic bytes, SVG sanitization)
 """
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
@@ -10,6 +17,7 @@ from pathlib import Path
 from prisma import Prisma
 
 from app.core.config import settings
+from app.core.rate_limit import RateLimitMiddleware
 from app.db import db
 from app.api.routes import auth, clients, projects, findings, reports, templates, uploads, billing, webhooks, orgs, ai, imports
 
@@ -33,7 +41,14 @@ app = FastAPI(
     redoc_url="/api/redoc" if settings.DEBUG else None,
 )
 
-# Add middleware
+# Add middleware (order matters - first added = last executed)
+# GZip compression for responses
+app.add_middleware(GZipMiddleware, minimum_size=1000)
+
+# Rate limiting - protects against abuse and DoS
+app.add_middleware(RateLimitMiddleware)
+
+# CORS - must be outermost for preflight requests
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
@@ -41,7 +56,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 # Include routers
 app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
