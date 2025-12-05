@@ -36,14 +36,10 @@ export const Editor = ({
             const formData = new FormData();
             formData.append('file', file);
 
-            console.log('[Upload] Starting upload for file:', file.name, 'Size:', file.size);
-
             const response = await fetch('http://localhost:8000/api/uploads/screenshot', {
                 method: 'POST',
                 body: formData,
             });
-
-            console.log('[Upload] Response status:', response.status);
 
             if (!response.ok) {
                 const errorText = await response.text();
@@ -53,7 +49,6 @@ export const Editor = ({
             }
 
             const data = await response.json();
-            console.log('[Upload] Success:', data);
             return `http://localhost:8000${data.url}`;
         } catch (error) {
             console.error('[Upload] Exception:', error);
@@ -217,8 +212,6 @@ export const Editor = ({
                         const codeBlock = codeBlockType.create(null, textNode);
                         const transaction = view.state.tr.replaceSelectionWith(codeBlock);
                         view.dispatch(transaction);
-                        
-                        console.log('[Security] Auto-wrapped potentially dangerous content in code block');
                     }
                     return true;
                 }
@@ -253,8 +246,6 @@ export const Editor = ({
                         );
                         dispatch(tr.replaceSelectionWith(slice.firstChild || state.schema.text(textContent)));
                     }
-                    
-                    console.log('[Security] Sanitized HTML paste content');
                     return true;
                 }
                 

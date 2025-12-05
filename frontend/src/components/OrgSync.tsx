@@ -32,17 +32,14 @@ export default function OrgSync() {
             }
             
             try {
-                console.log('🔄 Syncing organization to backend:', organization.name)
-                
                 // Get auth token
                 const token = await getToken()
                 if (!token) {
-                    console.error('No auth token available for org sync')
                     return
                 }
                 
                 // Sync organization to backend
-                const response = await api.post(
+                await api.post(
                     '/v1/orgs/sync',
                     {
                         id: organization.id,
@@ -56,7 +53,6 @@ export default function OrgSync() {
                     }
                 )
                 
-                console.log('✅ Organization synced:', response.data)
                 lastSyncedOrgId.current = organization.id
                 
             } catch (error: any) {

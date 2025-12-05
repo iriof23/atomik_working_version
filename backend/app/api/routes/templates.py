@@ -48,15 +48,22 @@ async def list_templates(
     current_user = Depends(get_current_user)
 ):
     """List all templates (organization + public)"""
-    where_clause = {
-        "OR": [
-            {"isPublic": True},
-            {"organizationId": current_user.organizationId} if current_user.organizationId else {"organizationId": None}
-        ]
-    }
+    or_conditions = [
+        {"isPublic": True},
+        {"organizationId": current_user.organizationId} if current_user.organizationId else {"organizationId": None}
+    ]
     
+    where_clause = {"OR": or_conditions}
+    
+    # If type filter is provided, wrap in AND with uppercase enum value
     if type:
-        where_clause["type"] = type
+        type_upper = type.upper()  # Convert "finding" -> "FINDING" for Prisma enum
+        where_clause = {
+            "AND": [
+                {"OR": or_conditions},
+                {"type": type_upper}
+            ]
+        }
     
     templates = await db.template.find_many(
         where=where_clause,

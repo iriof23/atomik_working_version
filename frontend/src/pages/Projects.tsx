@@ -63,62 +63,35 @@ import {
     addMonths,
     format
 } from 'date-fns'
+import { Project } from '@/types'
 
-// Project interface
-export interface Project {
+// Re-export for backwards compatibility
+export type { Project } from '@/types'
+
+// API response type for projects
+interface APIProjectResponse {
     id: string
     name: string
-    clientId: string
-    clientName: string
-    clientLogoUrl?: string
-
-    // Project details
-    type: 'External' | 'Internal' | 'Web App' | 'Mobile' | 'API' | 'Cloud' | 'Network'
-    status: 'Planning' | 'In Progress' | 'On Hold' | 'Completed' | 'Cancelled'
-    priority: 'Critical' | 'High' | 'Medium' | 'Low'
-
-    // Timeline
-    startDate: Date
-    endDate: Date
-    progress: number // 0-100
-
-    // Scope
-    scope: string[]
-    methodology: string // e.g., "OWASP", "PTES", "NIST"
-
-    // Team
-    teamMembers: {
-        id: string
-        name: string
-        role: string
-        avatarUrl?: string
-    }[]
-    leadTester: string
-
-    // Metrics
-    findingsCount: number
-    findingsBySeverity: {
-        critical: number
-        high: number
-        medium: number
-        low: number
-    }
-
-    // Compliance
-    complianceFrameworks: string[] // e.g., ["PCI-DSS", "SOC2"]
-
-    // Metadata
-    description: string
-    lastActivity: string
-    lastActivityDate: Date
-    createdAt: Date
-    updatedAt: Date
-    
-    // Retest fields
-    isRetest?: boolean
-    parentProjectId?: string
-    parentProjectName?: string
-    retestCount?: number
+    client_id: string
+    client_name: string
+    project_type: string
+    status: string
+    priority: string
+    start_date?: string
+    end_date?: string
+    finding_count?: number
+    findings_by_severity?: { critical: number; high: number; medium: number; low: number }
+    updated_at: string
+    created_at: string
+    description?: string
+    scope?: string | string[]
+    methodology?: string
+    lead_name?: string
+    compliance_frameworks?: string | string[]
+    is_retest?: boolean
+    parent_project_id?: string
+    parent_project_name?: string
+    retest_count?: number
 }
 
 
@@ -177,29 +150,25 @@ export default function Projects() {
                     setClients([])
                     return
                 }
-                console.log('Fetching clients from API...')
                 // Use trailing slash to avoid 307 redirect
                 const response = await api.get('/clients/', {
                     headers: { Authorization: `Bearer ${token}` }
                 })
-                console.log('API response:', response.data)
                 
                 // Map API response to expected format
                 if (Array.isArray(response.data) && response.data.length > 0) {
-                    const mappedClients = response.data.map((c: any) => ({
+                    const mappedClients = response.data.map((c: { id: string; name: string }) => ({
                         id: c.id,
                         name: c.name,
                         logoUrl: '' // No default icon
                     }))
-                    console.log('Fetched clients for dropdown:', mappedClients)
                     setClients(mappedClients)
                 } else {
-                    console.warn('No clients returned from API')
                     setClients([])
                 }
-            } catch (error: any) {
+            } catch (error) {
                 console.error('Failed to fetch clients:', error)
-                if (error.response) {
+                if ((error as { response?: unknown }).response) {
                     console.error('Error response:', error.response.status, error.response.data)
                 }
                 setClients([])
@@ -211,7 +180,7 @@ export default function Projects() {
         fetchClients()
     }, [addProjectDialogOpen, getToken])
 
-    const parseScopeField = (rawScope: any): string[] => {
+    const parseScopeField = (rawScope: string | string[] | null | undefined): string[] => {
         if (!rawScope) return []
         if (Array.isArray(rawScope)) return rawScope.filter(Boolean)
         
@@ -243,21 +212,17 @@ export default function Projects() {
             try {
                 const token = await getToken()
                 if (!token) {
-                    console.warn('No auth token available')
                     setProjects([])
                     return
                 }
                 
-                console.log('Fetching projects from API...')
                 const response = await api.get('/projects/', {
                     headers: { Authorization: `Bearer ${token}` }
                 })
                 
-                console.log('API projects response:', response.data)
-                
                 if (Array.isArray(response.data) && response.data.length > 0) {
                     // Map API response to frontend Project format
-                    const apiProjects: Project[] = response.data.map((p: any) => {
+                    const apiProjects: Project[] = response.data.map((p: APIProjectResponse) => {
                         // Parse JSON strings for scope and complianceFrameworks
                         const parsedScope = parseScopeField(p.scope)
                         
@@ -323,10 +288,8 @@ export default function Projects() {
                         }
                     })
                     
-                    console.log(`Loaded ${apiProjects.length} real projects from API`)
                     setProjects(apiProjects)
                 } else {
-                    console.log('No projects from API')
                     setProjects([])
                 }
             } catch (error) {
@@ -386,7 +349,7 @@ export default function Projects() {
         setAddProjectDialogOpen(true)
     }
 
-    const handleProjectAdded = (newProject: any) => {
+    const handleProjectAdded = (newProject: APIProjectResponse) => {
         // Map the status to title case (API returns uppercase like "PLANNING")
         const mappedProject = {
             ...newProject,
@@ -490,7 +453,7 @@ export default function Projects() {
                 // Navigate to the new retest project
                 navigate(`/projects`)
             }
-        } catch (error: any) {
+        } catch (error) {
             console.error('Failed to create retest:', error)
             toast({
                 title: "Error",
@@ -535,7 +498,7 @@ export default function Projects() {
                 title: "Project Deleted",
                 description: `${deletingProject.name} has been permanently removed.`,
             })
-        } catch (error: any) {
+        } catch (error) {
             console.error('Failed to delete project:', error)
             toast({
                 title: "Error",
@@ -599,7 +562,7 @@ export default function Projects() {
                 const scope = project.scope?.join('; ') || ''
                 
                 // Escape commas and quotes in CSV values
-                const escapeCSV = (value: any) => {
+                const escapeCSV = (value: string | number | boolean | null | undefined) => {
                     if (value === null || value === undefined) return ''
                     const str = String(value)
                     if (str.includes(',') || str.includes('"') || str.includes('\n')) {

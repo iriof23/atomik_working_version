@@ -45,12 +45,10 @@ import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
 import { api } from '@/lib/api'
+import { ClientBasic } from '@/types'
 
-interface Client {
-    id: string
-    name: string
-    logoUrl?: string
-}
+// Use ClientBasic for dropdown list
+type Client = ClientBasic
 
 interface EditingProject {
     id: string

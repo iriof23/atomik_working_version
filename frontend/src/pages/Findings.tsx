@@ -48,14 +48,37 @@ import { StatCard } from '@/components/StatCard'
 import { Card } from '@/components/ui/card'
 import { useAuth } from '@clerk/clerk-react'
 import { api } from '@/lib/api'
+import { FindingTemplate } from '@/types'
+
+// API response type for template
+interface APITemplateResponse {
+    id: string
+    name: string
+    content: string
+    created_at?: string
+}
+
+// Finding input type for create/update
+interface FindingInput {
+    id?: string
+    title: string
+    severity: string
+    category: string
+    description: string
+    remediation?: string
+    evidence?: string
+    references?: string
+    cvssScore?: number
+    cvssVector?: string
+}
 
 export default function Findings() {
     const [activeTab, setActiveTab] = useState<'system' | 'custom'>('system')
     const [selectedCategory, setSelectedCategory] = useState<string>('All')
     const [selectedSeverity, setSelectedSeverity] = useState<string>('All')
-    const [customFindings, setCustomFindings] = useState<any[]>([])
+    const [customFindings, setCustomFindings] = useState<FindingTemplate[]>([])
     const [addDialogOpen, setAddDialogOpen] = useState(false)
-    const [editingFinding, setEditingFinding] = useState<any>(null)
+    const [editingFinding, setEditingFinding] = useState<FindingTemplate | null>(null)
     const [isLoading, setIsLoading] = useState(false)
     const { toast } = useToast()
     const { getToken } = useAuth()
@@ -81,7 +104,7 @@ export default function Findings() {
 
                 if (response.data && Array.isArray(response.data)) {
                     // Parse template content back to finding objects
-                    const findings = response.data.map((template: any) => {
+                    const findings = response.data.map((template: APITemplateResponse) => {
                         try {
                             const content = JSON.parse(template.content)
                             return {
@@ -111,7 +134,7 @@ export default function Findings() {
     }, [getToken])
 
     // Create new finding template via API
-    const createFindingTemplate = async (finding: any) => {
+    const createFindingTemplate = async (finding: FindingInput) => {
         try {
             const token = await getToken()
             if (!token) return null
@@ -134,7 +157,7 @@ export default function Findings() {
     }
 
     // Update finding template via API
-    const updateFindingTemplate = async (id: string, finding: any) => {
+    const updateFindingTemplate = async (id: string, finding: FindingInput) => {
         try {
             const token = await getToken()
             if (!token) return null
@@ -214,7 +237,7 @@ export default function Findings() {
         }
     }
 
-    const handleAddFinding = async (newFinding: any) => {
+    const handleAddFinding = async (newFinding: FindingInput) => {
         try {
             const template = await createFindingTemplate(newFinding)
             if (template) {
@@ -239,7 +262,7 @@ export default function Findings() {
         }
     }
 
-    const handleDuplicate = async (finding: any) => {
+    const handleDuplicate = async (finding: FindingTemplate) => {
         const duplicatedFinding = {
             ...finding,
             title: `${finding.title} (Copy)`,
@@ -290,7 +313,7 @@ export default function Findings() {
         }
     }
 
-    const handleEdit = (finding: any) => {
+    const handleEdit = (finding: FindingTemplate) => {
         // Map finding to ProjectFinding format expected by EditFindingModal
         const mappedFinding: ProjectFinding = {
             id: finding.id,

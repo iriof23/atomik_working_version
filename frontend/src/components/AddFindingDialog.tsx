@@ -106,7 +106,7 @@ export function AddFindingDialog({ open, onOpenChange, onFindingAdded }: AddFind
     return (
         <Dialog open={open} onOpenChange={(opening) => !opening && handleClose()}>
             <DialogContent 
-                className="max-w-4xl h-[85vh] flex flex-col gap-0 p-0 bg-white border-slate-200 overflow-hidden [&>button]:hidden sm:rounded-2xl shadow-2xl"
+                className="max-w-[90vw] w-full h-[90vh] p-0 gap-0 bg-white border-slate-200 shadow-2xl flex flex-col overflow-hidden [&>button]:hidden sm:rounded-2xl"
                 onInteractOutside={(e) => {
                     if (isDirty) {
                         e.preventDefault()
@@ -119,132 +119,155 @@ export function AddFindingDialog({ open, onOpenChange, onFindingAdded }: AddFind
                         setShowUnsavedDialog(true)
                     }
                 }}
+                onOpenAutoFocus={(e) => e.preventDefault()}
             >
-                {/* Premium Header */}
-                <div className="px-6 py-5 border-b border-slate-100 bg-gradient-to-b from-slate-50/80 to-white shrink-0">
-                    <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg">
-                                <Shield className="w-6 h-6 text-white" />
-                            </div>
-                            <div>
-                                <h2 className="text-lg font-bold text-slate-900 tracking-tight">New Vulnerability Template</h2>
-                                <p className="text-xs text-slate-500 mt-0.5">Create a reusable finding for your security assessments</p>
+                {/* Premium Header - Matching System Library */}
+                <div className="border-b border-slate-100 bg-gradient-to-b from-slate-50/80 to-white shrink-0">
+                    <div className="px-6 py-4 grid grid-cols-[auto_1fr_auto] items-center gap-4">
+                        {/* Gradient Shield Icon */}
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg">
+                            <Shield className="w-6 h-6 text-white" />
+                        </div>
+                        
+                        {/* Title and Metadata */}
+                        <div className="min-w-0">
+                            <Input 
+                                value={formData.title} 
+                                onChange={(e) => handleFormChange({ title: e.target.value })}
+                                placeholder="Enter finding title..."
+                                className="font-bold text-xl border-none px-0 h-8 focus-visible:ring-0 bg-transparent text-slate-900 placeholder:text-slate-400 shadow-none w-full"
+                                autoFocus
+                            />
+                            
+                            {/* Metadata Pills */}
+                            <div className="flex items-center gap-2 text-xs mt-1.5 flex-wrap">
+                                <span className={cn(
+                                    'inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wide border',
+                                    currentSeverity.bg, currentSeverity.color, currentSeverity.border
+                                )}>
+                                    {(() => {
+                                        const Icon = currentSeverity.icon
+                                        return <Icon className="w-3 h-3" />
+                                    })()}
+                                    {formData.severity}
+                                </span>
+                                <span className="text-slate-300">•</span>
+                                <span className="text-[11px] text-slate-500">
+                                    {formData.category}
+                                </span>
+                                {formData.owasp_reference && (
+                                    <>
+                                        <span className="text-slate-300">•</span>
+                                        <span className="font-mono text-[11px] text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
+                                            {formData.owasp_reference}
+                                        </span>
+                                    </>
+                                )}
+                                {isDirty && (
+                                    <>
+                                        <span className="text-slate-300">•</span>
+                                        <span className="text-amber-600 font-medium flex items-center gap-1 text-[11px]">
+                                            <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse" />
+                                            Unsaved changes
+                                        </span>
+                                    </>
+                                )}
                             </div>
                         </div>
-                        <button 
-                            onClick={() => onOpenChange(false)}
-                            className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
-                        >
-                            <X className="w-4 h-4" />
-                        </button>
+                        
+                        {/* Actions */}
+                        <div className="flex items-center gap-2">
+                            <Button variant="ghost" size="sm" onClick={handleClose} className="text-slate-500 hover:text-slate-900 text-xs">
+                                Cancel
+                            </Button>
+                            <Button 
+                                onClick={handleSubmit}
+                                size="sm"
+                                disabled={!formData.title || !formData.description}
+                                className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-4 shadow-sm disabled:opacity-50 gap-1.5"
+                            >
+                                <Shield className="w-3.5 h-3.5 shrink-0" />
+                                <span>Save</span>
+                            </Button>
+                        </div>
                     </div>
                 </div>
 
-                {/* Split Layout: Sidebar + Content */}
-                <div className="flex-1 flex overflow-hidden">
-                    {/* Left Sidebar - Metadata */}
-                    <div className="w-72 shrink-0 bg-slate-50/80 border-r border-slate-100 p-5 overflow-y-auto scrollbar-thin">
-                        <div className="space-y-5">
-                            {/* Title */}
-                            <div>
-                                <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2 block">
-                                    Finding Title
-                                </label>
-                                <Input
-                                    value={formData.title}
-                                    onChange={(e) => handleFormChange({ title: e.target.value })}
-                                    placeholder="e.g. SQL Injection"
-                                    className="h-9 bg-white border-slate-200 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus-visible:ring-emerald-500/20 focus-visible:border-emerald-500"
-                                    autoFocus
-                                />
-                            </div>
-
-                            {/* Severity */}
-                            <div>
-                                <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2 block">
-                                    Severity
-                                </label>
-                                <Select
-                                    value={formData.severity}
-                                    onValueChange={(value) => handleFormChange({ severity: value })}
-                                >
-                                    <SelectTrigger className="h-9 bg-white border-slate-200 text-sm font-medium text-slate-900">
-                                        <SelectValue placeholder="Select severity" />
-                                    </SelectTrigger>
-                                    <SelectContent className="bg-white border-slate-200">
-                                        {Object.entries(severityConfig).map(([level, config]) => {
-                                            const Icon = config.icon
-                                            const colorMap: Record<string, string> = {
-                                                Critical: 'text-red-600',
-                                                High: 'text-orange-600',
-                                                Medium: 'text-amber-600',
-                                                Low: 'text-emerald-600',
-                                                Info: 'text-slate-600'
-                                            }
-                                            return (
-                                                <SelectItem key={level} value={level} className="text-sm">
-                                                    <div className="flex items-center gap-2">
-                                                        <Icon className={cn("w-3.5 h-3.5", colorMap[level])} />
-                                                        <span className={colorMap[level]}>{level}</span>
-                                                    </div>
-                                                </SelectItem>
-                                            )
-                                        })}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-
-                            {/* Category */}
-                            <div>
-                                <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2 block">
-                                    Category
-                                </label>
-                                <Select
-                                    value={formData.category}
-                                    onValueChange={(value) => handleFormChange({ category: value })}
-                                >
-                                    <SelectTrigger className="h-9 bg-white border-slate-200 text-sm text-slate-900">
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent className="bg-white border-slate-200">
-                                        <SelectItem value="Web">Web Application</SelectItem>
-                                        <SelectItem value="Mobile">Mobile</SelectItem>
-                                        <SelectItem value="Network">Network</SelectItem>
-                                        <SelectItem value="Cloud">Cloud Infrastructure</SelectItem>
-                                        <SelectItem value="API">API Security</SelectItem>
-                                        <SelectItem value="Database">Database</SelectItem>
-                                        <SelectItem value="Other">Other</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-
-                            <div className="border-t border-slate-200 pt-5">
-                                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-3">
-                                    References
-                                </p>
-                                
-                                {/* OWASP */}
-                                <div className="mb-4">
-                                    <label className="text-[10px] text-slate-500 mb-1.5 block">OWASP ID</label>
-                                    <Input
-                                        value={formData.owasp_reference}
-                                        onChange={(e) => handleFormChange({ owasp_reference: e.target.value })}
-                                        placeholder="A01:2021"
-                                        className="h-8 bg-white border-slate-200 text-xs font-mono text-slate-700 placeholder:text-slate-400"
-                                    />
+                {/* Body Layout - Matching System Library */}
+                <div className="flex-1 min-h-0 flex bg-slate-50/50">
+                    {/* Sidebar (Metadata) - Centered panel design */}
+                    <div className="w-[340px] shrink-0 overflow-y-auto scrollbar-thin">
+                        <div className="m-6 mr-3 p-6 bg-white rounded-2xl border border-slate-200/80 shadow-sm space-y-6">
+                            
+                            {/* Classification */}
+                            <div className="space-y-4">
+                                <h4 className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                                    Classification
+                                </h4>
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="text-[10px] text-slate-500 mb-1.5 block">Severity</label>
+                                        <Select
+                                            value={formData.severity}
+                                            onValueChange={(value) => handleFormChange({ severity: value })}
+                                        >
+                                            <SelectTrigger className="h-9 bg-white text-sm font-medium border-slate-200 !text-slate-900 [&>span]:!text-slate-900">
+                                                <SelectValue placeholder="Select severity" className="!text-slate-900" />
+                                            </SelectTrigger>
+                                            <SelectContent className="bg-white border-slate-200">
+                                                {Object.entries(severityConfig).map(([level, config]) => {
+                                                    const Icon = config.icon
+                                                    return (
+                                                        <SelectItem key={level} value={level} className="text-sm !text-slate-900">
+                                                            <div className="flex items-center gap-2">
+                                                                <Icon className="w-3.5 h-3.5 text-slate-600" />
+                                                                <span className="text-slate-900">{level}</span>
+                                                            </div>
+                                                        </SelectItem>
+                                                    )
+                                                })}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] text-slate-500 mb-1.5 block">Category</label>
+                                        <Select
+                                            value={formData.category}
+                                            onValueChange={(value) => handleFormChange({ category: value })}
+                                        >
+                                            <SelectTrigger className="h-9 bg-white text-sm font-medium border-slate-200 text-slate-700">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent className="bg-white border-slate-200">
+                                                <SelectItem value="Web" className="text-sm text-slate-700">Web Application</SelectItem>
+                                                <SelectItem value="Mobile" className="text-sm text-slate-700">Mobile</SelectItem>
+                                                <SelectItem value="Network" className="text-sm text-slate-700">Network</SelectItem>
+                                                <SelectItem value="Cloud" className="text-sm text-slate-700">Cloud Infrastructure</SelectItem>
+                                                <SelectItem value="API" className="text-sm text-slate-700">API Security</SelectItem>
+                                                <SelectItem value="Database" className="text-sm text-slate-700">Database</SelectItem>
+                                                <SelectItem value="Other" className="text-sm text-slate-700">Other</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
                                 </div>
+                            </div>
 
-                                {/* CVSS */}
+                            <div className="border-t border-slate-100" />
+
+                            {/* Technical Specs */}
+                            <div className="space-y-4">
+                                <h4 className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                                    Technical
+                                </h4>
                                 <div>
-                                    <label className="text-[10px] text-slate-500 mb-1.5 block">CVSS Vector</label>
+                                    <label className="text-[10px] text-slate-500 mb-1.5 block">CVSS Score</label>
                                     <div className="flex gap-1.5">
                                         <Input
                                             key={`cvss-${formData.cvss_vector?.slice(-10) || 'empty'}`}
                                             value={formData.cvss_vector}
                                             onChange={(e) => handleFormChange({ cvss_vector: e.target.value })}
                                             placeholder="CVSS:3.1/AV:N/AC:L/..."
-                                            className="h-8 bg-white border-slate-200 text-[10px] font-mono text-slate-700 placeholder:text-slate-400 flex-1"
+                                            className="h-8 font-mono text-[10px] bg-white border-slate-200 text-slate-900 placeholder:text-slate-400 flex-1"
                                         />
                                         <CVSSCalculator
                                             vector={formData.cvss_vector}
@@ -256,14 +279,28 @@ export function AddFindingDialog({ open, onOpenChange, onFindingAdded }: AddFind
                                             }}
                                         />
                                     </div>
+                                    <p className="text-[10px] text-slate-400 font-mono mt-1 line-clamp-1">
+                                        {formData.cvss_vector || 'Vector will be generated after applying a score'}
+                                    </p>
+                                </div>
+                                <div>
+                                    <label className="text-[10px] text-slate-500 mb-1.5 block">OWASP Reference</label>
+                                    <Input
+                                        value={formData.owasp_reference}
+                                        onChange={(e) => handleFormChange({ owasp_reference: e.target.value })}
+                                        placeholder="A01:2021"
+                                        className="h-8 bg-white border-slate-200 text-xs font-mono text-slate-700 placeholder:text-slate-400"
+                                    />
                                 </div>
                             </div>
 
-                            {/* Quick Stats Preview */}
-                            <div className="border-t border-slate-200 pt-5">
-                                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-3">
+                            <div className="border-t border-slate-100" />
+
+                            {/* Preview Card */}
+                            <div className="space-y-3">
+                                <h4 className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
                                     Preview
-                                </p>
+                                </h4>
                                 <div className={cn(
                                     "p-3 rounded-lg border",
                                     currentSeverity.bg,
@@ -278,10 +315,10 @@ export function AddFindingDialog({ open, onOpenChange, onFindingAdded }: AddFind
                                             {formData.severity}
                                         </span>
                                     </div>
-                                    <p className="text-sm font-medium text-slate-900 truncate">
+                                    <p className="text-sm font-medium text-white truncate">
                                         {formData.title || 'Untitled Finding'}
                                     </p>
-                                    <p className="text-[10px] text-slate-500 mt-1">
+                                    <p className="text-[10px] text-white/70 mt-1">
                                         {formData.category} • {formData.owasp_reference || 'No OWASP ref'}
                                     </p>
                                 </div>
@@ -290,8 +327,8 @@ export function AddFindingDialog({ open, onOpenChange, onFindingAdded }: AddFind
                     </div>
 
                     {/* Right Content - Editors */}
-                    <div className="flex-1 overflow-y-auto bg-white scrollbar-thin">
-                        <div className="p-8 space-y-8">
+                    <div className="flex-1 overflow-y-auto scrollbar-thin">
+                        <div className="m-6 ml-3 p-8 bg-white rounded-2xl border border-slate-200/80 shadow-sm space-y-8">
                             {/* Description */}
                             <section>
                                 <div className="flex items-center gap-2 mb-4">
@@ -324,7 +361,7 @@ export function AddFindingDialog({ open, onOpenChange, onFindingAdded }: AddFind
                                 />
                             </section>
 
-                            {/* Evidence */}
+                            {/* Evidence / Proof of Concept */}
                             <section className="pt-6 border-t border-slate-100">
                                 <div className="flex items-center justify-between mb-4">
                                     <div className="flex items-center gap-2">
@@ -337,40 +374,13 @@ export function AddFindingDialog({ open, onOpenChange, onFindingAdded }: AddFind
                                     <Editor
                                         content={formData.evidence}
                                         onChange={(html) => handleFormChange({ evidence: html })}
-                                        placeholder="Add screenshots, code snippets, or step-by-step reproduction..."
+                                        placeholder="Type reproduction steps, paste code snippets, or drag & drop screenshots here..."
                                         variant="evidence"
                                         className="min-h-[160px]"
                                     />
                                 </div>
                             </section>
                         </div>
-                    </div>
-                </div>
-
-                {/* Premium Footer */}
-                <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/30 shrink-0 flex items-center justify-between">
-                    <p className="text-[10px] text-slate-400">
-                        {formData.title ? '✓ Title' : '○ Title'} • {formData.description ? '✓ Description' : '○ Description'} • {formData.remediation ? '✓ Remediation' : '○ Remediation'}
-                    </p>
-                    <div className="flex gap-2">
-                        <Button 
-                            type="button" 
-                            variant="ghost"
-                            size="sm"
-                            onClick={handleClose}
-                            className="text-slate-500 hover:text-slate-900 hover:bg-slate-100 text-xs"
-                        >
-                            Cancel
-                        </Button>
-                        <Button 
-                            onClick={handleSubmit}
-                            size="sm"
-                            disabled={!formData.title || !formData.description}
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-5 shadow-sm disabled:opacity-50"
-                        >
-                            <Shield className="w-3.5 h-3.5 mr-1.5" />
-                            Add Finding
-                        </Button>
                     </div>
                 </div>
             </DialogContent>

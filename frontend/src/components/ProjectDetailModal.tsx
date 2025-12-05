@@ -27,55 +27,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-
-interface Project {
-    id: string
-    name: string
-    clientId: string
-    clientName: string
-    clientLogoUrl?: string
-
-    type: 'External' | 'Internal' | 'Web App' | 'Mobile' | 'API' | 'Cloud' | 'Network'
-    status: 'Planning' | 'In Progress' | 'On Hold' | 'Completed' | 'Cancelled'
-    priority: 'Critical' | 'High' | 'Medium' | 'Low'
-
-    startDate: Date
-    endDate: Date
-    progress: number
-
-    scope: string[]
-    methodology: string
-
-    teamMembers: {
-        id: string
-        name: string
-        role: string
-        avatarUrl?: string
-    }[]
-    leadTester: string
-
-    findingsCount: number
-    findingsBySeverity: {
-        critical: number
-        high: number
-        medium: number
-        low: number
-    }
-
-    complianceFrameworks: string[]
-
-    description: string
-    lastActivity: string
-    lastActivityDate: Date
-    createdAt: Date
-    updatedAt: Date
-    
-    // Retest fields
-    isRetest?: boolean
-    parentProjectId?: string
-    parentProjectName?: string
-    retestCount?: number
-}
+import { Project } from '@/types'
 
 interface ProjectDetailModalProps {
     project: Project | null
@@ -114,7 +66,6 @@ export default function ProjectDetailModal({
             try {
                 const token = await getToken()
                 if (!token) {
-                    console.warn('No auth token for fetching findings')
                     return
                 }
 

@@ -7,34 +7,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Mail, Phone, Building2, Users, FileText, Activity, Edit, Trash2, Loader2, Tag, StickyNote, Globe } from 'lucide-react'
 import { api } from '@/lib/api'
 import { cn } from '@/lib/utils'
-
-interface Client {
-    id: string
-    name: string
-    logoUrl?: string
-    status: 'Active' | 'Inactive' | 'Prospect' | 'Archived'
-    riskLevel: 'High' | 'Medium' | 'Low'
-    industry: string
-    companySize: 'Enterprise' | 'SMB' | 'Startup'
-    primaryContact: string
-    email: string
-    phone?: string
-    lastActivity: string
-    lastActivityDate: Date
-    tags: string[]
-    notes?: string
-    projectsCount: number
-    reportsCount: number
-    totalFindings: number
-    findingsBySeverity: {
-        critical: number
-        high: number
-        medium: number
-        low: number
-    }
-    createdAt: Date
-    updatedAt: Date
-}
+import { Client } from '@/types'
 
 interface ClientDetailModalProps {
     client: Client | null
@@ -72,7 +45,6 @@ export default function ClientDetailModal({ client, open, onClose, onEdit, onDel
             try {
                 const token = await getToken()
                 if (!token) {
-                    console.warn('No auth token for fetching projects')
                     setAssociatedProjects([])
                     return
                 }
@@ -80,8 +52,6 @@ export default function ClientDetailModal({ client, open, onClose, onEdit, onDel
                 const response = await api.get(`/projects/?client_id=${client.id}`, {
                     headers: { Authorization: `Bearer ${token}` }
                 })
-
-                console.log('Client projects response:', response.data)
 
                 if (Array.isArray(response.data)) {
                     const projects: AssociatedProject[] = response.data.map((p: any) => ({

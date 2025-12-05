@@ -34,16 +34,13 @@ export default function BillingSettings() {
                 
                 // Get Clerk session token and set it for this request
                 const token = await getToken()
-                console.log('Clerk token obtained:', token ? 'Yes' : 'No')
                 
                 if (!token) {
-                    console.error('No Clerk token available')
                     throw new Error('Not authenticated')
                 }
                 
                 // Make request with token
                 const data = await billingApi.getBillingInfo(token)
-                console.log('Billing info fetched:', data)
                 setBillingInfo(data)
             } catch (error: any) {
                 console.error('Failed to fetch billing info:', error)
@@ -79,21 +76,13 @@ export default function BillingSettings() {
                 environment: 'sandbox',
                 token,
                 eventCallback: async (data) => {
-                    console.log('Paddle Event:', data)
-                    
                     // Handle checkout errors
                     if (data.name === 'checkout.error') {
                         console.error('Paddle Checkout Error:', data)
                     }
                     
-                    // Handle checkout closed
-                    if (data.name === 'checkout.closed') {
-                        console.log('Paddle Checkout Closed:', data)
-                    }
-                    
                     // Handle successful checkout
                     if (data.name === 'checkout.completed') {
-                        console.log('Checkout completed!', data)
                         // Refresh billing data from API
                         try {
                             const token = await getToken()
@@ -109,13 +98,10 @@ export default function BillingSettings() {
             }).then((paddleInstance) => {
                 if (paddleInstance) {
                     setPaddle(paddleInstance)
-                    console.log('Paddle initialized successfully')
                 }
             }).catch((error) => {
                 console.error('Failed to initialize Paddle:', error)
             })
-        } else {
-            console.warn('VITE_PADDLE_CLIENT_TOKEN not found in environment variables')
         }
     }, [])
 
@@ -169,8 +155,6 @@ export default function BillingSettings() {
                 email: user.primaryEmailAddress.emailAddress
             }
         }
-        
-        console.log('Opening Paddle checkout with:', checkoutOptions)
         
         paddle.Checkout.open(checkoutOptions)
         // Reset loading state after a delay

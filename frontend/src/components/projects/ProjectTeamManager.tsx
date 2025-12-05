@@ -105,9 +105,8 @@ export default function ProjectTeamManager({
             } catch (error: any) {
                 console.error('Failed to fetch available members:', error)
                 
-                // Don't show error toast for 404/empty responses - just log it
+                // Don't show error toast for 404/empty responses
                 if (error.response?.status === 404 || error.response?.status === 403) {
-                    console.warn('No organization found or no available members')
                     setAvailableMembers([])
                 } else {
                     toast({

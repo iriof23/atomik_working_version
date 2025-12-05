@@ -20,32 +20,26 @@ import { cn } from '@/lib/utils'
 import { api } from '@/lib/api'
 import { useToast } from '@/components/ui/use-toast'
 import { logProjectDeleted } from '@/lib/activityLog'
+import { ReportProject, Report } from '@/types'
 
-interface Project {
+// Use ReportProject as local Project type for this page
+type Project = ReportProject
+
+// API response types
+interface APIProjectResponse {
     id: string
     name: string
-    clientName: string
-    clientLogoUrl: string
-    status: 'Planning' | 'In Progress' | 'Completed' | 'On Hold'
-    progress: number
-    findingsCount: number
-    findingsBySeverity: { critical: number, high: number, medium: number, low: number }
-    teamMembers: Array<{ id: string, name: string }>
-    leadTester: string
-    startDate: Date
-    endDate: Date
-    lastModified: Date
-    scope: string
-    priority: 'High' | 'Medium' | 'Low'
-}
-
-interface Report {
-    id: string
-    title: string
-    project_id: string
-    status: string
-    created_at: string
+    client_name?: string
+    client_logo_url?: string
+    status?: string
+    start_date?: string
+    end_date?: string
     updated_at: string
+    finding_count?: number
+    findings_by_severity?: { critical: number; high: number; medium: number; low: number }
+    lead_name?: string
+    scope?: string
+    priority?: string
 }
 
 export default function ReportBuilder() {
@@ -79,7 +73,7 @@ export default function ReportBuilder() {
                 
                 if (response.data && response.data.length > 0) {
                     // Map API projects to the format expected by the UI (using findings_by_severity from API)
-                    const apiProjects = response.data.map((p: any) => ({
+                    const apiProjects = response.data.map((p: APIProjectResponse) => ({
                         id: p.id,
                         name: p.name,
                         clientName: p.client_name || 'Unknown Client',
@@ -182,7 +176,7 @@ export default function ReportBuilder() {
                 title: 'Project Deleted',
                 description: `${selectedProject.name} has been deleted successfully.`,
             })
-        } catch (error: any) {
+        } catch (error) {
             console.error('Failed to delete project:', error)
             toast({
                 title: 'Error',
@@ -234,14 +228,14 @@ export default function ReportBuilder() {
                 
                 if (reportsResponse.data && reportsResponse.data.length > 0) {
                     // Report exists - navigate to the most recent one
-                    const sortedReports = reportsResponse.data.sort((a: any, b: any) => 
+                    const sortedReports = reportsResponse.data.sort((a: Report, b: Report) => 
                         new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
                     )
                     navigate(`/reports/${sortedReports[0].id}`)
                     return
                 }
-            } catch (e) {
-                console.log('No existing reports found, will create new one')
+            } catch {
+                // No existing reports found, will create new one
             }
             
             // Create a new report for this project
@@ -255,7 +249,7 @@ export default function ReportBuilder() {
             
             // Navigate to the new report
             navigate(`/reports/${response.data.id}`)
-        } catch (error: any) {
+        } catch (error) {
             console.error('Failed to create report:', error)
             toast({
                 title: 'Error',

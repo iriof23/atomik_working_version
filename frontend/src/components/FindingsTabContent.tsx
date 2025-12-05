@@ -17,29 +17,7 @@ import { logFindingAdded, logFindingUpdated, logFindingDeleted } from '@/lib/act
 import { api } from '@/lib/api'
 import { useAuth } from '@clerk/clerk-react'
 import { useToast } from '@/components/ui/use-toast'
-
-interface ProjectFinding {
-    id: string
-    referenceId?: string  // Professional Finding ID (e.g., "ACME-001")
-    owaspId: string
-    title: string
-    severity: 'Critical' | 'High' | 'Medium' | 'Low' | 'Informational'
-    cvssScore?: number
-    cvssVector?: string
-    status: 'Open' | 'In Progress' | 'Fixed' | 'Accepted Risk'
-    description: string
-    recommendations: string
-    evidence?: string
-    references?: string
-    affectedAssets: Array<{ url: string; description: string; instanceCount: number }>
-    screenshots: Array<{ id: string; url: string; caption: string }>
-    project?: {
-        client?: {
-            name?: string
-            code?: string
-        }
-    }
-}
+import { ProjectFinding } from '@/types'
 
 interface FindingsTabContentProps {
     projectId?: string  // Optional - if not provided, will use URL params
@@ -110,8 +88,8 @@ export default function FindingsTabContent({ projectId: propProjectId, onUpdate 
             cvssVector: apiFinding.cvss_vector || undefined,
             status: (apiFinding.status === 'OPEN' ? 'Open' : 
                     apiFinding.status === 'IN_PROGRESS' ? 'In Progress' : 
-                    apiFinding.status === 'FIXED' ? 'Fixed' : 
-                    apiFinding.status === 'ACCEPTED_RISK' ? 'Accepted Risk' : 'Open') as ProjectFinding['status'],
+                    apiFinding.status === 'RESOLVED' ? 'Fixed' : 
+                    apiFinding.status === 'ACCEPTED' ? 'Accepted Risk' : 'Open') as ProjectFinding['status'],
             description: apiFinding.description || '',
             recommendations: apiFinding.remediation || '',
             evidence: apiFinding.evidence || undefined,  // PoC/Evidence content
@@ -304,11 +282,9 @@ export default function FindingsTabContent({ projectId: propProjectId, onUpdate 
                 references: updated.references || null,
                 status: updated.status === 'Open' ? 'OPEN' :
                        updated.status === 'In Progress' ? 'IN_PROGRESS' :
-                       updated.status === 'Fixed' ? 'FIXED' :
-                       updated.status === 'Accepted Risk' ? 'ACCEPTED_RISK' : 'OPEN',
+                       updated.status === 'Fixed' ? 'RESOLVED' :
+                       updated.status === 'Accepted Risk' ? 'ACCEPTED' : 'OPEN',
             }
-
-            console.log('Updating finding with payload:', payload)
 
             const response = await api.put(`/findings/${updated.id}`, payload, {
                 headers: { Authorization: `Bearer ${token}` }

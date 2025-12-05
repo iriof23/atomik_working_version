@@ -20,36 +20,7 @@ import {
     DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
-
-// Duplicate interface for now to avoid circular dependencies or larger refactors
-// In a real app, this should be in a shared types file
-export interface Client {
-    id: string
-    name: string
-    logoUrl?: string
-    status: 'Active' | 'Inactive' | 'Prospect' | 'Archived'
-    riskLevel: 'High' | 'Medium' | 'Low'
-    industry: string
-    companySize: 'Enterprise' | 'SMB' | 'Startup'
-    primaryContact: string
-    email: string
-    phone?: string
-    lastActivity: string
-    lastActivityDate: Date
-    tags: string[]
-    projectsCount: number
-    reportsCount: number
-    totalFindings: number
-    findingsBySeverity: {
-        critical: number
-        high: number
-        medium: number
-        low: number
-    }
-    createdAt: Date
-    updatedAt: Date
-    hasPortalAccess?: boolean
-}
+import { Client } from '@/types'
 
 interface ClientCardProps {
     client: Client

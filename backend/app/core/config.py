@@ -1,8 +1,10 @@
 """
 Configuration management for dual-mode deployment
 """
+import warnings
 from typing import Literal
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import model_validator
 
 
 class Settings(BaseSettings):
@@ -90,6 +92,30 @@ class Settings(BaseSettings):
     def is_docker_mode(self) -> bool:
         """Check if running in docker mode"""
         return self.DEPLOYMENT_MODE == "docker"
+    
+    @model_validator(mode='after')
+    def validate_security_settings(self) -> 'Settings':
+        """
+        SECURITY: Validate critical security settings.
+        
+        Warns in development, raises error in production if SECRET_KEY is default.
+        """
+        default_secret = "change-this-secret-key-in-production"
+        
+        if self.SECRET_KEY == default_secret:
+            if self.DEPLOYMENT_MODE == "docker" and not self.DEBUG:
+                raise ValueError(
+                    "SECURITY ERROR: SECRET_KEY must be changed in production! "
+                    "Set a strong random value in your environment variables."
+                )
+            else:
+                warnings.warn(
+                    "WARNING: Using default SECRET_KEY. "
+                    "Set a secure SECRET_KEY in production!",
+                    UserWarning
+                )
+        
+        return self
 
 
 # Global settings instance

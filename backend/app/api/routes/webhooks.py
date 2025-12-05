@@ -245,15 +245,14 @@ async def handle_transaction_completed(data: dict):
         print(f"✅ Adding {amount} credits to Org {org_id}")
         
         try:
-            # Get current balance first
-            org = await db.organization.find_unique(where={"id": org_id})
-            if org:
-                new_balance = org.creditBalance + amount
-                await db.organization.update(
-                    where={"id": org_id},
-                    data={"creditBalance": new_balance}
-                )
-                print(f"  ✅ Credits added. New balance: {new_balance}")
+            # SECURITY: Use atomic increment to prevent race conditions
+            # This ensures concurrent purchases don't lose credits
+            updated_org = await db.organization.update(
+                where={"id": org_id},
+                data={"creditBalance": {"increment": amount}}
+            )
+            if updated_org:
+                print(f"  ✅ Credits added. New balance: {updated_org.creditBalance}")
             else:
                 print(f"  ❌ Organization {org_id} not found in database")
         except Exception as e:
@@ -433,43 +432,56 @@ async def handle_subscription_resumed(data: dict):
 # ============== Helper Functions ==============
 
 async def add_credits_to_organization(org_id: str, credits: int):
-    """Add credits to an organization (atomic increment)."""
-    org = await db.organization.find_unique(where={"id": org_id})
-    if org:
-        await db.organization.update(
+    """
+    Add credits to an organization using atomic increment.
+    
+    SECURITY: Uses Prisma's atomic increment to prevent race conditions.
+    Concurrent webhook calls won't lose credits.
+    """
+    try:
+        updated_org = await db.organization.update(
             where={"id": org_id},
-            data={"creditBalance": org.creditBalance + credits}
+            data={"creditBalance": {"increment": credits}}
         )
-        print(f"  ✅ Added {credits} credits to organization {org_id}")
-    else:
-        print(f"  ❌ Organization {org_id} not found")
+        print(f"  ✅ Added {credits} credits to organization {org_id}. New balance: {updated_org.creditBalance}")
+    except Exception as e:
+        print(f"  ❌ Organization {org_id} not found or update failed: {e}")
 
 
 async def add_credits_to_user(user_id: str, credits: int):
-    """Add credits to a user (atomic increment)."""
-    user = await db.user.find_unique(where={"id": user_id})
-    if user:
-        await db.user.update(
+    """
+    Add credits to a user using atomic increment.
+    
+    SECURITY: Uses Prisma's atomic increment to prevent race conditions.
+    """
+    try:
+        updated_user = await db.user.update(
             where={"id": user_id},
-            data={"creditBalance": user.creditBalance + credits}
+            data={"creditBalance": {"increment": credits}}
         )
-        print(f"  ✅ Added {credits} credits to user {user_id}")
-    else:
-        print(f"  ❌ User {user_id} not found")
+        print(f"  ✅ Added {credits} credits to user {user_id}. New balance: {updated_user.creditBalance}")
+    except Exception as e:
+        print(f"  ❌ User {user_id} not found or update failed: {e}")
 
 
 async def add_credits_by_customer_id(customer_id: str, credits: int):
-    """Add credits by Paddle customer ID."""
-    # Try to find organization first
+    """
+    Add credits by Paddle customer ID using atomic increment.
+    
+    SECURITY: Uses Prisma's atomic increment to prevent race conditions.
+    """
+    # Find organization by customer ID
     org = await db.organization.find_first(
         where={"paddleCustomerId": customer_id}
     )
+    
     if org:
-        await db.organization.update(
+        # Use atomic increment
+        updated_org = await db.organization.update(
             where={"id": org.id},
-            data={"creditBalance": org.creditBalance + credits}
+            data={"creditBalance": {"increment": credits}}
         )
-        print(f"  ✅ Added {credits} credits to organization {org.id} (by customer ID)")
+        print(f"  ✅ Added {credits} credits to organization {org.id}. New balance: {updated_org.creditBalance}")
         return
     
     print(f"  ⚠️ No organization found for customer {customer_id}")

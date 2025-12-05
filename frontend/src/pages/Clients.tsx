@@ -66,35 +66,31 @@ import ClientDetailModal from '@/components/ClientDetailModal'
 import { ClientCard } from '@/components/ClientCard'
 import { useToast } from '@/components/ui/use-toast'
 import { StatCard } from '@/components/StatCard'
+import { Client } from '@/types'
 
-// Client interface
-interface Client {
+// API response types
+interface APIProjectResponse {
+  client_id: string
+  finding_count?: number
+  findings_by_severity?: { critical: number; high: number; medium: number; low: number }
+}
+
+interface APIClientResponse {
   id: string
   name: string
-  logoUrl?: string
-  status: 'Active' | 'Inactive' | 'Prospect' | 'Archived'
-  riskLevel: 'High' | 'Medium' | 'Low'
-  industry: string
-  companySize: 'Enterprise' | 'SMB' | 'Startup'
-  primaryContact: string
-  email: string
+  website_url?: string
+  industry?: string
+  company_size?: string
+  primary_contact?: string
+  email?: string
   phone?: string
-  lastActivity: string
-  lastActivityDate: Date
-  tags: string[]
+  tags?: string | string[]
   notes?: string
-  projectsCount: number
-  reportsCount: number
-  totalFindings: number
-  findingsBySeverity: {
-    critical: number
-    high: number
-    medium: number
-    low: number
-  }
-  createdAt: Date
-  updatedAt: Date
-  hasPortalAccess?: boolean
+  status?: string
+  risk_level?: string
+  created_at?: string
+  updated_at?: string
+  logo_url?: string
 }
 
 type ViewMode = 'card' | 'table' | 'list'
@@ -134,7 +130,7 @@ export default function Clients() {
           const projectsByClient: Record<string, { count: number, findings: { total: number, critical: number, high: number, medium: number, low: number } }> = {}
           
           if (Array.isArray(projectsResponse.data)) {
-            projectsResponse.data.forEach((p: any) => {
+            projectsResponse.data.forEach((p: APIProjectResponse) => {
               if (p.client_id) {
                 if (!projectsByClient[p.client_id]) {
                   projectsByClient[p.client_id] = { count: 0, findings: { total: 0, critical: 0, high: 0, medium: 0, low: 0 } }
@@ -155,7 +151,7 @@ export default function Clients() {
           }
           
           if (clientsResponse.data.length > 0) {
-            const apiClients: Client[] = clientsResponse.data.map((c: any) => {
+            const apiClients: Client[] = clientsResponse.data.map((c: APIClientResponse) => {
               const websiteUrl = typeof c.website_url === 'string' ? c.website_url.trim() : ''
               
               let parsedTags: string[] = []
@@ -239,7 +235,7 @@ export default function Clients() {
   }
 
   // Client handlers (PRESERVED)
-  const handleClientAdded = (newClient: any) => {
+  const handleClientAdded = (newClient: APIClientResponse) => {
     const mappedClient: Client = {
       id: newClient.id,
       name: newClient.name,
@@ -314,7 +310,7 @@ export default function Clients() {
         title: "Client Deleted",
         description: `${deletingClient.name} has been removed.`,
       })
-    } catch (error: any) {
+    } catch (error) {
       console.error('Failed to delete client:', error)
       toast({
         title: "Error",
@@ -363,7 +359,7 @@ export default function Clients() {
     const csvRows = [
       headers.join(','),
       ...clientsToExport.map(client => {
-        const escapeCSV = (value: any) => {
+        const escapeCSV = (value: string | number | boolean | null | undefined) => {
           if (value === null || value === undefined) return ''
           const str = String(value)
           if (str.includes(',') || str.includes('"') || str.includes('\n')) {

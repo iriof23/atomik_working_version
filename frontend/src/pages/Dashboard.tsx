@@ -68,21 +68,69 @@ function formatDate(dateString: string): string {
 
 // --- Types ---
 
-interface Project {
+import { ProjectSummary } from '@/types'
+
+// Extended project type for dashboard with optional findings
+interface DashboardProject extends ProjectSummary {
+    findings?: unknown[]
+}
+
+// Simple client type for dashboard
+interface DashboardClient {
     id: string
     name: string
-    clientName: string
+    created_at: string
+}
+
+// Simple report type for dashboard
+interface DashboardReport {
+    id: string
+    title: string
+    updated_at: string
+}
+
+// Finding template for adding from dashboard
+interface FindingInput {
+    id?: string
+    title: string
+    description?: string
+    severity?: string
+}
+
+// Project input for adding from dashboard  
+interface ProjectInput {
+    id: string
+    name: string
+    client_name?: string
+    clientName?: string
+}
+
+// API response types
+interface APIProject {
+    id: string
+    name: string
+    client_name?: string
     status: string
     priority: string
-    progress: number
-    endDate: string
-    updatedAt: string
-    findings?: any[]
+    end_date?: string
+    updated_at: string
+}
+
+// Activity event for dashboard
+interface ActivityEvent {
+    id: string
+    type: 'project' | 'finding' | 'report' | 'client'
+    title: string
+    description: string
+    timestamp: string
+    timestampText?: string
+    icon: React.ReactNode
+    severity?: string
 }
 
 interface DashboardData {
-    activeProject: Project | null
-    upcomingProjects: Project[]
+    activeProject: DashboardProject | null
+    upcomingProjects: DashboardProject[]
     stats: {
         totalFindings: number
         criticalFindings: number
@@ -122,9 +170,9 @@ const useDashboardStore = (getToken: () => Promise<string | null>) => {
         const fetchDashboardData = async () => {
             setIsLoading(true)
             
-            let projects: Project[] = []
-            let clients: any[] = []
-            let reports: any[] = []
+            let projects: DashboardProject[] = []
+            let clients: DashboardClient[] = []
+            let reports: DashboardReport[] = []
             
             try {
                 const token = await getToken()
@@ -135,7 +183,7 @@ const useDashboardStore = (getToken: () => Promise<string | null>) => {
                             headers: { Authorization: `Bearer ${token}` }
                         })
                         if (projectsRes.data && Array.isArray(projectsRes.data)) {
-                            projects = projectsRes.data.map((p: any) => ({
+                            projects = projectsRes.data.map((p: APIProject) => ({
                                 id: p.id,
                                 name: p.name,
                                 clientName: p.client_name || 'Unknown Client',
@@ -236,7 +284,7 @@ const useDashboardStore = (getToken: () => Promise<string | null>) => {
             })
             
             // Add client activities
-            clients.forEach((c: any) => {
+            clients.forEach((c: DashboardClient) => {
                 activityList.push({
                     id: `client-${c.id}`,
                     type: 'client' as const,
@@ -250,7 +298,7 @@ const useDashboardStore = (getToken: () => Promise<string | null>) => {
             })
             
             // Add report activities
-            reports.forEach((r: any) => {
+            reports.forEach((r: DashboardReport) => {
                 activityList.push({
                     id: `report-${r.id}`,
                     type: 'report' as const,
@@ -600,7 +648,7 @@ const KanbanColumn = ({
 )
 
 // Activity Item
-const ActivityItem = ({ event }: { event: any }) => {
+const ActivityItem = ({ event }: { event: ActivityEvent }) => {
     const getTypeColor = (type: string) => {
         switch (type) {
             case 'client': return 'bg-emerald-100 text-emerald-700'
@@ -694,14 +742,14 @@ export default function Dashboard() {
                 })
                 
                 if (reportsResponse.data && reportsResponse.data.length > 0) {
-                    const sortedReports = reportsResponse.data.sort((a: any, b: any) => 
+                    const sortedReports = reportsResponse.data.sort((a: DashboardReport, b: DashboardReport) => 
                         new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
                     )
                     navigate(`/reports/${sortedReports[0].id}`)
                     return
                 }
-            } catch (e) {
-                console.log('No existing reports found, will create new one')
+            } catch {
+                // No existing reports found, will create new one
             }
             
             const response = await api.post('/v1/reports/', {
@@ -713,7 +761,7 @@ export default function Dashboard() {
             })
             
             navigate(`/reports/${response.data.id}`)
-        } catch (error: any) {
+        } catch (error) {
             console.error('Failed to open/create report:', error)
             toast({
                 title: 'Error',
@@ -747,7 +795,7 @@ export default function Dashboard() {
         })
     }
     
-    const handleClientAdded = (client: any) => {
+    const handleClientAdded = (client: DashboardClient) => {
         setClients(prev => [...prev, client])
         logClientCreated(client.name, client.id)
         toast({
@@ -756,7 +804,7 @@ export default function Dashboard() {
         })
     }
     
-    const handleFindingAdded = async (finding: any) => {
+    const handleFindingAdded = async (finding: FindingInput) => {
         try {
             const token = await getToken()
             if (!token) {
@@ -798,7 +846,7 @@ export default function Dashboard() {
         }
     }
     
-    const handleProjectAdded = (project: any) => {
+    const handleProjectAdded = (project: ProjectInput) => {
         logProjectCreated(project.name, project.client_name || project.clientName || 'Unknown', project.id)
         toast({
             title: "✓ Project Created",

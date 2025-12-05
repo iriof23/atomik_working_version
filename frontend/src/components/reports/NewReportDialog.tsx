@@ -71,33 +71,19 @@ export function NewReportDialog({ children, onReportCreated }: NewReportDialogPr
         try {
             const token = await getToken()
             if (!token) {
-                console.warn('No authentication token available for fetching projects')
                 setProjects([])
                 setLoading(false)
                 return
             }
 
             // Fetch all projects - no query params
-            console.log('Fetching projects from /v1/projects...')
             const response = await api.get('/v1/projects/', {
                 headers: { Authorization: `Bearer ${token}` }
             })
             
-            console.log('API Response:', response.data)
-            console.log('Response type:', typeof response.data, 'Is array:', Array.isArray(response.data))
-            
             // Validate and map API projects
             if (Array.isArray(response.data)) {
-                console.log(`Received ${response.data.length} projects from API`)
-                
-                response.data.forEach((p: any, index: number) => {
-                    console.log(`Processing project ${index + 1}:`, {
-                        id: p.id,
-                        name: p.name,
-                        status: p.status,
-                        client_name: p.client_name
-                    })
-                    
+                response.data.forEach((p: any) => {
                     // Accept any non-empty ID from API (trust the API response)
                     const projectId = String(p.id || '').trim()
                     
@@ -111,9 +97,6 @@ export function NewReportDialog({ children, onReportCreated }: NewReportDialogPr
                             findingsCount: p.finding_count || 0,
                             status: p.status // Store status for filtering
                         })
-                        console.log(`✓ Added project: ${p.name} (ID: ${projectId}, Status: ${p.status})`)
-                    } else {
-                        console.warn(`✗ Skipping project with empty ID:`, p)
                     }
                 })
             } else {
@@ -121,20 +104,13 @@ export function NewReportDialog({ children, onReportCreated }: NewReportDialogPr
             }
             
             // Filter client-side: exclude only ARCHIVED projects (case-insensitive)
-            // Status enum values: PLANNING, IN_PROGRESS, REVIEW, COMPLETED, ARCHIVED
             const activeProjects = apiProjects.filter(p => {
                 const status = String(p.status || '').toUpperCase().trim()
-                const isArchived = status === 'ARCHIVED'
-                if (isArchived) {
-                    console.log(`✗ Filtered out archived project: ${p.name} (status: ${p.status})`)
-                }
-                return !isArchived
+                return status !== 'ARCHIVED'
             })
             
-            console.log(`Total projects fetched: ${apiProjects.length}, Active (non-archived): ${activeProjects.length}`)
-            // If filtering removes everything but we had projects, fallback to showing everything to avoid "No projects found" confusion
+            // If filtering removes everything but we had projects, fallback to showing everything
             if (activeProjects.length === 0 && apiProjects.length > 0) {
-                 console.warn('Filtering removed all projects. Showing all projects as fallback.')
                  setProjects(apiProjects)
             } else {
                 setProjects(activeProjects)
@@ -153,7 +129,6 @@ export function NewReportDialog({ children, onReportCreated }: NewReportDialogPr
 
     const handleCreateDraft = async () => {
         if (!selectedProjectId) {
-            console.warn('No project selected')
             return
         }
 
@@ -181,10 +156,6 @@ export function NewReportDialog({ children, onReportCreated }: NewReportDialogPr
             return
         }
 
-        // Log the project ID before sending
-        console.log('Creating report with project ID:', projectId)
-        console.log('Selected project:', selectedProject)
-
         setIsSubmitting(true)
         try {
             const token = await getToken()
@@ -202,8 +173,6 @@ export function NewReportDialog({ children, onReportCreated }: NewReportDialogPr
                 title: `${selectedProject.name} Report`,
                 report_type: 'PENTEST'  // Default report type
             }
-
-            console.log('Sending report creation request with payload:', payload)
 
             const response = await api.post('/v1/reports/', payload, {
                 headers: { Authorization: `Bearer ${token}` }

@@ -39,12 +39,10 @@ export default function UserSync() {
             
             try {
                 setLoading(true)
-                console.log('🔄 Syncing user data from backend...')
                 
                 // Get auth token
                 const token = await getToken()
                 if (!token) {
-                    console.error('No auth token available for user sync')
                     return
                 }
                 
@@ -56,10 +54,8 @@ export default function UserSync() {
                 })
                 
                 const data = response.data
-                console.log('✅ User data fetched:', data)
                 
                 // Update the billing store with plan and credits
-                // Note: setAuthData automatically sets isInitialized to true
                 setAuthData({
                     plan: data.organization?.plan || 'FREE',
                     credits: data.organization?.creditBalance ?? data.creditBalance ?? 0,
@@ -68,10 +64,6 @@ export default function UserSync() {
                 })
                 
                 lastSyncedUserId.current = user.id
-                console.log('✅ Billing store updated:', {
-                    plan: data.organization?.plan || 'FREE',
-                    credits: data.organization?.creditBalance ?? data.creditBalance ?? 0,
-                })
                 
             } catch (error: any) {
                 console.error('❌ Failed to sync user data:', error)

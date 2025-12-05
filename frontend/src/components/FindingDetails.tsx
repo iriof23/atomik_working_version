@@ -7,22 +7,10 @@ import { Editor } from '@/components/editor/Editor';
 import { Trash2, Save, Globe, Plus, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
+import { ProjectFinding } from '@/types';
 
-// Define types locally for now, ideally should be shared
-export interface ProjectFinding {
-    id: string;
-    owaspId: string;
-    title: string;
-    severity: 'Critical' | 'High' | 'Medium' | 'Low' | 'Informational';
-    cvssScore?: number;
-    cvssVector?: string;
-    status: 'Open' | 'In Progress' | 'Fixed' | 'Accepted Risk';
-    description: string;
-    recommendations: string;
-    evidence?: string;
-    affectedAssets: Array<{ url: string; description: string; instanceCount: number }>;
-    screenshots: Array<{ id: string; url: string; caption: string }>;
-}
+// Re-export for backwards compatibility
+export type { ProjectFinding } from '@/types';
 
 interface FindingDetailsProps {
     finding: ProjectFinding;

@@ -50,6 +50,11 @@ interface ReportData {
     updated_at: string
 }
 
+interface ReportSettings {
+    footerText: string
+    pdfTemplate: string
+}
+
 export default function ReportEditor() {
     const { projectId: reportId } = useParams() // This is actually the report ID
     const navigate = useNavigate()
@@ -111,10 +116,9 @@ export default function ReportEditor() {
                     headers: { Authorization: `Bearer ${token}` }
                 })
                 
-                console.log('Report data:', response.data)
                 setReportData(response.data)
                 setNarrativeContent(response.data.html_content || '')
-            } catch (error: any) {
+            } catch (error) {
                 console.error('Failed to fetch report:', error)
                 toast({
                     title: 'Error',
@@ -267,7 +271,7 @@ export default function ReportEditor() {
                 title: 'Saved',
                 description: 'Report saved successfully.',
             })
-        } catch (error: any) {
+        } catch (error) {
             console.error('Failed to save report:', error)
             toast({
                 title: 'Error',
@@ -612,8 +616,8 @@ function SettingsTab({
     settings,
     onUpdate
 }: {
-    settings: any;
-    onUpdate: (settings: any) => void
+    settings: ReportSettings;
+    onUpdate: (settings: ReportSettings) => void
 }) {
     return (
         <div className="space-y-4">
@@ -664,7 +668,7 @@ function SettingsTab({
 }
 
 // Export Tab Component
-function ExportTab({ reportId, settings }: { reportId: string, settings: any }) {
+function ExportTab({ reportId, settings }: { reportId: string, settings: ReportSettings }) {
     const [exportFormat, setExportFormat] = useState<'pdf' | 'docx'>('pdf')
     const [isExporting, setIsExporting] = useState(false)
     const [error, setError] = useState<string | null>(null)
@@ -726,9 +730,9 @@ function ExportTab({ reportId, settings }: { reportId: string, settings: any }) 
                 title: 'Export Successful',
                 description: `Your report has been exported as ${exportFormat.toUpperCase()}.`,
             })
-        } catch (err: any) {
+        } catch (err) {
             console.error('Export failed:', err)
-            setError(err.message || 'Failed to export report')
+            setError((err as Error).message || 'Failed to export report')
             toast({
                 title: 'Export Failed',
                 description: err.message || 'Failed to export report. Please try again.',

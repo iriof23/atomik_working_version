@@ -22,8 +22,9 @@ export default function Login() {
             const user = await authApi.getCurrentUser()
             setAuth(user, data.access_token, data.refresh_token)
             navigate('/dashboard')
-        } catch (err: any) {
-            setError(err.response?.data?.detail || 'Login failed')
+        } catch (err) {
+            const axiosError = err as { response?: { data?: { detail?: string } } }
+            setError(axiosError.response?.data?.detail || 'Login failed')
         } finally {
             setLoading(false)
         }

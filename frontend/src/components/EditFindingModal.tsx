@@ -27,29 +27,10 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import CVSSCalculator from './CVSSCalculator';
+import { ProjectFinding } from '@/types';
 
-export interface ProjectFinding {
-    id: string;
-    referenceId?: string;  // Professional Finding ID (e.g., "ACME-001")
-    owaspId: string;
-    title: string;
-    severity: 'Critical' | 'High' | 'Medium' | 'Low' | 'Informational';
-    cvssScore?: number;
-    cvssVector?: string;
-    status: 'Open' | 'In Progress' | 'Fixed' | 'Accepted Risk';
-    description: string;
-    recommendations: string;
-    evidence?: string;
-    affectedAssets: Array<{ url: string; description: string; instanceCount: number }>;
-    screenshots: Array<{ id: string; url: string; caption: string }>;
-    references?: string;
-    project?: {
-        client?: {
-            name?: string;
-            code?: string;
-        };
-    };
-}
+// Re-export for backwards compatibility
+export type { ProjectFinding } from '@/types';
 
 interface EditFindingModalProps {
     finding: ProjectFinding | null;
