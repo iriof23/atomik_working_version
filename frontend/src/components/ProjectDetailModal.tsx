@@ -15,7 +15,6 @@ import {
     Building2,
     Loader2,
     Calendar,
-    TrendingUp,
     Flame,
     RotateCcw,
     GitBranch
@@ -263,20 +262,7 @@ export default function ProjectDetailModal({
                     </div>
 
                     {/* Stats Row - More compact */}
-                    <div className="grid grid-cols-4 gap-2 mt-5">
-                        <div className="p-2.5 rounded-xl bg-white border border-slate-100 shadow-sm">
-                            <div className="flex items-center justify-between mb-1">
-                                <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Progress</span>
-                                <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
-                            </div>
-                            <p className="text-xl font-bold text-slate-900">{project.progress}%</p>
-                            <div className="mt-1.5 h-1 w-full bg-slate-100 rounded-full overflow-hidden">
-                                <div 
-                                    className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-700"
-                                    style={{ width: `${Math.max(project.progress, 2)}%` }}
-                                />
-                            </div>
-                        </div>
+                    <div className="grid grid-cols-3 gap-2 mt-5">
                         <div className="p-2.5 rounded-xl bg-white border border-slate-100 shadow-sm">
                             <div className="flex items-center justify-between mb-1">
                                 <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Findings</span>

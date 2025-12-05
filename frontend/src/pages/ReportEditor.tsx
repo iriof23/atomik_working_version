@@ -215,6 +215,17 @@ export default function ReportEditor() {
         }
     }, [reportData])
 
+    // Auto-save after 3 seconds of inactivity when there are unsaved changes
+    useEffect(() => {
+        if (!hasUnsavedChanges || !reportId || !reportData) return
+        
+        const autoSaveTimer = setTimeout(() => {
+            handleSave()
+        }, 3000)
+        
+        return () => clearTimeout(autoSaveTimer)
+    }, [narrativeContent, hasUnsavedChanges, reportId, reportData])
+
     const handleBack = () => {
         if (hasUnsavedChanges) {
             setShowUnsavedDialog(true);
@@ -348,9 +359,6 @@ export default function ReportEditor() {
                             <div className="text-right">
                                 <p className="text-sm font-semibold text-slate-900">
                                     {actualFindingsCount} Finding{actualFindingsCount !== 1 ? 's' : ''}
-                                </p>
-                                <p className="text-xs text-slate-500">
-                                    {actualFindingsCount > 0 ? Math.round((actualFindingsCount / 10) * 100) : 0}% Complete
                                 </p>
                             </div>
                             <Button onClick={handleSave} size="sm" disabled={!hasUnsavedChanges || isSaving} className="bg-emerald-600 hover:bg-emerald-700 gap-2">
@@ -507,6 +515,12 @@ function NarrativeTab({
     }
     
     const [narrative, setNarrative] = useState<NarrativeContent>(parseInitialContent)
+    
+    // Sync state when initialContent changes (e.g., after API load)
+    useEffect(() => {
+        const parsed = parseInitialContent()
+        setNarrative(parsed)
+    }, [initialContent])
     
     // Serialize narrative to JSON string whenever it changes
     const serializeNarrative = (updated: NarrativeContent): string => {
@@ -755,63 +769,19 @@ function SettingsTab({
                         </div>
                     </div>
 
-                    {/* PDF Template Style - Full Width with visual selector */}
+                    {/* PDF Template Style */}
                     <div className="pt-4 border-t border-slate-100">
-                        <label className="block text-xs font-medium text-slate-700 mb-2">
+                        <label className="block text-xs font-medium text-slate-700 mb-1.5">
                             PDF Template Style
                         </label>
-                        <div className="grid grid-cols-2 gap-3">
-                            <button
-                                type="button"
-                                onClick={() => onUpdate({ ...settings, pdfTemplate: 'classic' })}
-                                className={`p-3 rounded-lg border-2 text-left transition-all ${
-                                    (settings.pdfTemplate || 'classic') === 'classic'
-                                        ? 'border-emerald-500 bg-emerald-50'
-                                        : 'border-slate-200 hover:border-slate-300 bg-white'
-                                }`}
-                            >
-                                <div className="flex items-center gap-2 mb-1">
-                                    <div className={`w-3 h-3 rounded-full border-2 ${
-                                        (settings.pdfTemplate || 'classic') === 'classic'
-                                            ? 'border-emerald-500 bg-emerald-500'
-                                            : 'border-slate-300'
-                                    }`}>
-                                        {(settings.pdfTemplate || 'classic') === 'classic' && (
-                                            <div className="w-full h-full flex items-center justify-center">
-                                                <div className="w-1 h-1 bg-white rounded-full" />
-                                            </div>
-                                        )}
-                                    </div>
-                                    <span className="text-sm font-medium text-slate-900">Classic Premium</span>
-                                </div>
-                                <p className="text-xs text-slate-500 ml-5">Dark headers, structured cards</p>
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => onUpdate({ ...settings, pdfTemplate: 'apple' })}
-                                className={`p-3 rounded-lg border-2 text-left transition-all ${
-                                    settings.pdfTemplate === 'apple'
-                                        ? 'border-emerald-500 bg-emerald-50'
-                                        : 'border-slate-200 hover:border-slate-300 bg-white'
-                                }`}
-                            >
-                                <div className="flex items-center gap-2 mb-1">
-                                    <div className={`w-3 h-3 rounded-full border-2 ${
-                                        settings.pdfTemplate === 'apple'
-                                            ? 'border-emerald-500 bg-emerald-500'
-                                            : 'border-slate-300'
-                                    }`}>
-                                        {settings.pdfTemplate === 'apple' && (
-                                            <div className="w-full h-full flex items-center justify-center">
-                                                <div className="w-1 h-1 bg-white rounded-full" />
-                                            </div>
-                                        )}
-                                    </div>
-                                    <span className="text-sm font-medium text-slate-900">Apple Minimal</span>
-                                </div>
-                                <p className="text-xs text-slate-500 ml-5">Clean, spacious layout</p>
-                            </button>
-                        </div>
+                        <select
+                            value={settings.pdfTemplate || 'classic'}
+                            onChange={(e) => onUpdate({ ...settings, pdfTemplate: e.target.value })}
+                            className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                        >
+                            <option value="classic">Classic Premium — Dark headers, structured cards</option>
+                            <option value="apple">The Apple Minimal — Clean, spacious layout</option>
+                        </select>
                     </div>
                 </CardContent>
             </Card>

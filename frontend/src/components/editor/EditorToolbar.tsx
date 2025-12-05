@@ -15,9 +15,19 @@ import {
     Sparkles,
     Loader2,
     ClipboardPaste,
+    Wand2,
+    Check,
+    Maximize2,
+    ChevronDown,
 } from 'lucide-react';
 import { useAuth } from '@clerk/clerk-react';
 import { useToast } from '@/components/ui/use-toast';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
@@ -72,7 +82,7 @@ export const EditorToolbar = ({ editor, frameless = false }: EditorToolbarProps)
         }
     };
 
-    const handleAiGenerate = async () => {
+    const handleAiAction = async (type: 'rewrite' | 'fix_grammar' | 'expand') => {
         // Get selected text
         const { from, to } = editor.state.selection;
         const selectedText = editor.state.doc.textBetween(from, to);
@@ -104,7 +114,7 @@ export const EditorToolbar = ({ editor, frameless = false }: EditorToolbarProps)
             const response = await api.post(
                 '/v1/ai/generate',
                 {
-                    type: 'fix_grammar',
+                    type,
                     text: selectedText,
                 },
                 {
@@ -274,19 +284,45 @@ export const EditorToolbar = ({ editor, frameless = false }: EditorToolbarProps)
             {/* Divider */}
             <div className="w-px h-4 bg-slate-200 mx-1" />
 
-            {/* AI Generate Button */}
-            <ToolbarButton
-                onClick={handleAiGenerate}
-                disabled={isGenerating}
-                title="Improve with AI (1 credit)"
-                className="text-emerald-500 hover:text-emerald-600 hover:bg-emerald-50"
-            >
-                {isGenerating ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                    <Sparkles className="h-4 w-4" />
-                )}
-            </ToolbarButton>
+            {/* AI Generate Dropdown */}
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <button
+                        type="button"
+                        disabled={isGenerating}
+                        className={cn(
+                            'p-1.5 rounded-md transition-colors flex items-center gap-1',
+                            'text-emerald-600 hover:bg-emerald-50',
+                            isGenerating && 'opacity-50 cursor-not-allowed'
+                        )}
+                        title="AI Magic Wand"
+                    >
+                        {isGenerating ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                            <Sparkles className="h-4 w-4" />
+                        )}
+                        <ChevronDown className="h-3 w-3 opacity-50" />
+                    </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-48">
+                    <DropdownMenuItem onClick={() => handleAiAction('rewrite')}>
+                        <Wand2 className="mr-2 h-4 w-4 text-purple-500" />
+                        <span>Rewrite Professionally</span>
+                        <span className="ml-auto text-xs text-slate-400">1⚡</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleAiAction('fix_grammar')}>
+                        <Check className="mr-2 h-4 w-4 text-green-500" />
+                        <span>Fix Grammar</span>
+                        <span className="ml-auto text-xs text-slate-400">1⚡</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleAiAction('expand')}>
+                        <Maximize2 className="mr-2 h-4 w-4 text-blue-500" />
+                        <span>Expand Note</span>
+                        <span className="ml-auto text-xs text-slate-400">1⚡</span>
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
 
             {/* Divider */}
             <div className="w-px h-4 bg-slate-200 mx-1" />

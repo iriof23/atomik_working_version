@@ -25,7 +25,7 @@ TEMPLATE_OPTIONS = {
     },
     "apple": {
         "file": "report_apple.html", 
-        "name": "Apple Minimal",
+        "name": "The Apple Minimal",
         "description": "Clean, spacious, Apple-inspired design"
     }
 }

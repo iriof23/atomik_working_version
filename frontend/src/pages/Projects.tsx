@@ -619,7 +619,6 @@ export default function Projects() {
             'Type',
             'Status',
             'Priority',
-            'Progress (%)',
             'Start Date',
             'End Date',
             'Findings Count',
@@ -661,7 +660,6 @@ export default function Projects() {
                     escapeCSV(project.type),
                     escapeCSV(project.status),
                     escapeCSV(project.priority),
-                    escapeCSV(project.progress),
                     escapeCSV(project.startDate.toLocaleDateString()),
                     escapeCSV(project.endDate.toLocaleDateString()),
                     escapeCSV(findingsData.count),
@@ -800,7 +798,7 @@ export default function Projects() {
                 <div>
                     <h1 className="text-2xl font-semibold text-slate-900">Projects</h1>
                     <p className="text-sm text-slate-500 mt-1">
-                        Manage penetration testing projects and track progress
+                        Manage penetration testing projects and engagements
                     </p>
                 </div>
                 <Button onClick={openAddProjectDialog} className="bg-emerald-600 hover:bg-emerald-700 gap-2">

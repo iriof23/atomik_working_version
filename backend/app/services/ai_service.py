@@ -181,6 +181,62 @@ Instructions:
 """
         
         return await self._generate(prompt, max_tokens)
+
+    async def rewrite_text(
+        self,
+        text: str,
+        max_tokens: int = 1000
+    ) -> str:
+        """
+        Rewrite text to be more professional and objective.
+        
+        Args:
+            text: The text to rewrite
+            max_tokens: Maximum tokens for the response
+            
+        Returns:
+            Rewritten text
+        """
+        prompt = f"""
+Task: Rewrite the following text to be more professional, objective, and suitable for a formal security assessment report.
+
+Text: "{text}"
+
+Instructions:
+1. Adopt a professional, third-person objective tone.
+2. Remove any colloquialisms, slang, or first-person references.
+3. Ensure the language is precise and concise.
+4. Output ONLY the rewritten text.
+"""
+        return await self._generate(prompt, max_tokens)
+
+    async def expand_text(
+        self,
+        text: str,
+        max_tokens: int = 1000
+    ) -> str:
+        """
+        Expand rough notes or bullet points into full paragraphs.
+        
+        Args:
+            text: The notes to expand
+            max_tokens: Maximum tokens for the response
+            
+        Returns:
+            Expanded text
+        """
+        prompt = f"""
+Task: Expand the following notes or bullet points into full, well-structured paragraphs suitable for a security report.
+
+Input Text: "{text}"
+
+Instructions:
+1. Convert bullet points and shorthand into complete sentences.
+2. Add necessary transition words to improve flow.
+3. Maintain the original technical meaning and facts.
+4. Output ONLY the expanded text.
+"""
+        return await self._generate(prompt, max_tokens)
     
     async def translate_finding(
         self,

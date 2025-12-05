@@ -17,6 +17,8 @@ COST_MAP = {
     "generate_finding": 5,
     "remediation": 5,
     "fix_grammar": 1,
+    "rewrite": 1,
+    "expand": 1,
     "generate_summary": 10,
     "translate": 2,
 }
@@ -147,6 +149,22 @@ async def generate_ai_content(
                         detail="text is required for fix_grammar"
                     )
                 result = await ai_service.fix_grammar(text=request.text)
+
+            elif request.type == "rewrite":
+                if not request.text:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="text is required for rewrite"
+                    )
+                result = await ai_service.rewrite_text(text=request.text)
+
+            elif request.type == "expand":
+                if not request.text:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="text is required for expand"
+                    )
+                result = await ai_service.expand_text(text=request.text)
             
             elif request.type == "generate_summary":
                 result = await ai_service.generate_executive_summary(

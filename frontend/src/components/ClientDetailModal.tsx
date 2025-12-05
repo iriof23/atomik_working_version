@@ -325,14 +325,6 @@ export default function ClientDetailModal({ client, open, onClose, onEdit, onDel
                                                 <span className="text-xs text-slate-500">{project.priority} Priority</span>
                                             </div>
                                         </div>
-                                        <div className="w-24 ml-4">
-                                            <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                                                <div 
-                                                    className="h-full bg-emerald-500 rounded-full transition-all duration-500"
-                                                    style={{ width: `${project.progress}%` }}
-                                                />
-                                            </div>
-                                        </div>
                                     </div>
                                 ))
                             )}

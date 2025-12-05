@@ -549,20 +549,6 @@ const ProjectCard = ({
                     Due: {formatDate(project.endDate)}
                 </div>
 
-                {/* Progress */}
-                <div className="space-y-1.5 mb-4">
-                    <div className="flex justify-between text-xs">
-                        <span className="text-slate-500">Progress</span>
-                        <span className="font-medium text-slate-700">{project.progress}%</span>
-                    </div>
-                    <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                        <div
-                            className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full transition-all"
-                            style={{ width: `${project.progress}%` }}
-                        />
-                    </div>
-                </div>
-
                 {/* Actions */}
                 <div className="flex items-center justify-between pt-3 border-t border-slate-100">
                     <div className="flex items-center gap-1 text-xs text-slate-400">
