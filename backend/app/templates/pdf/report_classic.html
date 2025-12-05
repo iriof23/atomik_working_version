@@ -982,9 +982,16 @@
                 </div>
                 {% endif %}
                 
+                {% if finding.evidence_html %}
+                <div class="finding-section">
+                    <div class="finding-section-title">Proof of Concept</div>
+                    <div class="finding-section-content">{{ finding.evidence_html | safe }}</div>
+                </div>
+                {% endif %}
+                
                 {% if finding.evidence_items %}
                 <div class="finding-section">
-                    <div class="finding-section-title">Evidence</div>
+                    <div class="finding-section-title">Evidence Screenshots</div>
                     <div class="evidence-gallery">
                         {% for item in finding.evidence_items %}
                         <div class="evidence-item">
