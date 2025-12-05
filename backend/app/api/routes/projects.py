@@ -865,13 +865,14 @@ async def create_retest(
     import logging
     logger = logging.getLogger(__name__)
     
-    # Fetch the original project with findings
+    # Fetch the original project with findings and reports
     original_project = await db.project.find_unique(
         where={"id": project_id},
         include={
             "client": True,
             "lead": True,
             "findings": True,
+            "reports": True,  # Include reports to clone narrative content
         }
     )
     
@@ -952,6 +953,24 @@ async def create_retest(
         cloned_findings_count += 1
     
     logger.info(f"Cloned {cloned_findings_count} findings to retest project")
+    
+    # Clone reports from the original project (preserves narrative content: Executive Summary, Methodology, Scope)
+    cloned_reports_count = 0
+    for report in original_project.reports:
+        await db.report.create(
+            data={
+                "title": f"{report.title} - Retest {retest_number}",
+                "reportType": report.reportType,
+                "status": "DRAFT",  # Reset to DRAFT for new review
+                "projectId": retest_project.id,
+                "generatedById": current_user.id,
+                "templateId": report.templateId,
+                "htmlContent": report.htmlContent,  # Clone the narrative content!
+            }
+        )
+        cloned_reports_count += 1
+    
+    logger.info(f"Cloned {cloned_reports_count} reports with narrative content to retest project")
     
     # Fetch the complete retest project with counts
     complete_retest = await db.project.find_unique(
