@@ -86,7 +86,8 @@ export default function ReportBuilder() {
                         clientLogoUrl: '',
                         status: p.status === 'PLANNING' ? 'Planning' : 
                                 p.status === 'IN_PROGRESS' ? 'In Progress' : 
-                                p.status === 'COMPLETED' ? 'Completed' : 'In Progress',
+                                p.status === 'COMPLETED' ? 'Completed' : 
+                                p.status === 'ON_HOLD' ? 'On Hold' : 'Planning',
                         progress: 0,
                         findingsCount: p.finding_count || 0,
                         findingsBySeverity: p.findings_by_severity || { critical: 0, high: 0, medium: 0, low: 0 },
