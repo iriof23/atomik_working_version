@@ -685,9 +685,9 @@ function ExportTab({ reportId, settings }: { reportId: string, settings: any }) 
             const pdfTemplate = settings.pdfTemplate || 'classic'
             const templateParam = exportFormat === 'pdf' ? `&template=${pdfTemplate}` : ''
             
-            // Call the export API
+            // Call the export API (use relative path to go through Vite proxy)
             const response = await fetch(
-                `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/v1/reports/${reportId}/export?format=${exportFormat}${templateParam}`,
+                `/api/v1/reports/${reportId}/export?format=${exportFormat}${templateParam}`,
                 {
                     method: 'GET',
                     headers: {
