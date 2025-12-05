@@ -1,28 +1,32 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@clerk/clerk-react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import {
     Users,
     FileText,
     Edit,
     Trash2,
-    Target,
-    Shield,
     Globe,
     CheckCircle2,
-    AlertTriangle,
     Building2,
     Loader2,
     Calendar,
-    Flame,
     RotateCcw,
-    GitBranch
+    MoreHorizontal,
+    Shield,
+    ExternalLink
 } from 'lucide-react'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { format } from 'date-fns'
 import { api } from '@/lib/api'
 import { cn } from '@/lib/utils'
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 interface Project {
     id: string
@@ -149,325 +153,250 @@ export default function ProjectDetailModal({
 
     if (!project) return null
 
-    const getStatusStyle = (status: string) => {
+    const getStatusColor = (status: string) => {
         switch (status) {
-            case 'In Progress':
-                return 'bg-blue-50 text-blue-700 border-blue-200'
-            case 'Completed':
-                return 'bg-emerald-50 text-emerald-700 border-emerald-200'
-            case 'Planning':
-                return 'bg-slate-100 text-slate-600 border-slate-200'
-            case 'On Hold':
-                return 'bg-amber-50 text-amber-700 border-amber-200'
-            case 'Cancelled':
-                return 'bg-red-50 text-red-700 border-red-200'
-            default:
-                return 'bg-slate-50 text-slate-600 border-slate-200'
+            case 'In Progress': return 'bg-blue-500'
+            case 'Completed': return 'bg-emerald-500'
+            case 'Planning': return 'bg-slate-400'
+            case 'On Hold': return 'bg-amber-500'
+            case 'Cancelled': return 'bg-red-500'
+            default: return 'bg-slate-400'
         }
     }
 
-    const getPriorityStyle = (priority: string) => {
-        switch (priority) {
-            case 'Critical':
-                return 'bg-red-50 text-red-700 border-red-200'
-            case 'High':
-                return 'bg-orange-50 text-orange-700 border-orange-200'
-            case 'Medium':
-                return 'bg-amber-50 text-amber-700 border-amber-200'
-            case 'Low':
-                return 'bg-emerald-50 text-emerald-700 border-emerald-200'
-            default:
-                return 'bg-slate-50 text-slate-600 border-slate-200'
-        }
+    const getDuration = () => {
+        const start = new Date(project.startDate)
+        const end = new Date(project.endDate)
+        const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))
+        if (days < 7) return `${days} Days`
+        const weeks = Math.ceil(days / 7)
+        return `${weeks} Week${weeks > 1 ? 's' : ''}`
     }
 
     return (
         <Dialog open={open} onOpenChange={onClose}>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0 gap-0 bg-white border-slate-200 sm:rounded-2xl shadow-2xl scrollbar-thin">
-                {/* Premium Header */}
-                <div className="p-6 bg-gradient-to-b from-slate-50/80 to-white border-b border-slate-100">
+            <DialogContent className="max-w-xl max-h-[85vh] overflow-y-auto p-0 gap-0 bg-white border-slate-200 sm:rounded-2xl shadow-2xl">
+                {/* Clean Header */}
+                <div className="p-6 pb-4">
                     <div className="flex items-start gap-4">
-                        {/* Avatar with gradient */}
-                        <div className="relative">
-                            <Avatar className="h-16 w-16 rounded-2xl shadow-lg ring-4 ring-white">
-                                <AvatarFallback className="rounded-2xl bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-600 text-white font-bold text-xl">
-                                    {project.name.slice(0, 2).toUpperCase()}
-                                </AvatarFallback>
-                            </Avatar>
-                            {/* Status dot */}
-                            <div className={cn(
-                                "absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-white shadow-sm flex items-center justify-center",
-                                project.status === 'In Progress' ? 'bg-blue-500' :
-                                project.status === 'Completed' ? 'bg-emerald-500' :
-                                project.status === 'On Hold' ? 'bg-amber-500' : 'bg-slate-400'
-                            )}>
-                                {project.status === 'In Progress' && (
-                                    <span className="w-2 h-2 bg-white rounded-full animate-pulse" />
-                                )}
-                            </div>
-                        </div>
+                        {/* Avatar */}
+                        <Avatar className="h-14 w-14 rounded-2xl shadow-md ring-2 ring-slate-100">
+                            <AvatarFallback className="rounded-2xl bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-600 text-white font-bold text-lg">
+                                {project.name.slice(0, 2).toUpperCase()}
+                            </AvatarFallback>
+                        </Avatar>
 
                         {/* Title & Meta */}
                         <div className="flex-1 min-w-0">
-                            <div className="flex items-start justify-between gap-3">
-                                <div>
-                                    <DialogTitle className="text-xl font-bold text-slate-900 tracking-tight">
-                                        {project.name}
-                                    </DialogTitle>
-                                    <p className="text-xs text-slate-500 mt-1 flex items-center gap-1.5">
-                                        <Building2 className="w-3 h-3" />
-                                        <span className="font-medium">{project.clientName}</span>
-                                        <span className="text-slate-300 mx-1">·</span>
-                                        <span>{project.type}</span>
-                                    </p>
-                                </div>
-                                <div className="flex gap-1.5 shrink-0">
-                                    {/* Retest Badge */}
-                                    {project.isRetest && (
-                                        <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wide border border-amber-200 bg-amber-50 text-amber-700 flex items-center gap-1">
-                                            <GitBranch className="w-3 h-3" />
-                                            Retest
-                                        </span>
-                                    )}
-                                    <span className={cn(
-                                        "px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wide border",
-                                        getStatusStyle(project.status)
-                                    )}>
-                                        {project.status}
-                                    </span>
-                                    <span className={cn(
-                                        "px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wide border",
-                                        getPriorityStyle(project.priority)
-                                    )}>
-                                        {project.priority}
-                                    </span>
-                                </div>
+                            <DialogTitle className="text-lg font-bold text-slate-900 tracking-tight leading-tight">
+                                {project.name}
+                            </DialogTitle>
+                            <div className="flex items-center gap-1.5 mt-1.5 text-sm text-slate-500">
+                                <Building2 className="w-3.5 h-3.5 text-slate-400" />
+                                <span className="font-medium text-slate-700">{project.clientName}</span>
+                                <span className="text-slate-300">·</span>
+                                <span>{project.type}</span>
+                                <span className="text-slate-300">·</span>
+                                <span className={cn("w-2 h-2 rounded-full", getStatusColor(project.status))} />
+                                <span className="font-medium">{project.status}</span>
                             </div>
-
-                            {/* Parent Project Link (if this is a retest) */}
+                            
+                            {/* Retest indicator */}
                             {project.isRetest && project.parentProjectName && (
-                                <p className="text-xs text-amber-600 mt-1 flex items-center gap-1.5 bg-amber-50/50 px-2 py-1 rounded-md w-fit">
-                                    <RotateCcw className="w-3 h-3" />
-                                    <span>Retest of: <span className="font-medium">{project.parentProjectName}</span></span>
+                                <p className="text-xs text-slate-500 mt-2 flex items-center gap-1.5">
+                                    <RotateCcw className="w-3 h-3 text-slate-400" />
+                                    <span>Retest of</span>
+                                    <span className="font-medium text-slate-700">{project.parentProjectName}</span>
                                 </p>
                             )}
-
-                            {/* Description as subtitle */}
-                            {project.description && (
-                                <p className="text-xs text-slate-500 mt-2 line-clamp-2 leading-relaxed">
-                                    {project.description}
-                                </p>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Stats Row - More compact */}
-                    <div className="grid grid-cols-3 gap-2 mt-5">
-                        <div className="p-2.5 rounded-xl bg-white border border-slate-100 shadow-sm">
-                            <div className="flex items-center justify-between mb-1">
-                                <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Findings</span>
-                                <Target className="w-3.5 h-3.5 text-slate-400" />
-                            </div>
-                            <p className="text-xl font-bold text-slate-900">
-                                {loadingFindings ? <Loader2 className="w-4 h-4 animate-spin" /> : totalFindings}
-                            </p>
-                        </div>
-                        <div className="p-2.5 rounded-xl bg-red-50/50 border border-red-100">
-                            <div className="flex items-center justify-between mb-1">
-                                <span className="text-[10px] font-medium text-red-400 uppercase tracking-wider">Critical</span>
-                                <AlertTriangle className="w-3.5 h-3.5 text-red-400" />
-                            </div>
-                            <p className="text-xl font-bold text-red-600">
-                                {loadingFindings ? <Loader2 className="w-4 h-4 animate-spin" /> : findingsBySeverity.critical}
-                            </p>
-                        </div>
-                        <div className="p-2.5 rounded-xl bg-orange-50/50 border border-orange-100">
-                            <div className="flex items-center justify-between mb-1">
-                                <span className="text-[10px] font-medium text-orange-400 uppercase tracking-wider">High</span>
-                                <Flame className="w-3.5 h-3.5 text-orange-400" />
-                            </div>
-                            <p className="text-xl font-bold text-orange-600">
-                                {loadingFindings ? <Loader2 className="w-4 h-4 animate-spin" /> : findingsBySeverity.high}
-                            </p>
                         </div>
                     </div>
                 </div>
 
-                {/* Content Body */}
-                <div className="p-6 space-y-6">
-                    {/* Two Column Layout - Tighter */}
-                    <div className="grid grid-cols-2 gap-6">
-                        {/* Left Column */}
-                        <div className="space-y-5">
-                            {/* Timeline */}
-                            <div>
-                                <h3 className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
-                                    <Calendar className="w-3.5 h-3.5" />
-                                    Timeline
-                                </h3>
-                                <div className="space-y-2">
-                                    <div className="flex justify-between items-center py-1">
-                                        <span className="text-xs text-slate-500">Start</span>
-                                        <span className="text-xs font-semibold text-slate-900">{format(project.startDate, 'MMM d, yyyy')}</span>
-                                    </div>
-                                    <div className="flex justify-between items-center py-1">
-                                        <span className="text-xs text-slate-500">End</span>
-                                        <span className="text-xs font-semibold text-slate-900">{format(project.endDate, 'MMM d, yyyy')}</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Methodology & Tags */}
-                            <div>
-                                <h3 className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
-                                    <Shield className="w-3.5 h-3.5" />
-                                    Standards
-                                </h3>
-                                <div className="flex flex-wrap gap-1.5">
-                                    <span className="inline-flex items-center px-2 py-1 rounded-md text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                        {project.methodology}
-                                    </span>
-                                    {project.complianceFrameworks.map(f => (
-                                        <span key={f} className="inline-flex items-center px-2 py-1 rounded-md text-[10px] font-medium bg-slate-50 text-slate-600 border border-slate-200">
-                                            {f}
-                                        </span>
-                                    ))}
-                                </div>
-                            </div>
+                {/* Stats Row */}
+                <div className="px-6 pb-4">
+                    <div className="grid grid-cols-4 gap-2">
+                        <div className="text-center p-3 rounded-xl bg-slate-50 border border-slate-100">
+                            <p className="text-2xl font-bold text-slate-900">
+                                {loadingFindings ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : totalFindings}
+                            </p>
+                            <p className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mt-0.5">Findings</p>
                         </div>
+                        <div className="text-center p-3 rounded-xl bg-red-50 border border-red-100">
+                            <p className="text-2xl font-bold text-red-600">
+                                {loadingFindings ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : findingsBySeverity.critical}
+                            </p>
+                            <p className="text-[10px] font-medium text-red-500 uppercase tracking-wider mt-0.5">Critical</p>
+                        </div>
+                        <div className="text-center p-3 rounded-xl bg-orange-50 border border-orange-100">
+                            <p className="text-2xl font-bold text-orange-600">
+                                {loadingFindings ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : findingsBySeverity.high}
+                            </p>
+                            <p className="text-[10px] font-medium text-orange-500 uppercase tracking-wider mt-0.5">High</p>
+                        </div>
+                        <div className="text-center p-3 rounded-xl bg-amber-50 border border-amber-100">
+                            <p className="text-2xl font-bold text-amber-600">
+                                {loadingFindings ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : findingsBySeverity.medium}
+                            </p>
+                            <p className="text-[10px] font-medium text-amber-500 uppercase tracking-wider mt-0.5">Medium</p>
+                        </div>
+                    </div>
+                </div>
 
-                        {/* Right Column */}
-                        <div className="space-y-5">
-                            {/* Team */}
-                            <div>
-                                <h3 className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
-                                    <Users className="w-3.5 h-3.5" />
-                                    Team
-                                </h3>
-                                <div className="space-y-2">
-                                    <div className="flex justify-between items-center py-1">
-                                        <span className="text-xs text-slate-500">Lead</span>
-                                        <div className="flex items-center gap-1.5">
-                                            <Avatar className="h-5 w-5 rounded-md">
-                                                <AvatarFallback className="text-[8px] rounded-md bg-gradient-to-br from-emerald-500 to-teal-600 text-white font-medium">
-                                                    {project.leadTester?.split(' ').map(n => n[0]).join('') || 'LT'}
-                                                </AvatarFallback>
-                                            </Avatar>
-                                            <span className="text-xs font-semibold text-slate-900">{project.leadTester}</span>
-                                        </div>
-                                    </div>
-                                    {project.teamMembers.length > 0 && (
-                                        <div className="flex items-center gap-1 pt-1">
-                                            <div className="flex -space-x-1.5">
-                                                {project.teamMembers.slice(0, 4).map(member => (
-                                                    <Avatar key={member.id} className="h-5 w-5 rounded-md ring-2 ring-white">
-                                                        <AvatarFallback className="text-[8px] rounded-md bg-gradient-to-br from-slate-400 to-slate-500 text-white font-medium">
-                                                            {member.name.split(' ').map(n => n[0]).join('')}
-                                                        </AvatarFallback>
-                                                    </Avatar>
-                                                ))}
-                                            </div>
-                                            {project.teamMembers.length > 4 && (
-                                                <span className="text-[10px] text-slate-500 ml-1">
-                                                    +{project.teamMembers.length - 4} more
-                                                </span>
-                                            )}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
+                {/* Details Section */}
+                <div className="px-6 py-4 border-t border-slate-100 space-y-3">
+                    {/* Timeline Row */}
+                    <div className="flex items-center justify-between py-2">
+                        <div className="flex items-center gap-2 text-slate-500">
+                            <Calendar className="w-4 h-4" />
+                            <span className="text-sm">Timeline</span>
+                        </div>
+                        <span className="text-sm font-medium text-slate-900">
+                            {format(project.startDate, 'MMM d')} – {format(project.endDate, 'MMM d, yyyy')}
+                        </span>
+                    </div>
 
-                            {/* Scope */}
-                            <div>
-                                <h3 className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
-                                    <Globe className="w-3.5 h-3.5" />
-                                    Scope
-                                </h3>
-                                {project.scope.length === 0 ? (
-                                    <p className="text-[10px] text-slate-400 italic">No scope defined</p>
-                                ) : (
-                                    <ul className="space-y-1.5">
-                                        {project.scope.slice(0, 4).map((item, idx) => (
-                                            <li key={idx} className="flex items-start gap-1.5">
-                                                <CheckCircle2 className="w-3 h-3 text-emerald-500 mt-0.5 shrink-0" />
-                                                <span className="text-[11px] text-slate-700 break-all leading-tight">{item}</span>
-                                            </li>
-                                        ))}
-                                        {project.scope.length > 4 && (
-                                            <li className="text-[10px] text-slate-500 pl-4">
-                                                +{project.scope.length - 4} more items
-                                            </li>
-                                        )}
-                                    </ul>
-                                )}
-                            </div>
+                    {/* Duration Row */}
+                    <div className="flex items-center justify-between py-2 border-t border-slate-50">
+                        <div className="flex items-center gap-2 text-slate-500">
+                            <CheckCircle2 className="w-4 h-4" />
+                            <span className="text-sm">Duration</span>
+                        </div>
+                        <span className="text-sm font-medium text-slate-900">{getDuration()}</span>
+                    </div>
+
+                    {/* Lead Row */}
+                    <div className="flex items-center justify-between py-2 border-t border-slate-50">
+                        <div className="flex items-center gap-2 text-slate-500">
+                            <Users className="w-4 h-4" />
+                            <span className="text-sm">Lead</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Avatar className="h-5 w-5 rounded-md">
+                                <AvatarFallback className="text-[8px] rounded-md bg-gradient-to-br from-emerald-500 to-teal-600 text-white font-medium">
+                                    {project.leadTester?.split(' ').map(n => n[0]).join('') || 'LT'}
+                                </AvatarFallback>
+                            </Avatar>
+                            <span className="text-sm font-medium text-slate-900">{project.leadTester}</span>
                         </div>
                     </div>
 
-                    {/* Findings Breakdown - Premium solid colors */}
-                    <div className="pt-5 border-t border-slate-100">
-                        <h3 className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-3">
-                            Severity Breakdown
-                        </h3>
-                        <div className="grid grid-cols-4 gap-2">
-                            {[
-                                { label: 'Critical', count: findingsBySeverity.critical, gradient: 'from-red-600 to-red-700' },
-                                { label: 'High', count: findingsBySeverity.high, gradient: 'from-orange-500 to-orange-600' },
-                                { label: 'Medium', count: findingsBySeverity.medium, gradient: 'from-amber-500 to-amber-600' },
-                                { label: 'Low', count: findingsBySeverity.low, gradient: 'from-emerald-500 to-emerald-600' },
-                            ].map(({ label, count, gradient }) => (
-                                <div key={label} className={cn("p-3 rounded-xl text-center bg-gradient-to-br shadow-sm", gradient)}>
-                                    <p className="text-xl font-bold text-white">{count}</p>
-                                    <p className="text-[9px] font-semibold uppercase tracking-wider text-white/80">{label}</p>
-                                </div>
+                    {/* Scope Row */}
+                    {project.scope.length > 0 && (
+                        <div className="flex items-start justify-between py-2 border-t border-slate-50">
+                            <div className="flex items-center gap-2 text-slate-500">
+                                <Globe className="w-4 h-4" />
+                                <span className="text-sm">Scope</span>
+                            </div>
+                            <div className="text-right">
+                                {project.scope.slice(0, 2).map((item, idx) => (
+                                    <div key={idx} className="flex items-center gap-1.5 justify-end">
+                                        <ExternalLink className="w-3 h-3 text-emerald-500" />
+                                        <span className="text-sm font-medium text-slate-900">{item}</span>
+                                    </div>
+                                ))}
+                                {project.scope.length > 2 && (
+                                    <span className="text-xs text-slate-400">+{project.scope.length - 2} more</span>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Standards Row */}
+                    <div className="flex items-start justify-between py-2 border-t border-slate-50">
+                        <div className="flex items-center gap-2 text-slate-500">
+                            <Shield className="w-4 h-4" />
+                            <span className="text-sm">Standards</span>
+                        </div>
+                        <div className="flex flex-wrap gap-1 justify-end max-w-[60%]">
+                            <span className="px-2 py-0.5 rounded-md text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                {project.methodology}
+                            </span>
+                            {project.complianceFrameworks.slice(0, 2).map(f => (
+                                <span key={f} className="px-2 py-0.5 rounded-md text-xs font-medium bg-slate-50 text-slate-600 border border-slate-200">
+                                    {f}
+                                </span>
                             ))}
                         </div>
                     </div>
                 </div>
 
-                {/* Footer Actions - Refined */}
-                <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/30 flex items-center justify-between">
-                    <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => onDelete(project)}
-                        className="text-slate-500 hover:text-red-600 hover:bg-red-50 text-xs gap-1.5"
-                    >
-                        <Trash2 className="w-3.5 h-3.5 shrink-0" />
-                        <span>Delete</span>
-                    </Button>
-                    <div className="flex gap-2">
-                        <Button variant="ghost" size="sm" onClick={onClose} className="text-xs text-slate-600">
+                {/* Severity Breakdown */}
+                <div className="px-6 py-4 border-t border-slate-100">
+                    <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">
+                        Severity Breakdown
+                    </h3>
+                    <div className="grid grid-cols-4 gap-2">
+                        {[
+                            { label: 'Critical', count: findingsBySeverity.critical, gradient: 'from-red-600 to-red-700' },
+                            { label: 'High', count: findingsBySeverity.high, gradient: 'from-orange-500 to-orange-600' },
+                            { label: 'Medium', count: findingsBySeverity.medium, gradient: 'from-amber-500 to-amber-600' },
+                            { label: 'Low', count: findingsBySeverity.low, gradient: 'from-emerald-500 to-emerald-600' },
+                        ].map(({ label, count, gradient }) => (
+                            <div key={label} className={cn("p-3 rounded-xl text-center bg-gradient-to-br shadow-sm", gradient)}>
+                                <p className="text-xl font-bold text-white">{count}</p>
+                                <p className="text-[9px] font-semibold uppercase tracking-wider text-white/80">{label}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Footer Actions */}
+                <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between">
+                    {/* More menu with Delete */}
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" className="text-slate-400 hover:text-slate-600 h-8 w-8 p-0">
+                                <MoreHorizontal className="w-4 h-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start" className="w-40">
+                            <DropdownMenuItem 
+                                onClick={() => onDelete(project)}
+                                className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                            >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Delete Project
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+
+                    {/* Action Buttons */}
+                    <div className="flex items-center gap-2">
+                        <Button variant="ghost" size="sm" onClick={onClose} className="text-sm text-slate-500 hover:text-slate-700">
                             Close
                         </Button>
-                        {/* Start Retest button - only show if not already a retest */}
+                        
+                        {/* Retest button - only for non-retests */}
                         {!project.isRetest && onStartRetest && (
                             <Button 
                                 variant="outline" 
                                 size="sm"
                                 onClick={() => onStartRetest(project)}
-                                className="text-xs border-amber-200 text-amber-700 hover:bg-amber-50 gap-1.5"
+                                className="text-sm border-slate-200 text-slate-600 hover:bg-slate-50 gap-1.5"
                             >
-                                <RotateCcw className="w-3.5 h-3.5 shrink-0" />
-                                <span>Retest</span>
+                                <RotateCcw className="w-3.5 h-3.5" />
+                                Retest
                             </Button>
                         )}
+                        
                         <Button 
                             variant="outline" 
                             size="sm"
                             onClick={() => onGenerateReport(project)}
-                            className="text-xs border-slate-200 text-slate-700 hover:bg-slate-50 gap-1.5"
+                            className="text-sm border-slate-200 text-slate-600 hover:bg-slate-50 gap-1.5"
                         >
-                            <FileText className="w-3.5 h-3.5 shrink-0" />
-                            <span>Report</span>
+                            <FileText className="w-3.5 h-3.5" />
+                            Report
                         </Button>
+                        
                         <Button 
                             size="sm"
                             onClick={() => onEdit(project)} 
-                            className="text-xs bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
+                            className="text-sm bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm gap-1.5"
                         >
-                            <Edit className="w-3.5 h-3.5 mr-1.5" />
-                            Edit
+                            <Edit className="w-3.5 h-3.5" />
+                            Edit Project
                         </Button>
                     </div>
                 </div>

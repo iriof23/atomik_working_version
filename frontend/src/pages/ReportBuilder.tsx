@@ -54,7 +54,6 @@ export default function ReportBuilder() {
     const { toast } = useToast()
     const [selectedProject, setSelectedProject] = useState<Project | null>(null)
     const [statusFilter, setStatusFilter] = useState<'all' | 'In Progress' | 'Planning'>('all')
-    const [projectFindingsData, setProjectFindingsData] = useState<Record<string, { count: number, severity: { critical: number, high: number, medium: number, low: number } }>>({})
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
     const [isDeleting, setIsDeleting] = useState(false)
     const [projects, setProjects] = useState<Project[]>([])
@@ -79,7 +78,7 @@ export default function ReportBuilder() {
                 })
                 
                 if (response.data && response.data.length > 0) {
-                    // Map API projects to the format expected by the UI
+                    // Map API projects to the format expected by the UI (using findings_by_severity from API)
                     const apiProjects = response.data.map((p: any) => ({
                         id: p.id,
                         name: p.name,
@@ -90,7 +89,7 @@ export default function ReportBuilder() {
                                 p.status === 'COMPLETED' ? 'Completed' : 'In Progress',
                         progress: 0,
                         findingsCount: p.finding_count || 0,
-                        findingsBySeverity: { critical: 0, high: 0, medium: 0, low: 0 },
+                        findingsBySeverity: p.findings_by_severity || { critical: 0, high: 0, medium: 0, low: 0 },
                         teamMembers: [],
                         leadTester: p.lead_name || '',
                         startDate: p.start_date ? new Date(p.start_date) : new Date(),
@@ -195,47 +194,6 @@ export default function ReportBuilder() {
         }
     }
 
-    // Load actual findings counts from API
-    useEffect(() => {
-        const fetchFindingsCounts = async () => {
-            const token = await getToken()
-            if (!token || projects.length === 0) return
-            
-        const data: Record<string, any> = {}
-            
-            // Fetch findings for each project in parallel
-            await Promise.all(projects.map(async (project) => {
-                try {
-                    const response = await api.get(`/findings/?project_id=${project.id}`, {
-                        headers: { Authorization: `Bearer ${token}` }
-                    })
-                    
-                    if (response.data && Array.isArray(response.data)) {
-                        const findings = response.data
-                    const breakdown = { critical: 0, high: 0, medium: 0, low: 0 }
-                    findings.forEach((f: any) => {
-                            const severity = f.severity?.toUpperCase()
-                            if (severity === 'CRITICAL') breakdown.critical++
-                            else if (severity === 'HIGH') breakdown.high++
-                            else if (severity === 'MEDIUM') breakdown.medium++
-                            else if (severity === 'LOW') breakdown.low++
-                    })
-                    data[project.id] = { count: findings.length, severity: breakdown }
-                    } else {
-                        data[project.id] = { count: 0, severity: { critical: 0, high: 0, medium: 0, low: 0 } }
-                    }
-                } catch (e) {
-                    console.error(`Failed to fetch findings for project ${project.id}:`, e)
-                    data[project.id] = { count: 0, severity: { critical: 0, high: 0, medium: 0, low: 0 } }
-                }
-            }))
-            
-        setProjectFindingsData(data)
-        }
-        
-        fetchFindingsCounts()
-    }, [projects, getToken])
-
     // Filter projects
     const filteredProjects = projects.filter(project => {
         return statusFilter === 'all' || project.status === statusFilter
@@ -323,15 +281,16 @@ export default function ReportBuilder() {
         }
     }
 
-    // Calculate viz percentages
+    // Calculate viz percentages (using data from project directly)
     const getVizWidths = (projectId: string) => {
-        const data = projectFindingsData[projectId] || { count: 0, severity: { critical: 0, high: 0, medium: 0, low: 0 } }
-        const total = data.count || 1
+        const project = projects.find(p => p.id === projectId)
+        const severity = project?.findingsBySeverity || { critical: 0, high: 0, medium: 0, low: 0 }
+        const total = project?.findingsCount || 1
         return {
-            critical: (data.severity.critical / total) * 100,
-            high: (data.severity.high / total) * 100,
-            medium: (data.severity.medium / total) * 100,
-            low: (data.severity.low / total) * 100
+            critical: (severity.critical / total) * 100,
+            high: (severity.high / total) * 100,
+            medium: (severity.medium / total) * 100,
+            low: (severity.low / total) * 100
         }
     }
 
@@ -481,7 +440,8 @@ export default function ReportBuilder() {
 
                             <div className="flex-1 overflow-y-auto p-6 space-y-8">
                                 {(() => {
-                                    const findings = projectFindingsData[selectedProject.id] || { count: 0, severity: { critical: 0, high: 0, medium: 0, low: 0 } }
+                                    // Use findings data directly from project (no extra API calls)
+                                    const findings = { count: selectedProject.findingsCount, severity: selectedProject.findingsBySeverity }
                                     const viz = getVizWidths(selectedProject.id)
                                     return (
                                         <>

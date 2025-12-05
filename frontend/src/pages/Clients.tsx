@@ -130,48 +130,28 @@ export default function Clients() {
         ])
         
         if (clientsResponse.data && Array.isArray(clientsResponse.data)) {
-          const projectsByClient: Record<string, string[]> = {}
+          // Aggregate findings data from projects (using findings_by_severity from API)
+          const projectsByClient: Record<string, { count: number, findings: { total: number, critical: number, high: number, medium: number, low: number } }> = {}
+          
           if (Array.isArray(projectsResponse.data)) {
             projectsResponse.data.forEach((p: any) => {
               if (p.client_id) {
                 if (!projectsByClient[p.client_id]) {
-                  projectsByClient[p.client_id] = []
+                  projectsByClient[p.client_id] = { count: 0, findings: { total: 0, critical: 0, high: 0, medium: 0, low: 0 } }
                 }
-                projectsByClient[p.client_id].push(p.id)
+                projectsByClient[p.client_id].count++
+                
+                // Use severity breakdown from projects API (no extra findings API calls needed)
+                const severity = p.findings_by_severity || { critical: 0, high: 0, medium: 0, low: 0 }
+                const findingCount = p.finding_count || 0
+                
+                projectsByClient[p.client_id].findings.total += findingCount
+                projectsByClient[p.client_id].findings.critical += severity.critical || 0
+                projectsByClient[p.client_id].findings.high += severity.high || 0
+                projectsByClient[p.client_id].findings.medium += severity.medium || 0
+                projectsByClient[p.client_id].findings.low += severity.low || 0
               }
             })
-          }
-          
-          const findingsByClient: Record<string, { total: number, critical: number, high: number, medium: number, low: number }> = {}
-          const allProjectIds = Object.values(projectsByClient).flat()
-          
-          for (const projectId of allProjectIds) {
-            try {
-              const findingsResponse = await api.get(`/findings/?project_id=${projectId}`, {
-                headers: { Authorization: `Bearer ${token}` }
-              })
-              if (Array.isArray(findingsResponse.data)) {
-                const clientId = Object.entries(projectsByClient).find(([, pIds]) => 
-                  pIds.includes(projectId)
-                )?.[0]
-                
-                if (clientId) {
-                  if (!findingsByClient[clientId]) {
-                    findingsByClient[clientId] = { total: 0, critical: 0, high: 0, medium: 0, low: 0 }
-                  }
-                  findingsResponse.data.forEach((f: any) => {
-                    findingsByClient[clientId].total++
-                    const severity = (f.severity || '').toLowerCase()
-                    if (severity === 'critical') findingsByClient[clientId].critical++
-                    else if (severity === 'high') findingsByClient[clientId].high++
-                    else if (severity === 'medium') findingsByClient[clientId].medium++
-                    else if (severity === 'low' || severity === 'info') findingsByClient[clientId].low++
-                  })
-                }
-              }
-            } catch (e) {
-              console.error(`Failed to fetch findings for project ${projectId}:`, e)
-            }
           }
           
           if (clientsResponse.data.length > 0) {
@@ -187,7 +167,7 @@ export default function Clients() {
                 }
               }
               
-              const clientFindings = findingsByClient[c.id] || { total: 0, critical: 0, high: 0, medium: 0, low: 0 }
+              const clientData = projectsByClient[c.id] || { count: 0, findings: { total: 0, critical: 0, high: 0, medium: 0, low: 0 } }
 
               return {
                 id: c.id,
@@ -204,14 +184,14 @@ export default function Clients() {
                 lastActivityDate: c.updated_at ? new Date(c.updated_at) : new Date(),
                 tags: parsedTags,
                 notes: c.notes || '',
-                projectsCount: (projectsByClient[c.id] || []).length,
+                projectsCount: clientData.count,
                 reportsCount: 0,
-                totalFindings: clientFindings.total,
+                totalFindings: clientData.findings.total,
                 findingsBySeverity: { 
-                  critical: clientFindings.critical, 
-                  high: clientFindings.high, 
-                  medium: clientFindings.medium, 
-                  low: clientFindings.low 
+                  critical: clientData.findings.critical, 
+                  high: clientData.findings.high, 
+                  medium: clientData.findings.medium, 
+                  low: clientData.findings.low 
                 },
                 createdAt: c.created_at ? new Date(c.created_at) : new Date(),
                 updatedAt: c.updated_at ? new Date(c.updated_at) : new Date(),

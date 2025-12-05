@@ -52,6 +52,14 @@ class ProjectMemberInResponse(BaseModel):
     assignedAt: str
 
 
+class FindingsSeverityCount(BaseModel):
+    """Breakdown of findings by severity level"""
+    critical: int = 0
+    high: int = 0
+    medium: int = 0
+    low: int = 0
+
+
 class ProjectResponse(BaseModel):
     id: str
     name: str
@@ -71,6 +79,7 @@ class ProjectResponse(BaseModel):
     created_at: str
     updated_at: str
     finding_count: int
+    findings_by_severity: FindingsSeverityCount  # Breakdown by severity
     report_count: int
     members: Optional[List[ProjectMemberInResponse]] = None
     # Retest fields
@@ -109,6 +118,23 @@ class ProjectMemberResponse(BaseModel):
     userEmail: str
     role: str
     assignedAt: str
+
+
+def _count_findings_by_severity(findings) -> FindingsSeverityCount:
+    """Helper function to count findings by severity level"""
+    counts = {"critical": 0, "high": 0, "medium": 0, "low": 0}
+    if findings:
+        for finding in findings:
+            severity = (finding.severity or "").upper()
+            if severity == "CRITICAL":
+                counts["critical"] += 1
+            elif severity == "HIGH":
+                counts["high"] += 1
+            elif severity == "MEDIUM":
+                counts["medium"] += 1
+            elif severity in ("LOW", "INFO"):
+                counts["low"] += 1
+    return FindingsSeverityCount(**counts)
 
 
 @router.get("/", response_model=list[ProjectResponse])
@@ -192,6 +218,7 @@ async def list_projects(
             created_at=project.createdAt.isoformat(),
             updated_at=project.updatedAt.isoformat(),
             finding_count=len(project.findings),
+            findings_by_severity=_count_findings_by_severity(project.findings),
             report_count=len(project.reports),
             is_retest=project.isRetest or False,
             parent_project_id=project.parentProjectId,
@@ -276,6 +303,7 @@ async def create_project(
         created_at=project_with_counts.createdAt.isoformat(),
         updated_at=project_with_counts.updatedAt.isoformat(),
         finding_count=len(project_with_counts.findings),
+        findings_by_severity=_count_findings_by_severity(project_with_counts.findings),
         report_count=len(project_with_counts.reports),
         is_retest=False,  # New projects are not retests
         parent_project_id=None,
@@ -428,6 +456,7 @@ async def get_project(
         created_at=project.createdAt.isoformat(),
         updated_at=project.updatedAt.isoformat(),
         finding_count=len(project.findings) if project.findings else 0,
+        findings_by_severity=_count_findings_by_severity(project.findings),
         report_count=len(project.reports) if project.reports else 0,
         members=members,
         is_retest=project.isRetest or False,
@@ -517,6 +546,7 @@ async def update_project(
         created_at=updated_project.createdAt.isoformat(),
         updated_at=updated_project.updatedAt.isoformat(),
         finding_count=len(updated_project.findings) if updated_project.findings else 0,
+        findings_by_severity=_count_findings_by_severity(updated_project.findings),
         report_count=len(updated_project.reports) if updated_project.reports else 0,
         is_retest=updated_project.isRetest or False,
         parent_project_id=updated_project.parentProjectId,
@@ -1003,6 +1033,7 @@ async def create_retest(
         created_at=complete_retest.createdAt.isoformat(),
         updated_at=complete_retest.updatedAt.isoformat(),
         finding_count=len(complete_retest.findings),
+        findings_by_severity=_count_findings_by_severity(complete_retest.findings),
         report_count=len(complete_retest.reports),
         is_retest=complete_retest.isRetest,
         parent_project_id=complete_retest.parentProjectId,

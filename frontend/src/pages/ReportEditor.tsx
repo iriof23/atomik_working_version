@@ -607,7 +607,7 @@ function CollapsibleSection({
     )
 }
 
-// Settings Tab Component (Client Branding)
+// Settings Tab Component (Report Settings)
 function SettingsTab({
     settings,
     onUpdate
@@ -615,158 +615,29 @@ function SettingsTab({
     settings: any;
     onUpdate: (settings: any) => void
 }) {
-    const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0]
-        if (file) {
-            // Validate file type
-            if (!file.type.startsWith('image/')) {
-                alert('Please upload an image file')
-                return
-            }
-
-            // Validate file size (max 2MB)
-            if (file.size > 2 * 1024 * 1024) {
-                alert('File size must be less than 2MB')
-                return
-            }
-
-            // Convert to base64
-            const reader = new FileReader()
-            reader.onloadend = () => {
-                onUpdate({ ...settings, clientLogo: reader.result as string })
-            }
-            reader.readAsDataURL(file)
-        }
-    }
-
     return (
         <div className="space-y-4">
             <Card>
                 <CardContent className="p-5">
                     <h3 className="text-sm font-semibold text-slate-900 mb-4">
-                        Client Branding
+                        Report Settings
                     </h3>
 
-                    {/* Logo Upload - Full Width */}
-                    <div className="mb-4 pb-4 border-b border-slate-100">
-                        <label className="block text-xs font-medium text-slate-700 mb-2">
-                            Client Logo
-                        </label>
-                        <div className="flex items-center gap-3">
-                            {settings.clientLogo ? (
-                                <div className="relative">
-                                    <img
-                                        src={settings.clientLogo}
-                                        alt="Client logo"
-                                        className="h-12 w-auto max-w-[160px] object-contain border border-slate-200 rounded-lg p-1.5"
-                                    />
-                                    <button
-                                        onClick={() => onUpdate({ ...settings, clientLogo: '' })}
-                                        className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs hover:bg-red-600"
-                                    >
-                                        ×
-                                    </button>
-                                </div>
-                            ) : (
-                                <div className="h-12 w-24 border-2 border-dashed border-slate-200 rounded-lg flex items-center justify-center text-slate-400 text-xs">
-                                    No logo
-                                </div>
-                            )}
-                            <label className="cursor-pointer">
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={handleLogoUpload}
-                                    className="hidden"
-                                />
-                                <div className="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-medium hover:bg-emerald-700 transition-colors">
-                                    {settings.clientLogo ? 'Change' : 'Upload'}
-                                </div>
-                            </label>
-                            <span className="text-xs text-slate-400">PNG, JPG, SVG · Max 2MB</span>
-                        </div>
-                    </div>
-
-                    {/* Report Title - Full Width */}
+                    {/* Footer Text */}
                     <div className="mb-4">
                         <label className="block text-xs font-medium text-slate-700 mb-1.5">
-                            Report Title
+                            Footer Text
                         </label>
                         <input
                             type="text"
-                            value={settings.reportTitle}
-                            onChange={(e) => onUpdate({ ...settings, reportTitle: e.target.value })}
+                            value={settings.footerText}
+                            onChange={(e) => onUpdate({ ...settings, footerText: e.target.value })}
                             className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                            placeholder="e.g., Prepared by Atomik Security"
                         />
-                    </div>
-
-                    {/* 2-Column Grid */}
-                    <div className="grid grid-cols-2 gap-4 mb-4">
-                        {/* Primary Color */}
-                        <div>
-                            <label className="block text-xs font-medium text-slate-700 mb-1.5">
-                                Primary Color
-                            </label>
-                            <div className="flex items-center gap-2">
-                                <input
-                                    type="color"
-                                    value={settings.primaryColor}
-                                    onChange={(e) => onUpdate({ ...settings, primaryColor: e.target.value })}
-                                    className="h-9 w-14 rounded-lg cursor-pointer border border-slate-200"
-                                />
-                                <input
-                                    type="text"
-                                    value={settings.primaryColor}
-                                    onChange={(e) => onUpdate({ ...settings, primaryColor: e.target.value })}
-                                    className="flex-1 px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-                                    placeholder="#10b981"
-                                />
-                            </div>
-                        </div>
-
-                        {/* Header Text */}
-                        <div>
-                            <label className="block text-xs font-medium text-slate-700 mb-1.5">
-                                Header Text
-                            </label>
-                            <input
-                                type="text"
-                                value={settings.headerText}
-                                onChange={(e) => onUpdate({ ...settings, headerText: e.target.value })}
-                                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-                                placeholder="e.g., Confidential"
-                            />
-                        </div>
-
-                        {/* Footer Text */}
-                        <div>
-                            <label className="block text-xs font-medium text-slate-700 mb-1.5">
-                                Footer Text
-                            </label>
-                            <input
-                                type="text"
-                                value={settings.footerText}
-                                onChange={(e) => onUpdate({ ...settings, footerText: e.target.value })}
-                                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-                                placeholder="e.g., Prepared by Atomik Security"
-                            />
-                        </div>
-
-                        {/* Confidentiality Level */}
-                        <div>
-                            <label className="block text-xs font-medium text-slate-700 mb-1.5">
-                                Confidentiality Level
-                            </label>
-                            <select
-                                value={settings.confidentialityLevel}
-                                onChange={(e) => onUpdate({ ...settings, confidentialityLevel: e.target.value })}
-                                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-                            >
-                                <option value="Public">Public</option>
-                                <option value="Confidential">Confidential</option>
-                                <option value="Strictly Confidential">Strictly Confidential</option>
-                            </select>
-                        </div>
+                        <p className="text-xs text-slate-400 mt-1">
+                            This text will appear in the footer of your exported PDF report.
+                        </p>
                     </div>
 
                     {/* PDF Template Style */}
@@ -782,6 +653,9 @@ function SettingsTab({
                             <option value="classic">Classic Premium — Dark headers, structured cards</option>
                             <option value="apple">The Apple Minimal — Clean, spacious layout</option>
                         </select>
+                        <p className="text-xs text-slate-400 mt-1">
+                            Choose the visual style for your exported PDF report.
+                        </p>
                     </div>
                 </CardContent>
             </Card>

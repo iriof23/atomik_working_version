@@ -155,7 +155,6 @@ export default function Projects() {
     const [viewingProject, setViewingProject] = useState<Project | null>(null)
     const [deletingProject, setDeletingProject] = useState<Project | null>(null)
     const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null)
-    const [projectFindingsData, setProjectFindingsData] = useState<Record<string, { count: number, severity: { critical: number, high: number, medium: number, low: number } }>>({})
     const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null)
     const [filterDialogOpen, setFilterDialogOpen] = useState(false)
     const [appliedFilters, setAppliedFilters] = useState<ActiveFilters>({})
@@ -288,6 +287,9 @@ export default function Projects() {
                             return typeMap[type] || 'Web App'
                         }
                         
+                        // Get severity breakdown from API (avoids extra API calls)
+                        const severityCounts = p.findings_by_severity || { critical: 0, high: 0, medium: 0, low: 0 }
+                        
                         return {
                             id: p.id,
                             name: p.name,
@@ -301,7 +303,7 @@ export default function Projects() {
                             endDate: p.end_date ? new Date(p.end_date) : new Date(),
                             progress: 0,
                             findingsCount: p.finding_count || 0,
-                            findingsBySeverity: { critical: 0, high: 0, medium: 0, low: 0 },
+                            findingsBySeverity: severityCounts,
                             teamMembers: [],
                             lastActivity: 'Just now',
                             lastActivityDate: new Date(p.updated_at),
@@ -368,50 +370,6 @@ export default function Projects() {
     useEffect(() => {
         localStorage.setItem('projectsViewMode', viewMode)
     }, [viewMode])
-
-    // Load actual findings counts and severity from API
-    useEffect(() => {
-        const fetchFindingsData = async () => {
-            if (projects.length === 0) return
-            
-            try {
-                const token = await getToken()
-                if (!token) return
-                
-                const data: Record<string, { count: number, severity: { critical: number, high: number, medium: number, low: number } }> = {}
-                
-                // Fetch findings for all projects in parallel
-                await Promise.all(projects.map(async (project) => {
-                    try {
-                        const response = await api.get(`/findings/?project_id=${project.id}`, {
-                            headers: { Authorization: `Bearer ${token}` }
-                        })
-                        
-                        if (Array.isArray(response.data)) {
-                            const findings = response.data
-                    const breakdown = { critical: 0, high: 0, medium: 0, low: 0 }
-                    findings.forEach((f: any) => {
-                                const severity = (f.severity || '').toLowerCase() as keyof typeof breakdown
-                                if (breakdown[severity] !== undefined) breakdown[severity]++
-                    })
-                    data[project.id] = { count: findings.length, severity: breakdown }
-                        } else {
-                    data[project.id] = { count: 0, severity: { critical: 0, high: 0, medium: 0, low: 0 } }
-                }
-                    } catch (error) {
-                        console.error(`Failed to fetch findings for project ${project.id}:`, error)
-                data[project.id] = { count: 0, severity: { critical: 0, high: 0, medium: 0, low: 0 } }
-            }
-                }))
-                
-        setProjectFindingsData(data)
-            } catch (error) {
-                console.error('Failed to fetch findings data:', error)
-            }
-        }
-        
-        fetchFindingsData()
-    }, [projects, getToken])
 
     // Filter management functions
     const removeFilter = (id: string) => {
@@ -639,7 +597,8 @@ export default function Projects() {
         const csvRows = [
             headers.join(','),
             ...projectsToExport.map(project => {
-                const findingsData = projectFindingsData[project.id] || { count: 0, severity: { critical: 0, high: 0, medium: 0, low: 0 } }
+                // Use severity data from project directly (no extra API calls needed)
+                const findingsData = { count: project.findingsCount, severity: project.findingsBySeverity }
                 const teamMembers = project.teamMembers?.map(m => m.name).join('; ') || ''
                 const complianceFrameworks = project.complianceFrameworks?.join('; ') || ''
                 const scope = project.scope?.join('; ') || ''
@@ -711,14 +670,14 @@ export default function Projects() {
         }
     }
 
-    // Calculate stats
+    // Calculate stats (using data from projects directly)
     const stats = {
         totalProjects: projects.length,
         activeProjects: projects.filter(p => p.status === 'In Progress').length,
         completedProjects: projects.filter(p => p.status === 'Completed').length,
         overdueProjects: projects.filter(p => p.endDate < new Date() && p.status !== 'Completed').length,
-        totalFindings: Object.values(projectFindingsData).reduce((sum, data) => sum + data.count, 0),
-        criticalFindings: Object.values(projectFindingsData).reduce((sum, data) => sum + data.severity.critical, 0)
+        totalFindings: projects.reduce((sum, p) => sum + p.findingsCount, 0),
+        criticalFindings: projects.reduce((sum, p) => sum + (p.findingsBySeverity?.critical || 0), 0)
     }
 
     // Filter projects based on search
@@ -796,8 +755,8 @@ export default function Projects() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-semibold text-slate-900">Projects</h1>
-                    <p className="text-sm text-slate-500 mt-1">
+                    <h1 className="text-2xl font-bold text-slate-900">Projects</h1>
+                    <p className="text-slate-500 text-sm mt-0.5">
                         Manage penetration testing projects and engagements
                     </p>
                 </div>
@@ -980,7 +939,6 @@ export default function Projects() {
                         projects={filteredProjects}
                         selectedProjectId={selectedProjectId}
                         setSelectedProjectId={setSelectedProjectId}
-                        projectFindingsData={projectFindingsData}
                         onViewDetails={handleViewDetails}
                         onEditProject={handleEditProject}
                         onGenerateReport={handleGenerateReport}
@@ -1123,7 +1081,6 @@ function CardView({
     projects,
     selectedProjectId,
     setSelectedProjectId,
-    projectFindingsData,
     onViewDetails,
     onEditProject,
     onGenerateReport,
@@ -1132,7 +1089,6 @@ function CardView({
     projects: Project[]
     selectedProjectId: string | null
     setSelectedProjectId: (id: string | null) => void
-    projectFindingsData: Record<string, { count: number, severity: { critical: number, high: number, medium: number, low: number } }>
     onViewDetails: (project: Project) => void
     onEditProject: (project: Project) => void
     onGenerateReport: (project: Project) => void
@@ -1146,8 +1102,8 @@ function CardView({
                     project={project}
                     isSelected={selectedProjectId === project.id}
                     onSelect={() => setSelectedProjectId(project.id)}
-                    findingsCount={projectFindingsData[project.id]?.count ?? 0}
-                    findingsSeverity={projectFindingsData[project.id]?.severity}
+                    findingsCount={project.findingsCount}
+                    findingsSeverity={project.findingsBySeverity}
                     onViewDetails={onViewDetails}
                     onEditProject={onEditProject}
                     onGenerateReport={onGenerateReport}
