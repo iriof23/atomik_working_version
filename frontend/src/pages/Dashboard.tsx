@@ -38,7 +38,8 @@ import {
     GitCommit,
     ExternalLink,
     Eye,
-    Pencil
+    Pencil,
+    PauseCircle
 } from 'lucide-react'
 
 // --- Helper Functions ---
@@ -141,12 +142,9 @@ const useDashboardStore = (getToken: () => Promise<string | null>) => {
                                 status: p.status === 'PLANNING' ? 'Planning' :
                                         p.status === 'IN_PROGRESS' ? 'In Progress' :
                                         p.status === 'COMPLETED' ? 'Completed' :
-                                        p.status === 'REVIEW' ? 'In Review' : p.status,
+                                        p.status === 'ON_HOLD' ? 'On Hold' : p.status,
                                 priority: p.priority || 'Medium',
-                                progress: p.status === 'COMPLETED' ? 100 :
-                                          p.status === 'IN_PROGRESS' ? 50 :
-                                          p.status === 'REVIEW' ? 75 :
-                                          p.status === 'PLANNING' ? 10 : 0,
+                                progress: 0,
                                 endDate: p.end_date || new Date().toISOString(),
                                 updatedAt: p.updated_at || new Date().toISOString(),
                                 findings: []
@@ -202,9 +200,9 @@ const useDashboardStore = (getToken: () => Promise<string | null>) => {
                 }
             })
 
-            // Active Project (Most recently updated 'In Progress' project)
+            // Active Project (Most recently updated 'In Progress' or 'On Hold' project)
             const activeProjects = projects.filter(p => 
-                p.status === 'In Progress' || p.status === 'IN_PROGRESS' || p.status === 'In Review'
+                p.status === 'In Progress' || p.status === 'IN_PROGRESS' || p.status === 'On Hold' || p.status === 'ON_HOLD'
             )
             const sortedActive = [...activeProjects].sort((a, b) =>
                 new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
@@ -361,12 +359,12 @@ const SparklineBar = ({ values, color = 'bg-emerald-400' }: { values: number[], 
 const ProjectStatusCard = ({ projects }: { projects: Project[] }) => {
     const planning = projects.filter(p => p.status === 'Planning').length
     const inProgress = projects.filter(p => p.status === 'In Progress' || p.status === 'IN_PROGRESS').length
-    const inReview = projects.filter(p => p.status === 'In Review' || p.status === 'REVIEW').length
+    const onHold = projects.filter(p => p.status === 'On Hold' || p.status === 'ON_HOLD').length
     const completed = projects.filter(p => p.status === 'Completed' || p.status === 'COMPLETED').length
     const total = projects.length
 
-    // Generate fake sparkline data based on actual counts
-    const sparklineData = [planning * 2, inProgress * 3, inReview * 2, completed, planning, inProgress * 2, completed * 2]
+    // Generate sparkline data based on actual counts
+    const sparklineData = [planning * 2, inProgress * 3, onHold * 2, completed, planning, inProgress * 2, completed * 2]
 
     return (
         <StatWidget 
@@ -390,8 +388,8 @@ const ProjectStatusCard = ({ projects }: { projects: Project[] }) => {
                         <span className="text-sm text-slate-500 ml-2">In Progress <Zap className="w-3 h-3 inline text-emerald-500" /></span>
                     </div>
                     <div>
-                        <span className="text-3xl font-bold text-slate-900">{inReview}</span>
-                        <span className="text-sm text-slate-500 ml-2">Review <Eye className="w-3 h-3 inline text-amber-500" /></span>
+                        <span className="text-3xl font-bold text-slate-900">{onHold}</span>
+                        <span className="text-sm text-slate-500 ml-2">On Hold <PauseCircle className="w-3 h-3 inline text-amber-500" /></span>
                     </div>
                 </div>
 
@@ -410,10 +408,10 @@ const ProjectStatusCard = ({ projects }: { projects: Project[] }) => {
                                 style={{ width: `${(inProgress / Math.max(total, 1)) * 100}%` }} 
                             />
                         )}
-                        {inReview > 0 && (
+                        {onHold > 0 && (
                             <div 
                                 className="h-full bg-amber-400 transition-all" 
-                                style={{ width: `${(inReview / Math.max(total, 1)) * 100}%` }} 
+                                style={{ width: `${(onHold / Math.max(total, 1)) * 100}%` }} 
                             />
                         )}
                         {completed > 0 && (
@@ -828,7 +826,7 @@ export default function Dashboard() {
     // Group projects by status for Kanban
     const planningProjects = allProjects.filter(p => p.status === 'Planning')
     const inProgressProjects = allProjects.filter(p => p.status === 'In Progress' || p.status === 'IN_PROGRESS')
-    const reviewProjects = allProjects.filter(p => p.status === 'In Review' || p.status === 'REVIEW')
+    const onHoldProjects = allProjects.filter(p => p.status === 'On Hold' || p.status === 'ON_HOLD')
     const completedProjects = allProjects.filter(p => p.status === 'Completed' || p.status === 'COMPLETED')
 
     if (isLoading) {
@@ -908,10 +906,10 @@ export default function Dashboard() {
                         onResumeReport={handleResumeReport}
                     />
                     <KanbanColumn 
-                        title="Review" 
-                        count={reviewProjects.length}
-                        icon={<Eye className="w-4 h-4 text-amber-500" />}
-                        projects={reviewProjects}
+                        title="On Hold" 
+                        count={onHoldProjects.length}
+                        icon={<PauseCircle className="w-4 h-4 text-amber-500" />}
+                        projects={onHoldProjects}
                         onViewDetails={handleViewDetails}
                         onResumeReport={handleResumeReport}
                     />

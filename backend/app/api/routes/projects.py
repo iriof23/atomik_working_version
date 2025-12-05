@@ -922,11 +922,14 @@ async def create_retest(
     logger.info(f"Created retest project '{retest_project.name}' (ID: {retest_project.id})")
     
     # Clone all findings from the original project
+    retest_number = existing_retests + 1
     cloned_findings_count = 0
     for finding in original_project.findings:
+        # Append retest suffix to referenceId to avoid unique constraint violation
+        new_reference_id = f"{finding.referenceId}-R{retest_number}" if finding.referenceId else None
         await db.finding.create(
             data={
-                "referenceId": finding.referenceId,  # CRITICAL: Keep the same Finding ID!
+                "referenceId": new_reference_id,  # Append -R1, -R2, etc. for retests
                 "title": finding.title,
                 "description": finding.description,
                 "severity": finding.severity,
