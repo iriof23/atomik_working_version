@@ -47,7 +47,7 @@ import { useToast } from "@/components/ui/use-toast"
 import { StatCard } from '@/components/StatCard'
 import { Card } from '@/components/ui/card'
 import { useAuth } from '@clerk/clerk-react'
-import api from '@/lib/api'
+import { api } from '@/lib/api'
 
 export default function Findings() {
     const [activeTab, setActiveTab] = useState<'system' | 'custom'>('system')
