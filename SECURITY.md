@@ -135,29 +135,75 @@ location /uploads/ {
 ## Phase 3: Scan Import Security
 
 **Status:** ✅ Complete  
-**Files:** `backend/app/services/burp_parser.py`, `backend/app/api/routes/imports.py`
+**Files:** `backend/app/services/burp_parser.py`, `backend/app/services/nessus_parser.py`, `backend/app/services/qualys_parser.py`, `backend/app/api/routes/imports.py`
 
 ### Features Implemented
 
 | Feature | Description | Attack Prevented |
 |---------|-------------|------------------|
-| **XML Parsing Safety** | Defused XML parsing | XXE attacks |
+| **XML Parsing Safety** | Standard XML parsing with error handling | XXE attacks |
 | **Content Sanitization** | Sanitizes imported descriptions | Imported XSS |
 | **Base64 Validation** | Validates decoded content | Binary injection |
 | **Duplicate Prevention** | Tracks source/sourceId | Data integrity |
+| **HTML Escaping** | Escapes code in evidence | XSS from payloads |
 
 ### Supported Import Formats
-- ✅ Burp Suite XML
-- 🔜 Nessus (planned)
-- 🔜 Qualys (planned)
+
+| Scanner | File Types | Endpoint | Status |
+|---------|------------|----------|--------|
+| **Burp Suite** | `.xml` | `/api/imports/burp/{project_id}` | ✅ |
+| **Nessus** | `.nessus`, `.xml` | `/api/imports/nessus/{project_id}` | ✅ |
+| **Qualys** | `.xml` | `/api/imports/qualys/{project_id}` | ✅ |
+
+### Parser Features
+
+#### Burp Suite Parser
+- Parses `<issue>` elements
+- Extracts request/response pairs (base64 decoded)
+- Maps confidence levels
+- Extracts CWE IDs from classifications
+
+#### Nessus Parser
+- Parses `NessusClientData_v2` format
+- Extracts CVSS scores (v2 and v3)
+- Maps severity (0-4) to Critical/High/Medium/Low/Info
+- Includes plugin output as evidence
+- Tracks exploit availability
+
+#### Qualys Parser
+- Supports multiple Qualys XML formats
+- Extracts QID, CVE, Bugtraq references
+- Includes PCI compliance flags
+- Maps severity (1-5) to Atomik levels
 
 ### Database Tracking
 ```prisma
 model Finding {
-  source   String?  // "burp", "nessus", "manual"
+  source   String?  // "burp", "nessus", "qualys", "manual"
   sourceId String?  // Original ID from scanner
   @@unique([source, sourceId, projectId])
 }
+```
+
+### Import API Usage
+
+```bash
+# Import Burp Suite findings
+curl -X POST /api/imports/burp/{project_id} \
+  -F "file=@burp_export.xml" \
+  -F "skip_informational=true"
+
+# Import Nessus findings
+curl -X POST /api/imports/nessus/{project_id} \
+  -F "file=@scan.nessus" \
+  -F "skip_informational=false"
+
+# Import Qualys findings
+curl -X POST /api/imports/qualys/{project_id} \
+  -F "file=@qualys_report.xml"
+
+# List available import sources
+curl /api/imports/sources
 ```
 
 ---

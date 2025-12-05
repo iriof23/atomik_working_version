@@ -1015,15 +1015,15 @@ export default function Projects() {
             {/* Empty State: No projects exist */}
             {!isLoading && projects.length === 0 && (
                 <Card className="flex flex-col items-center justify-center py-16 text-center">
-                    <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center mb-4">
-                        <FolderKanban className="h-6 w-6 text-slate-400" />
+                    <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mb-4">
+                        <FolderKanban className="h-8 w-8 text-slate-400" />
                     </div>
-                    <h3 className="text-sm font-semibold text-slate-900 mb-1">No projects yet</h3>
-                    <p className="text-xs text-slate-500 mb-4 max-w-sm">
-                        Get started by creating your first penetration testing project
+                    <h3 className="text-lg font-semibold text-slate-900 mb-2">No projects yet</h3>
+                    <p className="text-slate-500 mb-6 max-w-sm">
+                        Get started by creating your first penetration testing project.
                     </p>
-                    <Button onClick={openAddProjectDialog} size="sm" className="bg-emerald-600 hover:bg-emerald-700 gap-2">
-                        <Plus className="h-4 w-4 shrink-0" />
+                    <Button onClick={openAddProjectDialog} size="lg" className="bg-emerald-600 hover:bg-emerald-700 gap-2">
+                        <Plus className="h-5 w-5 shrink-0" />
                         <span>Create Project</span>
                     </Button>
                 </Card>

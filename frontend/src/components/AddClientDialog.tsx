@@ -34,20 +34,13 @@ import { cn } from '@/lib/utils'
 import { api } from '@/lib/api'
 import { useToast } from '@/components/ui/use-toast'
 
-interface AddClientDialogProps {
-    open: boolean
-    onOpenChange: (open: boolean) => void
-    onClientAdded?: (client: ClientData) => void
-    editingClient?: ClientData | null
-}
-
-interface ClientData {
+interface EditingClient {
     id: string
     name: string
     logoUrl?: string
-    status: 'Active' | 'Inactive' | 'Prospect' | 'Archived'
-    serviceTier: 'Standard' | 'Priority' | 'Strategic'
-    riskLevel?: string
+    status?: 'Active' | 'Inactive' | 'Prospect' | 'Archived'
+    serviceTier?: 'Standard' | 'Priority' | 'Strategic'
+    riskLevel?: 'High' | 'Medium' | 'Low' | string
     industry?: string
     companySize?: 'Enterprise' | 'SMB' | 'Startup'
     primaryContact?: string
@@ -55,14 +48,37 @@ interface ClientData {
     phone?: string
     tags?: string[]
     notes?: string
-    lastActivity?: string
-    lastActivityDate?: Date
-    projectsCount?: number
-    reportsCount?: number
-    totalFindings?: number
-    findingsBySeverity?: { critical: number; high: number; medium: number; low: number }
-    createdAt?: Date
-    updatedAt?: Date
+}
+
+interface CreatedClient {
+    id: string
+    name: string
+    logoUrl: string
+    status: 'Active' | 'Inactive' | 'Prospect' | 'Archived'
+    serviceTier: 'Standard' | 'Priority' | 'Strategic'
+    riskLevel: string
+    industry: string
+    companySize: 'Enterprise' | 'SMB' | 'Startup'
+    primaryContact: string
+    email: string
+    phone: string
+    tags: string[]
+    notes: string
+    lastActivity: string
+    lastActivityDate: Date
+    projectsCount: number
+    reportsCount: number
+    totalFindings: number
+    findingsBySeverity: { critical: number; high: number; medium: number; low: number }
+    createdAt: Date
+    updatedAt: Date
+}
+
+interface AddClientDialogProps {
+    open: boolean
+    onOpenChange: (open: boolean) => void
+    onClientAdded?: (client: CreatedClient) => void
+    editingClient?: EditingClient | null
 }
 
 interface FormData {
@@ -222,7 +238,7 @@ export function AddClientDialog({ open, onOpenChange, onClientAdded, editingClie
                 toast({ title: 'Client Created', description: `${clientData.name} created.` })
             }
 
-            const frontendClientData: ClientData = {
+            const frontendClientData: CreatedClient = {
                 id: clientData.id,
                 name: clientData.name,
                 logoUrl: formData.logoUrl || '',
