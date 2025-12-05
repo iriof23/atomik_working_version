@@ -172,7 +172,7 @@ export default function Clients() {
               return {
                 id: c.id,
                 name: c.name,
-                logoUrl: websiteUrl,
+                logoUrl: '', // Don't use website URL as logo - use fallback initials instead
                 status: c.status || 'Prospect',
                 riskLevel: c.risk_level || 'Medium',
                 industry: c.industry || 'Technology',
