@@ -18,7 +18,6 @@ import {
     LogOut,
     Bell,
     HelpCircle,
-    Sparkles,
 } from 'lucide-react'
 
 interface NavItemProps {
@@ -28,10 +27,9 @@ interface NavItemProps {
     count?: number
     isActive?: boolean
     isCollapsed?: boolean
-    isNew?: boolean
 }
 
-function NavItem({ to, icon, label, count, isActive, isCollapsed, isNew }: NavItemProps) {
+function NavItem({ to, icon, label, count, isActive, isCollapsed }: NavItemProps) {
     return (
         <Link
             to={to}
@@ -48,13 +46,7 @@ function NavItem({ to, icon, label, count, isActive, isCollapsed, isNew }: NavIt
             {!isCollapsed && (
                 <>
                     <span className="flex-1">{label}</span>
-                    {isNew && (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white">
-                            <Sparkles className="w-2.5 h-2.5" />
-                            New
-                        </span>
-                    )}
-                    {count !== undefined && !isNew && (
+                    {count !== undefined && (
                         <span className={cn(
                             "text-xs font-medium px-2 py-0.5 rounded-full",
                             isActive
@@ -176,7 +168,6 @@ export default function Layout() {
                             label="Dashboard"
                             isActive={isActive('/dashboard')}
                             isCollapsed={isCollapsed}
-                            isNew
                         />
                     </NavSection>
 
@@ -187,7 +178,6 @@ export default function Layout() {
                             label="Clients"
                             isActive={isActive('/clients')}
                             isCollapsed={isCollapsed}
-                            isNew
                         />
                         <NavItem
                             to="/projects"
@@ -195,15 +185,6 @@ export default function Layout() {
                             label="Projects"
                             isActive={isActive('/projects')}
                             isCollapsed={isCollapsed}
-                            isNew
-                        />
-                        <NavItem
-                            to="/findings"
-                            icon={<Shield className="w-5 h-5" />}
-                            label="Findings"
-                            isActive={isActive('/findings')}
-                            isCollapsed={isCollapsed}
-                            isNew
                         />
                         <NavItem
                             to="/reports"
@@ -211,18 +192,23 @@ export default function Layout() {
                             label="Reports"
                             isActive={isActive('/reports')}
                             isCollapsed={isCollapsed}
-                            isNew
+                        />
+                        <NavItem
+                            to="/findings"
+                            icon={<Shield className="w-5 h-5" />}
+                            label="Findings"
+                            isActive={isActive('/findings')}
+                            isCollapsed={isCollapsed}
                         />
                     </NavSection>
 
-                    <NavSection title="System" isCollapsed={isCollapsed} defaultOpen={false}>
+                    <NavSection title="System" isCollapsed={isCollapsed} defaultOpen={true}>
                         <NavItem
                             to="/settings"
                             icon={<Settings className="w-5 h-5" />}
                             label="Settings"
                             isActive={isActive('/settings')}
                             isCollapsed={isCollapsed}
-                            isNew
                         />
                     </NavSection>
                 </nav>

@@ -30,7 +30,6 @@ import {
     Globe,
     User,
 } from 'lucide-react'
-import { cn } from '@/lib/utils'
 import { api } from '@/lib/api'
 import { useToast } from '@/components/ui/use-toast'
 
@@ -56,7 +55,7 @@ interface CreatedClient {
     logoUrl: string
     status: 'Active' | 'Inactive' | 'Prospect' | 'Archived'
     serviceTier: 'Standard' | 'Priority' | 'Strategic'
-    riskLevel: string
+    riskLevel: 'High' | 'Medium' | 'Low'
     industry: string
     companySize: 'Enterprise' | 'SMB' | 'Startup'
     primaryContact: string
@@ -185,7 +184,10 @@ export function AddClientDialog({ open, onOpenChange, onClientAdded, editingClie
 
         try {
             const token = await getToken()
-            if (!token) throw new Error('Authentication required')
+            if (!token) {
+                toast({ title: 'Error', description: 'Authentication required. Please sign in again.', variant: 'destructive' })
+                return
+            }
 
             const payload: Record<string, string> = {
                 name: formData.name.trim(),
@@ -195,10 +197,19 @@ export function AddClientDialog({ open, onOpenChange, onClientAdded, editingClie
                 payload.contact_name = formData.primaryContact.trim()
             }
             if (formData.email?.trim()) {
-                payload.contact_email = formData.email.trim()
+                // Normalize email: trim and lowercase
+                const email = formData.email.trim().toLowerCase()
+                // Only send if it looks like a valid email
+                if (email.includes('@') && email.includes('.')) {
+                    payload.contact_email = email
+                }
             }
             if (formData.phone?.trim()) {
-                payload.contact_phone = formData.phone.trim()
+                // Normalize phone: keep only digits and common phone characters
+                const phone = formData.phone.trim().replace(/[^\d+\-().\s]/g, '')
+                if (phone) {
+                    payload.contact_phone = phone
+                }
             }
             if (formData.industry?.trim()) {
                 payload.industry = formData.industry.trim()
@@ -207,14 +218,23 @@ export function AddClientDialog({ open, onOpenChange, onClientAdded, editingClie
                 payload.company_size = formData.companySize
             }
             if (formData.logoUrl?.trim()) {
-                payload.website_url = formData.logoUrl.trim()
+                let websiteUrl = formData.logoUrl.trim()
+                // Auto-prepend https:// if no protocol specified
+                if (websiteUrl && !websiteUrl.match(/^https?:\/\//i)) {
+                    websiteUrl = `https://${websiteUrl}`
+                }
+                payload.website_url = websiteUrl
             }
             if (formData.status) {
                 payload.status = formData.status
             }
-            if (formData.serviceTier) {
-                payload.risk_level = formData.serviceTier
+            // Map service tier to risk level for backend
+            const riskLevelMap: Record<string, string> = {
+                'Standard': 'Medium',
+                'Priority': 'High', 
+                'Strategic': 'Low'
             }
+            payload.risk_level = riskLevelMap[formData.serviceTier] || 'Medium'
             if (formData.tags.length > 0) {
                 payload.tags = JSON.stringify(formData.tags)
             }
@@ -222,7 +242,7 @@ export function AddClientDialog({ open, onOpenChange, onClientAdded, editingClie
                 payload.notes = formData.notes.trim()
             }
 
-            let clientData: { id: string; name: string; contact_name?: string; contact_email?: string; contact_phone?: string; created_at: string; updated_at: string }
+            let clientData: { id: string; name: string; contact_name?: string; contact_email?: string; contact_phone?: string; created_at?: string; updated_at?: string }
             
             if (editingClient) {
                 const response = await api.put(`/clients/${editingClient.id}`, payload, {
@@ -238,28 +258,56 @@ export function AddClientDialog({ open, onOpenChange, onClientAdded, editingClie
                 toast({ title: 'Client Created', description: `${clientData.name} created.` })
             }
 
+            // Validate response has required fields
+            if (!clientData?.id || !clientData?.name) {
+                throw new Error('Invalid response from server')
+            }
+
+            const now = new Date()
+            const riskLevelFromTier: Record<string, 'High' | 'Medium' | 'Low'> = {
+                'Standard': 'Medium',
+                'Priority': 'High',
+                'Strategic': 'Low'
+            }
+            
+            // Parse dates safely
+            let createdAt = now
+            let updatedAt = now
+            try {
+                if (clientData.created_at) {
+                    createdAt = new Date(clientData.created_at)
+                    if (isNaN(createdAt.getTime())) createdAt = now
+                }
+                if (clientData.updated_at) {
+                    updatedAt = new Date(clientData.updated_at)
+                    if (isNaN(updatedAt.getTime())) updatedAt = now
+                }
+            } catch {
+                // Keep default dates
+            }
+
             const frontendClientData: CreatedClient = {
                 id: clientData.id,
                 name: clientData.name,
                 logoUrl: formData.logoUrl || '',
                 status: formData.status,
                 serviceTier: formData.serviceTier,
-                riskLevel: formData.serviceTier,
-                industry: formData.industry,
+                riskLevel: riskLevelFromTier[formData.serviceTier] || 'Medium',
+                industry: formData.industry || '',
                 companySize: formData.companySize,
-                primaryContact: clientData.contact_name || formData.primaryContact,
-                email: clientData.contact_email || formData.email,
-                phone: clientData.contact_phone || formData.phone,
-                tags: formData.tags,
+                primaryContact: clientData.contact_name || formData.primaryContact || '',
+                email: clientData.contact_email || formData.email || '',
+                phone: clientData.contact_phone || formData.phone || '',
+                tags: formData.tags || [],
                 notes: formData.notes || '',
                 lastActivity: 'Just now',
-                lastActivityDate: new Date(),
+                lastActivityDate: now,
                 projectsCount: 0,
                 reportsCount: 0,
                 totalFindings: 0,
                 findingsBySeverity: { critical: 0, high: 0, medium: 0, low: 0 },
-                createdAt: new Date(clientData.created_at),
-                updatedAt: new Date(clientData.updated_at),
+                createdAt,
+                updatedAt,
             }
 
             onClientAdded?.(frontendClientData)
@@ -267,10 +315,30 @@ export function AddClientDialog({ open, onOpenChange, onClientAdded, editingClie
 
         } catch (error: unknown) {
             console.error('Client save error:', error)
-            const apiError = error as { response?: { data?: { detail?: string } } }
+            let errorMessage = 'Failed to save client.'
+            
+            try {
+                const apiError = error as { response?: { data?: { detail?: string | Array<{ msg: string; loc?: string[] }> } }, message?: string }
+                const detail = apiError.response?.data?.detail
+                
+                if (detail) {
+                    if (typeof detail === 'string') {
+                        // Simple string error
+                        errorMessage = detail
+                    } else if (Array.isArray(detail)) {
+                        // Pydantic validation errors - extract messages
+                        errorMessage = detail.map(err => err.msg).join(', ')
+                    }
+                } else if (apiError.message) {
+                    errorMessage = apiError.message
+                }
+            } catch {
+                // Keep default error message
+            }
+            
             toast({
                 title: 'Error',
-                description: apiError.response?.data?.detail || 'Failed to save client.',
+                description: errorMessage,
                 variant: 'destructive',
             })
         } finally {

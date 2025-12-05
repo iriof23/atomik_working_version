@@ -34,8 +34,6 @@ import {
     FolderKanban,
     Flag,
     ChevronRight,
-    Sparkles,
-    BarChart3,
     MessageSquare,
     GitCommit,
     ExternalLink,
@@ -393,7 +391,7 @@ const ProjectStatusCard = ({ projects }: { projects: Project[] }) => {
                     </div>
                     <div>
                         <span className="text-3xl font-bold text-slate-900">{inReview}</span>
-                        <span className="text-sm text-slate-500 ml-2">Review <Sparkles className="w-3 h-3 inline text-amber-500" /></span>
+                        <span className="text-sm text-slate-500 ml-2">Review <Eye className="w-3 h-3 inline text-amber-500" /></span>
                     </div>
                 </div>
 
@@ -897,10 +895,6 @@ export default function Dashboard() {
                         </Badge>
                     </div>
                     <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="sm" className="text-slate-500 gap-1.5">
-                            <BarChart3 className="w-4 h-4 shrink-0" />
-                            <span>Board</span>
-                        </Button>
                         <Link to="/projects">
                             <Button variant="ghost" size="sm" className="text-slate-500 gap-0.5">
                                 <span>View all</span>
@@ -930,7 +924,7 @@ export default function Dashboard() {
                     <KanbanColumn 
                         title="Review" 
                         count={reviewProjects.length}
-                        icon={<Sparkles className="w-4 h-4 text-amber-500" />}
+                        icon={<Eye className="w-4 h-4 text-amber-500" />}
                         projects={reviewProjects}
                         onViewDetails={handleViewDetails}
                         onResumeReport={handleResumeReport}
