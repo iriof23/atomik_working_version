@@ -147,7 +147,7 @@ const parseScopeField = (rawScope: string | string[] | undefined | null): string
     return []
 }
 
-const COMPLIANCE_FRAMEWORKS = ['PCI-DSS', 'SOC2', 'HIPAA', 'GDPR', 'ISO 27001', 'FedRAMP']
+const PROJECT_TAGS = ['Web App', 'API', 'Mobile', 'Network', 'Cloud', 'Internal', 'External', 'Retest']
 
 export function AddProjectDialog({ open, onOpenChange, onProjectAdded, clients, editingProject }: AddProjectDialogProps) {
     const { getToken } = useAuth()
@@ -590,10 +590,10 @@ export function AddProjectDialog({ open, onOpenChange, onProjectAdded, clients, 
                     <div className="space-y-2">
                         <Label className="text-xs font-medium text-slate-500 uppercase flex items-center gap-1.5">
                             <Shield className="h-3 w-3" />
-                            Compliance Frameworks
+                            Project Tags
                         </Label>
                         <div className="flex flex-wrap gap-1.5">
-                            {COMPLIANCE_FRAMEWORKS.map((framework) => (
+                            {PROJECT_TAGS.map((framework) => (
                                 <button
                                     key={framework}
                                     type="button"

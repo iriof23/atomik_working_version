@@ -331,7 +331,7 @@ export default function ProjectDetailModal({
                                 </div>
                             </div>
 
-                            {/* Standards & Compliance - Combined */}
+                            {/* Methodology & Tags */}
                             <div>
                                 <h3 className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
                                     <Shield className="w-3.5 h-3.5" />

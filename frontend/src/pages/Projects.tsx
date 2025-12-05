@@ -630,7 +630,7 @@ export default function Projects() {
             'Lead Tester',
             'Team Members',
             'Methodology',
-            'Compliance Frameworks',
+            'Project Tags',
             'Scope',
             'Description',
             'Last Activity'
