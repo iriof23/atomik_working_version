@@ -340,6 +340,72 @@ form-action 'self';
 
 ---
 
+## Phase 7: Security Testing
+
+**Status:** ✅ Complete  
+**Files:** `backend/tests/test_*.py`
+
+### Test Suites
+
+| Suite | Tests | Coverage |
+|-------|-------|----------|
+| `test_sanitization.py` | XSS prevention, safe HTML | HTML sanitization |
+| `test_file_validation.py` | Magic bytes, SVG security | File uploads |
+| `test_rate_limit.py` | Rate limiting behavior | API protection |
+| `test_audit_service.py` | Audit logging | Compliance |
+| `test_security_headers.py` | Response headers | Defense-in-depth |
+
+### Running Security Tests
+
+```bash
+# Run all tests
+cd backend
+pytest tests/ -v
+
+# Run specific security test suite
+pytest tests/test_sanitization.py -v
+
+# Run with coverage report
+pytest tests/ --cov=app --cov-report=html
+
+# Run only XSS tests
+pytest tests/test_sanitization.py::TestXSSPrevention -v
+```
+
+### Test Categories
+
+#### XSS Prevention Tests
+```python
+test_blocks_script_tags          # <script> removal
+test_blocks_onerror_attribute    # Event handler removal
+test_blocks_javascript_urls      # javascript: URL blocking
+test_blocks_iframe_tags          # iframe removal
+test_preserves_safe_html         # Safe content preserved
+```
+
+#### File Validation Tests
+```python
+test_valid_png_file              # Magic byte verification
+test_rejects_php_as_png          # Extension spoofing prevention
+test_rejects_svg_with_script     # SVG sanitization
+```
+
+#### Rate Limiting Tests
+```python
+test_allows_requests_under_limit # Normal operation
+test_blocks_requests_over_limit  # Enforcement
+test_auth_endpoint_has_stricter_limit # Per-endpoint limits
+```
+
+#### Audit Service Tests
+```python
+test_log_creates_audit_entry     # Audit creation
+test_log_auth_failed             # Security event logging
+test_log_access_denied           # Access control logging
+```
+
+---
+
 ## Configuration Reference
 
 ### Environment Variables

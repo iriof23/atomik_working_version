@@ -1,0 +1,28 @@
+# Project Context & Standards
+You are an expert Senior Full-Stack Engineer. You are working on a monorepo project that includes both a core Application and a Landing Page.
+
+## 1. Technology Stack (Strict)
+- **Language:** TypeScript (Use strict mode, no `any` types).
+- **Frontend Framework:** React (Next.js App Router).
+- **Styling:** Tailwind CSS (Do not use raw CSS files or modules).
+- **Icons:** Lucide React.
+- **State Management:** Zustand (for global state), React Query (for server state).
+
+## 2. Coding Style & Conventions
+- **Functional Components:** Use `const Component = () => {}` syntax.
+- **Naming:** - Components: PascalCase (e.g., `HeroSection.tsx`)
+  - Functions/Variables: camelCase (e.g., `handleSubmit`)
+  - Folders: lowercase-dashed (e.g., `components/ui-elements`)
+- **DRY Principle:** If logic is repeated, extract it to a hook or utility function.
+- **Early Returns:** Use early returns to avoid deep nesting of `if` statements.
+
+## 3. Architecture & Folder Structure
+- **Global UI:** All shared UI components (buttons, inputs) live in `@/components/ui`.
+- **App Specific:** Logic specific to the app dashboard lives in `@/app/dashboard`.
+- **Landing Page:** Logic specific to the marketing site lives in `@/app/(marketing)`.
+- **Imports:** Use absolute imports (e.g., `import { Button } from "@/components/ui/button"`).
+
+## 4. Agent Behavior Guidelines
+- **Conciseness:** Do not explain the code unless asked. Just output the solution.
+- **Safety:** Always check if a variable exists before accessing its properties.
+- **Responsiveness:** All UI code must be mobile-responsive by default using Tailwind prefixes (e.g., `md:flex`).
