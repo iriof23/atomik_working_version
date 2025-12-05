@@ -475,7 +475,7 @@ export default function Clients() {
             Manage your client organizations and contacts
           </p>
         </div>
-        <Button onClick={openAddClientDialog} className="gap-1.5">
+        <Button onClick={openAddClientDialog} className="bg-emerald-600 hover:bg-emerald-700 gap-1.5">
           <Plus className="w-4 h-4 shrink-0" />
           <span>Add Client</span>
         </Button>

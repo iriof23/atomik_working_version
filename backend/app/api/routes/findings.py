@@ -66,6 +66,20 @@ class EvidenceResponse(BaseModel):
     created_at: str
 
 
+class FindingStatsResponse(BaseModel):
+    """Response model for findings statistics"""
+    total: int
+    total_open: int
+    critical: int
+    critical_open: int
+    high: int
+    high_open: int
+    medium: int
+    medium_open: int
+    low: int
+    low_open: int
+
+
 class FindingResponse(BaseModel):
     id: str
     reference_id: Optional[str]  # Professional Finding ID (e.g., "ACME-001")
@@ -167,6 +181,76 @@ async def list_findings(
         )
         for finding in findings
     ]
+
+
+@router.get("/stats", response_model=FindingStatsResponse)
+async def get_findings_stats(
+    current_user = Depends(get_current_user)
+):
+    """
+    Get aggregated findings statistics for the dashboard.
+    Returns total counts and counts by severity, both overall and for OPEN status only.
+    """
+    where_clause = {}
+    
+    # Filter by organization through project->client relationship
+    if current_user.organizationId:
+        where_clause["project"] = {
+            "client": {"organizationId": current_user.organizationId}
+        }
+    
+    # Fetch all findings for the organization
+    findings = await db.finding.find_many(
+        where=where_clause,
+        include={
+            "project": {
+                "include": {
+                    "client": True
+                }
+            }
+        }
+    )
+    
+    # Calculate stats
+    stats = {
+        "total": 0,
+        "total_open": 0,
+        "critical": 0,
+        "critical_open": 0,
+        "high": 0,
+        "high_open": 0,
+        "medium": 0,
+        "medium_open": 0,
+        "low": 0,
+        "low_open": 0,
+    }
+    
+    for finding in findings:
+        severity = finding.severity.upper() if finding.severity else ""
+        is_open = finding.status == "OPEN"
+        
+        stats["total"] += 1
+        if is_open:
+            stats["total_open"] += 1
+        
+        if severity == "CRITICAL":
+            stats["critical"] += 1
+            if is_open:
+                stats["critical_open"] += 1
+        elif severity == "HIGH":
+            stats["high"] += 1
+            if is_open:
+                stats["high_open"] += 1
+        elif severity == "MEDIUM":
+            stats["medium"] += 1
+            if is_open:
+                stats["medium_open"] += 1
+        elif severity in ("LOW", "INFO"):
+            stats["low"] += 1
+            if is_open:
+                stats["low_open"] += 1
+    
+    return FindingStatsResponse(**stats)
 
 
 async def generate_finding_reference_id(client_id: str) -> str:

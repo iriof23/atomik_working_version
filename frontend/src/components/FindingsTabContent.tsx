@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Plus, Search, FileText, X, Trash2, Shield, Upload, Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
+import { Plus, Search, FileText, X, Trash2, Shield, Upload, Loader2, CheckCircle2, AlertCircle, Download } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -546,7 +546,7 @@ export default function FindingsTabContent({ projectId: propProjectId, onUpdate 
                             className="flex-1 sm:flex-none"
                             onClick={() => setShowImportModal(true)}
                         >
-                            <Upload className="w-4 h-4 mr-2" />
+                            <Download className="w-4 h-4 mr-2" />
                             Import Scan
                         </Button>
                         <Button onClick={() => setShowAddModal(true)} size="sm" className="flex-1 sm:flex-none">
@@ -889,7 +889,7 @@ export default function FindingsTabContent({ projectId: propProjectId, onUpdate 
                 <DialogContent className="max-w-lg">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
-                            <Upload className="w-5 h-5 text-emerald-500" />
+                            <Download className="w-5 h-5 text-emerald-500" />
                             Import Scan Results
                         </DialogTitle>
                         <DialogDescription>
@@ -932,11 +932,11 @@ export default function FindingsTabContent({ projectId: propProjectId, onUpdate 
                             ) : (
                                 <div className="flex flex-col items-center gap-2">
                                     <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center">
-                                        <Upload className="w-6 h-6 text-slate-400" />
+                                        <Download className="w-6 h-6 text-slate-400" />
                                     </div>
                                     <p className="font-medium text-slate-700">Drop your scan file here</p>
                                     <p className="text-xs text-slate-500">
-                                        or click to browse • Supports: Burp Suite XML
+                                        or click to browse • Supports: Burp Suite, Nessus, Qualys (XML)
                                     </p>
                                 </div>
                             )}
@@ -1014,7 +1014,7 @@ export default function FindingsTabContent({ projectId: propProjectId, onUpdate 
                                     </>
                                 ) : (
                                     <>
-                                        <Upload className="w-4 h-4 mr-2" />
+                                        <Download className="w-4 h-4 mr-2" />
                                         Import Findings
                                     </>
                                 )}

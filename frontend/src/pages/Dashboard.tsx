@@ -182,23 +182,24 @@ const useDashboardStore = (getToken: () => Promise<string | null>) => {
                 console.error('Failed to get auth token:', e)
             }
 
-            // Calculate Stats from localStorage findings (for each project)
+            // Fetch findings stats from API (for accurate open findings count)
             let totalFindings = 0
             let criticalFindings = 0
 
-            projects.forEach((p: any) => {
-                const findingsKey = `findings_${p.id}`
-                const storedFindings = localStorage.getItem(findingsKey)
-                if (storedFindings) {
-                    try {
-                        const findings = JSON.parse(storedFindings)
-                        totalFindings += findings.length
-                        findings.forEach((f: any) => {
-                            if (f.severity === 'Critical') criticalFindings++
-                        })
-                    } catch (e) { }
+            try {
+                const token = await getToken()
+                if (token) {
+                    const statsRes = await api.get('/findings/stats', {
+                        headers: { Authorization: `Bearer ${token}` }
+                    })
+                    if (statsRes.data) {
+                        totalFindings = statsRes.data.total_open || 0
+                        criticalFindings = statsRes.data.critical_open || 0
+                    }
                 }
-            })
+            } catch (e) {
+                console.error('Failed to fetch findings stats:', e)
+            }
 
             // Active Project (Most recently updated 'In Progress' or 'On Hold' project)
             const activeProjects = projects.filter(p => 
