@@ -25,6 +25,10 @@ class Settings(BaseSettings):
     
     # Database
     DATABASE_URL: str = "file:./pentest.db"  # SQLite for desktop, PostgreSQL for docker
+    DATABASE_SSL_MODE: str = "prefer"  # disable, prefer, require, verify-ca, verify-full
+    DATABASE_POOL_SIZE: int = 10
+    DATABASE_MAX_OVERFLOW: int = 20
+    DATABASE_POOL_TIMEOUT: int = 30
     
     # Security
     SECRET_KEY: str = "change-this-secret-key-in-production"
@@ -71,6 +75,11 @@ class Settings(BaseSettings):
     # Logging
     LOG_LEVEL: str = "INFO"
     LOG_FORMAT: str = "json"  # or "text"
+    
+    # Backup
+    BACKUP_DIR: str = "./backups"
+    BACKUP_RETENTION_DAYS: int = 30
+    BACKUP_ENCRYPTION_ENABLED: bool = True
     
     @property
     def is_desktop_mode(self) -> bool:

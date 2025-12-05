@@ -1,35 +1,34 @@
-import React, { useState, useEffect, KeyboardEvent } from 'react'
+import { useState, useEffect, KeyboardEvent } from 'react'
 import { useAuth } from '@clerk/clerk-react'
 import {
     Dialog,
     DialogContent,
-    DialogDescription,
     DialogFooter,
     DialogHeader,
     DialogTitle,
+    DialogDescription,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
+import {
     Building2,
     Mail,
     Phone,
     Tag,
-    Briefcase,
     Check,
-    ChevronRight,
-    ChevronLeft,
     X,
     Loader2,
-    Target,
-    Zap,
-    PauseCircle,
-    Layers,
-    TrendingUp,
-    Award,
-    AlertCircle
+    Globe,
+    User,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { api } from '@/lib/api'
@@ -38,92 +37,107 @@ import { useToast } from '@/components/ui/use-toast'
 interface AddClientDialogProps {
     open: boolean
     onOpenChange: (open: boolean) => void
-    onClientAdded?: (client: any) => void
-    editingClient?: any
+    onClientAdded?: (client: ClientData) => void
+    editingClient?: ClientData | null
 }
 
-// Suggested tags for quick adding
-const SUGGESTED_TAGS = ['PCI-DSS', 'SOC2', 'HIPAA', 'ISO27001', 'GDPR', 'Finance', 'Healthcare', 'Tech']
+interface ClientData {
+    id: string
+    name: string
+    logoUrl?: string
+    status: 'Active' | 'Inactive' | 'Prospect' | 'Archived'
+    serviceTier: 'Standard' | 'Priority' | 'Strategic'
+    riskLevel?: string
+    industry?: string
+    companySize?: 'Enterprise' | 'SMB' | 'Startup'
+    primaryContact?: string
+    email?: string
+    phone?: string
+    tags?: string[]
+    notes?: string
+    lastActivity?: string
+    lastActivityDate?: Date
+    projectsCount?: number
+    reportsCount?: number
+    totalFindings?: number
+    findingsBySeverity?: { critical: number; high: number; medium: number; low: number }
+    createdAt?: Date
+    updatedAt?: Date
+}
+
+interface FormData {
+    name: string
+    industry: string
+    companySize: 'Enterprise' | 'SMB' | 'Startup'
+    logoUrl: string
+    primaryContact: string
+    email: string
+    phone: string
+    status: 'Active' | 'Inactive' | 'Prospect' | 'Archived'
+    serviceTier: 'Standard' | 'Priority' | 'Strategic'
+    tags: string[]
+    notes: string
+}
+
+const SUGGESTED_TAGS = ['PCI-DSS', 'SOC2', 'HIPAA', 'ISO27001', 'GDPR', 'Finance', 'Healthcare']
 
 export function AddClientDialog({ open, onOpenChange, onClientAdded, editingClient }: AddClientDialogProps) {
     const { getToken } = useAuth()
     const { toast } = useToast()
-    const [step, setStep] = useState(1)
     const [isSubmitting, setIsSubmitting] = useState(false)
-    const [animationDirection, setAnimationDirection] = useState<'forward' | 'backward'>('forward')
-    const [isAnimating, setIsAnimating] = useState(false)
-    const [formData, setFormData] = useState({
-        // Basic Info
+    
+    const [formData, setFormData] = useState<FormData>({
         name: '',
         industry: '',
-        companySize: 'SMB' as 'Enterprise' | 'SMB' | 'Startup',
+        companySize: 'SMB',
         logoUrl: '',
-
-        // Contact Info
         primaryContact: '',
         email: '',
         phone: '',
-
-        // Classification
-        status: 'Prospect' as 'Active' | 'Inactive' | 'Prospect' | 'Archived',
-        serviceTier: 'Standard' as 'Standard' | 'Priority' | 'Strategic',
-        tags: [] as string[],
-
-        // Additional
+        status: 'Prospect',
+        serviceTier: 'Standard',
+        tags: [],
         notes: ''
     })
 
     const [tagInput, setTagInput] = useState('')
 
-    // Populate form when editing
     useEffect(() => {
-        if (editingClient && open) {
-            setFormData({
-                name: editingClient.name || '',
-                industry: editingClient.industry || '',
-                companySize: editingClient.companySize || 'SMB',
-                logoUrl: editingClient.logoUrl || '',
-                primaryContact: editingClient.primaryContact || '',
-                email: editingClient.email || '',
-                phone: editingClient.phone || '',
-                status: editingClient.status || 'Prospect',
-                serviceTier: editingClient.serviceTier || editingClient.riskLevel || 'Standard',
-                tags: editingClient.tags || [],
-                notes: editingClient.notes || ''
-            })
-        } else if (!editingClient && open) {
-            // Reset form when adding new client
-            setFormData({
-                name: '',
-                industry: '',
-                companySize: 'SMB',
-                logoUrl: '',
-                primaryContact: '',
-                email: '',
-                phone: '',
-                status: 'Prospect',
-                serviceTier: 'Standard',
-                tags: [],
-                notes: ''
-            })
+        if (open) {
+            if (editingClient) {
+                setFormData({
+                    name: editingClient.name || '',
+                    industry: editingClient.industry || '',
+                    companySize: editingClient.companySize || 'SMB',
+                    logoUrl: editingClient.logoUrl || '',
+                    primaryContact: editingClient.primaryContact || '',
+                    email: editingClient.email || '',
+                    phone: editingClient.phone || '',
+                    status: editingClient.status || 'Prospect',
+                    serviceTier: editingClient.serviceTier || (editingClient.riskLevel as FormData['serviceTier']) || 'Standard',
+                    tags: editingClient.tags || [],
+                    notes: editingClient.notes || ''
+                })
+            } else {
+                setFormData({
+                    name: '',
+                    industry: '',
+                    companySize: 'SMB',
+                    logoUrl: '',
+                    primaryContact: '',
+                    email: '',
+                    phone: '',
+                    status: 'Prospect',
+                    serviceTier: 'Standard',
+                    tags: [],
+                    notes: ''
+                })
+            }
+            setTagInput('')
         }
     }, [editingClient, open])
 
-    const totalSteps = 3
-    const stepLabels = ['Basic Info', 'Contact', 'Classification']
-
-    // Validation per step
-    const isStep1Valid = formData.name.trim().length > 0
-    const isStep2Valid = formData.primaryContact.trim().length > 0 && formData.email.trim().length > 0 && formData.email.includes('@')
-    const isStep3Valid = true // No required fields
-
-    const canProceed = () => {
-        if (step === 1) return isStep1Valid
-        if (step === 2) return isStep2Valid
-        return true
-    }
-
-    const updateField = (field: string, value: any) => {
+    const updateField = <K extends keyof FormData>(field: K, value: FormData[K]) => {
         setFormData(prev => ({ ...prev, [field]: value }))
     }
 
@@ -148,44 +162,16 @@ export function AddClientDialog({ open, onOpenChange, onClientAdded, editingClie
         updateField('tags', formData.tags.filter(t => t !== tag))
     }
 
-    const handleNext = () => {
-        if (step < totalSteps && canProceed()) {
-            setAnimationDirection('forward')
-            setIsAnimating(true)
-            setTimeout(() => {
-                setStep(step + 1)
-                setTimeout(() => setIsAnimating(false), 50)
-            }, 150)
-        }
-    }
-
-    const handleBack = () => {
-        if (step > 1) {
-            setAnimationDirection('backward')
-            setIsAnimating(true)
-            setTimeout(() => {
-                setStep(step - 1)
-                setTimeout(() => setIsAnimating(false), 50)
-            }, 150)
-        }
-    }
-
     const handleSubmit = async () => {
-        if (isSubmitting) return
+        if (!formData.name.trim()) return
+        
         setIsSubmitting(true)
 
         try {
             const token = await getToken()
-            if (!token) {
-                toast({
-                    title: 'Error',
-                    description: 'Authentication token not available.',
-                    variant: 'destructive',
-                })
-                return
-            }
+            if (!token) throw new Error('Authentication required')
 
-            const payload: Record<string, any> = {
+            const payload: Record<string, string> = {
                 name: formData.name.trim(),
             }
             
@@ -220,28 +206,23 @@ export function AddClientDialog({ open, onOpenChange, onClientAdded, editingClie
                 payload.notes = formData.notes.trim()
             }
 
-            let clientData
+            let clientData: { id: string; name: string; contact_name?: string; contact_email?: string; contact_phone?: string; created_at: string; updated_at: string }
+            
             if (editingClient) {
                 const response = await api.put(`/clients/${editingClient.id}`, payload, {
                     headers: { Authorization: `Bearer ${token}` }
                 })
                 clientData = response.data
-                toast({
-                    title: 'Client Updated',
-                    description: `${clientData.name} has been updated successfully.`,
-                })
+                toast({ title: 'Client Updated', description: `${clientData.name} updated.` })
             } else {
                 const response = await api.post('/clients/', payload, {
                     headers: { Authorization: `Bearer ${token}` }
                 })
                 clientData = response.data
-                toast({
-                    title: 'Client Created',
-                    description: `${clientData.name} has been created successfully.`,
-                })
+                toast({ title: 'Client Created', description: `${clientData.name} created.` })
             }
 
-            const frontendClientData = {
+            const frontendClientData: ClientData = {
                 id: clientData.id,
                 name: clientData.name,
                 logoUrl: formData.logoUrl || '',
@@ -268,25 +249,12 @@ export function AddClientDialog({ open, onOpenChange, onClientAdded, editingClie
             onClientAdded?.(frontendClientData)
             onOpenChange(false)
 
-            setStep(1)
-            setFormData({
-                name: '',
-                industry: '',
-                companySize: 'SMB',
-                logoUrl: '',
-                primaryContact: '',
-                email: '',
-                phone: '',
-                status: 'Prospect',
-                serviceTier: 'Standard',
-                tags: [],
-                notes: ''
-            })
-        } catch (error: any) {
-            console.error('Failed to create/update client:', error)
+        } catch (error: unknown) {
+            console.error('Client save error:', error)
+            const apiError = error as { response?: { data?: { detail?: string } } }
             toast({
                 title: 'Error',
-                description: error.response?.data?.detail || 'Failed to save client. Please try again.',
+                description: apiError.response?.data?.detail || 'Failed to save client.',
                 variant: 'destructive',
             })
         } finally {
@@ -294,458 +262,228 @@ export function AddClientDialog({ open, onOpenChange, onClientAdded, editingClie
         }
     }
 
-    // Status options with professional icons
-    const statusOptions = [
-        { value: 'Prospect', label: 'Prospect', icon: Target },
-        { value: 'Active', label: 'Active', icon: Zap },
-        { value: 'Inactive', label: 'Inactive', icon: PauseCircle },
-    ] as const
-
-    // Service Tier options with professional icons
-    const tierOptions = [
-        { value: 'Standard', label: 'Standard', icon: Layers },
-        { value: 'Priority', label: 'Priority', icon: TrendingUp },
-        { value: 'Strategic', label: 'Strategic', icon: Award },
-    ] as const
-
-    // Available suggested tags (not already added)
-    const availableSuggestions = SUGGESTED_TAGS.filter(tag => !formData.tags.includes(tag))
-
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[500px] max-h-[85vh] overflow-y-auto bg-white border-slate-200 rounded-2xl shadow-2xl p-0">
-                {/* Header */}
-                <DialogHeader className="px-6 pt-6 pb-3">
-                    <DialogTitle className="text-lg font-semibold text-slate-900 flex items-center gap-2.5">
-                        <div className="p-2 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl shadow-sm">
-                            <Building2 className="h-4 w-4 text-white" />
+            <DialogContent className="sm:max-w-[600px] p-0 gap-0 overflow-hidden bg-white border-slate-200 rounded-xl shadow-2xl">
+                <DialogHeader className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+                    <DialogTitle className="text-lg font-semibold text-slate-900 flex items-center gap-2">
+                        <div className="p-2 bg-emerald-100 text-emerald-600 rounded-lg">
+                            <Building2 className="h-5 w-5" />
                         </div>
-                        {editingClient ? 'Edit Client' : 'Add Client'}
+                        {editingClient ? 'Edit Client' : 'New Client'}
                     </DialogTitle>
-                    <DialogDescription className="text-sm text-slate-500 mt-1">
-                        {editingClient 
-                            ? <span>Editing: <span className="font-medium text-slate-700">{editingClient.name}</span></span>
-                            : 'Create a new client organization'
-                        }
+                    <DialogDescription>
+                        Enter the organization details below.
                     </DialogDescription>
                 </DialogHeader>
 
-                {/* Apple-Style Stepper */}
-                <div className="px-6 pb-4 border-b border-slate-100">
-                    <div className="flex items-center gap-2 text-sm">
-                        {stepLabels.map((label, idx) => (
-                            <React.Fragment key={label}>
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        if (idx + 1 < step) {
-                                            setAnimationDirection('backward')
-                                            setIsAnimating(true)
-                                            setTimeout(() => {
-                                                setStep(idx + 1)
-                                                setTimeout(() => setIsAnimating(false), 50)
-                                            }, 150)
-                                        }
-                                    }}
-                                    className={cn(
-                                        "transition-colors",
-                                        step === idx + 1 
-                                            ? "text-slate-900 font-semibold" 
-                                            : step > idx + 1
-                                                ? "text-emerald-600 font-medium cursor-pointer hover:text-emerald-700"
-                                                : "text-slate-400"
-                                    )}
-                                >
-                                    {step > idx + 1 && (
-                                        <Check className="h-3.5 w-3.5 inline mr-1 -mt-0.5" />
-                                    )}
-                                    {label}
-                                </button>
-                                {idx < stepLabels.length - 1 && (
-                                    <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
-                                )}
-                            </React.Fragment>
-                        ))}
-                    </div>
-                    <p className="text-[11px] text-slate-400 mt-1.5">
-                        Step {step} of {totalSteps}
-                    </p>
-                </div>
-
-                {/* Form Content with Animation */}
-                <div className={cn(
-                    "px-6 py-5 transition-all duration-200 ease-out",
-                    isAnimating && animationDirection === 'forward' && "opacity-0 translate-x-4",
-                    isAnimating && animationDirection === 'backward' && "opacity-0 -translate-x-4",
-                    !isAnimating && "opacity-100 translate-x-0"
-                )}>
-                    {/* Step 1: Basic Information */}
-                    {step === 1 && (
-                        <div className="space-y-4">
-                            <div className="space-y-1.5">
-                                <Label htmlFor="name" className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">
-                                    Company Name <span className="text-red-500">*</span>
-                                </Label>
+                <div className="p-6 space-y-6">
+                    {/* Section 1: Core Identity */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="col-span-2 space-y-1.5">
+                            <Label htmlFor="name" className="text-xs font-medium text-slate-500 uppercase">
+                                Company Name <span className="text-red-500">*</span>
+                            </Label>
+                            <Input
+                                id="name"
+                                placeholder="Acme Corp"
+                                value={formData.name}
+                                onChange={(e) => updateField('name', e.target.value)}
+                                className="h-9"
+                                autoFocus
+                            />
+                        </div>
+                        
+                        <div className="space-y-1.5">
+                            <Label htmlFor="website" className="text-xs font-medium text-slate-500 uppercase">Website</Label>
+                            <div className="relative">
+                                <Globe className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
                                 <Input
-                                    id="name"
-                                    placeholder="e.g., Acme Corporation"
-                                    value={formData.name}
-                                    onChange={(e) => updateField('name', e.target.value)}
-                                    className={cn(
-                                        "h-10 text-sm border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 rounded-lg",
-                                        formData.name && "border-emerald-200 bg-emerald-50/30"
-                                    )}
-                                    autoFocus
-                                />
-                                {!isStep1Valid && (
-                                    <p className="text-[11px] text-slate-400 flex items-center gap-1 mt-1">
-                                        <AlertCircle className="h-3 w-3" />
-                                        Required to continue
-                                    </p>
-                                )}
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-3">
-                                <div className="space-y-1.5">
-                                    <Label htmlFor="industry" className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">
-                                        Industry
-                                    </Label>
-                                    <Input
-                                        id="industry"
-                                        placeholder="e.g., Financial Services"
-                                        value={formData.industry}
-                                        onChange={(e) => updateField('industry', e.target.value)}
-                                        className="h-10 text-sm border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 rounded-lg"
-                                    />
-                                </div>
-
-                                <div className="space-y-1.5">
-                                    <Label htmlFor="companySize" className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">
-                                        Size
-                                    </Label>
-                                    <select
-                                        id="companySize"
-                                        value={formData.companySize}
-                                        onChange={(e) => updateField('companySize', e.target.value)}
-                                        className="flex h-10 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 cursor-pointer"
-                                    >
-                                        <option value="Startup">Startup (1-50)</option>
-                                        <option value="SMB">SMB (51-500)</option>
-                                        <option value="Enterprise">Enterprise (500+)</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div className="space-y-1.5">
-                                <Label htmlFor="logoUrl" className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">
-                                    Website
-                                </Label>
-                                <Input
-                                    id="logoUrl"
-                                    placeholder="https://client-company.com"
+                                    id="website"
+                                    placeholder="https://acme.com"
                                     value={formData.logoUrl}
                                     onChange={(e) => updateField('logoUrl', e.target.value)}
-                                    className="h-10 text-sm border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 rounded-lg"
+                                    className="pl-9 h-9"
                                 />
                             </div>
                         </div>
-                    )}
 
-                    {/* Step 2: Contact Information */}
-                    {step === 2 && (
-                        <div className="space-y-4">
-                            <div className="space-y-1.5">
-                                <Label htmlFor="primaryContact" className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">
-                                    Primary Contact <span className="text-red-500">*</span>
-                                </Label>
-                                <Input
-                                    id="primaryContact"
-                                    placeholder="e.g., John Smith"
-                                    value={formData.primaryContact}
-                                    onChange={(e) => updateField('primaryContact', e.target.value)}
-                                    className={cn(
-                                        "h-10 text-sm border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 rounded-lg",
-                                        formData.primaryContact && "border-emerald-200 bg-emerald-50/30"
-                                    )}
-                                    autoFocus
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-3">
-                                <div className="space-y-1.5">
-                                    <Label htmlFor="email" className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">
-                                        Email <span className="text-red-500">*</span>
-                                    </Label>
-                                    <div className="relative">
-                                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
-                                        <Input
-                                            id="email"
-                                            type="email"
-                                            placeholder="john@company.com"
-                                            value={formData.email}
-                                            onChange={(e) => updateField('email', e.target.value)}
-                                            className={cn(
-                                                "h-10 text-sm pl-9 border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 rounded-lg",
-                                                formData.email && formData.email.includes('@') && "border-emerald-200 bg-emerald-50/30"
-                                            )}
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="space-y-1.5">
-                                    <Label htmlFor="phone" className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">
-                                        Phone
-                                    </Label>
-                                    <div className="relative">
-                                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
-                                        <Input
-                                            id="phone"
-                                            type="tel"
-                                            placeholder="+1 (555) 123-4567"
-                                            value={formData.phone}
-                                            onChange={(e) => updateField('phone', e.target.value)}
-                                            className="h-10 text-sm pl-9 border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 rounded-lg"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-
-                            {!isStep2Valid && (
-                                <p className="text-[11px] text-slate-400 flex items-center gap-1">
-                                    <AlertCircle className="h-3 w-3" />
-                                    Contact name and valid email required
-                                </p>
-                            )}
-
-                            <div className="space-y-1.5">
-                                <Label htmlFor="notes" className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">
-                                    Notes
-                                </Label>
-                                <Textarea
-                                    id="notes"
-                                    placeholder="Additional information..."
-                                    value={formData.notes}
-                                    onChange={(e) => updateField('notes', e.target.value)}
-                                    rows={2}
-                                    className="text-sm border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 resize-none rounded-lg"
-                                />
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Step 3: Classification */}
-                    {step === 3 && (
-                        <div className="space-y-5">
-                            {/* Client Status - Compact Cards */}
-                            <div className="space-y-2">
-                                <Label className="text-[11px] font-medium text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                                    <Briefcase className="h-3 w-3" />
-                                    Client Status
-                                </Label>
-                                <div className="grid grid-cols-3 gap-2">
-                                    {statusOptions.map((option) => {
-                                        const Icon = option.icon
-                                        const isSelected = formData.status === option.value
-                                        return (
-                                            <button
-                                                key={option.value}
-                                                type="button"
-                                                onClick={() => updateField('status', option.value)}
-                                                className={cn(
-                                                    "relative flex flex-col items-center gap-1.5 py-3 px-2 rounded-lg border transition-all",
-                                                    isSelected
-                                                        ? "border-emerald-500 bg-emerald-50 shadow-sm"
-                                                        : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
-                                                )}
-                                            >
-                                                {isSelected && (
-                                                    <div className="absolute top-1.5 right-1.5">
-                                                        <Check className="h-3 w-3 text-emerald-600" />
-                                                    </div>
-                                                )}
-                                                <Icon className={cn(
-                                                    "h-4 w-4",
-                                                    isSelected ? "text-emerald-600" : "text-slate-400"
-                                                )} />
-                                                <span className={cn(
-                                                    "text-xs font-medium",
-                                                    isSelected ? "text-emerald-700" : "text-slate-600"
-                                                )}>
-                                                    {option.label}
-                                                </span>
-                                            </button>
-                                        )
-                                    })}
-                                </div>
-                            </div>
-
-                            {/* Service Tier - Compact Cards */}
-                            <div className="space-y-2">
-                                <Label className="text-[11px] font-medium text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                                    <Award className="h-3 w-3" />
-                                    Service Tier
-                                </Label>
-                                <div className="grid grid-cols-3 gap-2">
-                                    {tierOptions.map((option) => {
-                                        const Icon = option.icon
-                                        const isSelected = formData.serviceTier === option.value
-                                        return (
-                                            <button
-                                                key={option.value}
-                                                type="button"
-                                                onClick={() => updateField('serviceTier', option.value)}
-                                                className={cn(
-                                                    "relative flex flex-col items-center gap-1.5 py-3 px-2 rounded-lg border transition-all",
-                                                    isSelected
-                                                        ? "border-emerald-500 bg-emerald-50 shadow-sm"
-                                                        : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
-                                                )}
-                                            >
-                                                {isSelected && (
-                                                    <div className="absolute top-1.5 right-1.5">
-                                                        <Check className="h-3 w-3 text-emerald-600" />
-                                                    </div>
-                                                )}
-                                                <Icon className={cn(
-                                                    "h-4 w-4",
-                                                    isSelected ? "text-emerald-600" : "text-slate-400"
-                                                )} />
-                                                <span className={cn(
-                                                    "text-xs font-medium",
-                                                    isSelected ? "text-emerald-700" : "text-slate-600"
-                                                )}>
-                                                    {option.label}
-                                                </span>
-                                            </button>
-                                        )
-                                    })}
-                                </div>
-                            </div>
-
-                            {/* Tags with Quick Add Suggestions */}
-                            <div className="space-y-2">
-                                <Label className="text-[11px] font-medium text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                                    <Tag className="h-3 w-3" />
-                                    Tags
-                                </Label>
-                                
-                                {/* Quick Add Suggestions */}
-                                {availableSuggestions.length > 0 && (
-                                    <div className="flex flex-wrap gap-1.5 mb-2">
-                                        {availableSuggestions.slice(0, 6).map((tag) => (
-                                            <button
-                                                key={tag}
-                                                type="button"
-                                                onClick={() => addTag(tag)}
-                                                className="px-2 py-0.5 text-[10px] font-medium rounded-md border border-dashed border-slate-300 text-slate-500 hover:border-emerald-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
-                                            >
-                                                + {tag}
-                                            </button>
-                                        ))}
-                                    </div>
-                                )}
-
-                                {/* Tag Input */}
-                                <div className={cn(
-                                    "flex flex-wrap items-center gap-1.5 p-2 min-h-[40px] rounded-lg border transition-colors",
-                                    "border-slate-200 bg-white focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/20"
-                                )}>
-                                    {formData.tags.map((tag) => (
-                                        <span
-                                            key={tag}
-                                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-100 text-emerald-700"
-                                        >
-                                            {tag}
-                                            <button
-                                                type="button"
-                                                onClick={() => removeTag(tag)}
-                                                className="hover:bg-emerald-200 rounded-full p-0.5 transition-colors"
-                                            >
-                                                <X className="h-2.5 w-2.5" />
-                                            </button>
-                                        </span>
-                                    ))}
-                                    <input
-                                        type="text"
-                                        placeholder={formData.tags.length === 0 ? "Type and press Enter..." : ""}
-                                        value={tagInput}
-                                        onChange={(e) => setTagInput(e.target.value)}
-                                        onKeyDown={handleTagKeyDown}
-                                        onBlur={() => { if (tagInput.trim()) addTag() }}
-                                        className="flex-1 min-w-[80px] text-sm bg-transparent border-0 outline-none placeholder:text-slate-400"
-                                    />
-                                </div>
-                            </div>
-
-                            <p className="text-[11px] text-emerald-600 bg-emerald-50 px-3 py-2 rounded-lg">
-                                Almost done — review and create your client.
-                            </p>
-                        </div>
-                    )}
-                </div>
-
-                {/* Footer */}
-                <DialogFooter className="px-6 py-3 bg-slate-50/80 border-t border-slate-100 rounded-b-2xl">
-                    <div className="flex items-center justify-between w-full">
-                        <div className="flex gap-2">
-                            {step > 1 && (
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={handleBack}
-                                    className="text-slate-600 hover:text-slate-900 hover:bg-slate-100 h-9 gap-1"
-                                >
-                                    <ChevronLeft className="h-4 w-4 shrink-0" />
-                                    <span>Back</span>
-                                </Button>
-                            )}
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => onOpenChange(false)}
-                                className="text-slate-600 hover:text-slate-900 hover:bg-slate-100 h-9"
-                            >
-                                Cancel
-                            </Button>
-                        </div>
-
-                        <div>
-                            {step < totalSteps ? (
-                                <Button
-                                    type="button"
-                                    size="sm"
-                                    onClick={handleNext}
-                                    disabled={!canProceed()}
-                                    className={cn(
-                                        "h-9 shadow-sm transition-all gap-1",
-                                        canProceed()
-                                            ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                                            : "bg-slate-200 text-slate-400 cursor-not-allowed"
-                                    )}
-                                >
-                                    <span>Next</span>
-                                    <ChevronRight className="h-4 w-4 shrink-0" />
-                                </Button>
-                            ) : (
-                                <Button
-                                    type="button"
-                                    size="sm"
-                                    onClick={handleSubmit}
-                                    disabled={isSubmitting}
-                                    className="bg-emerald-600 hover:bg-emerald-700 text-white h-9 shadow-sm gap-2"
-                                >
-                                    {isSubmitting ? (
-                                        <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
-                                    ) : (
-                                        <Check className="h-4 w-4 shrink-0" />
-                                    )}
-                                    <span>{isSubmitting ? 'Saving...' : (editingClient ? 'Update' : 'Create')}</span>
-                                </Button>
-                            )}
+                        <div className="space-y-1.5">
+                            <Label htmlFor="industry" className="text-xs font-medium text-slate-500 uppercase">Industry</Label>
+                            <Input
+                                id="industry"
+                                placeholder="e.g. FinTech"
+                                value={formData.industry}
+                                onChange={(e) => updateField('industry', e.target.value)}
+                                className="h-9"
+                            />
                         </div>
                     </div>
+
+                    {/* Section 2: Contact & Classification */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                            <Label htmlFor="contact" className="text-xs font-medium text-slate-500 uppercase">Primary Contact</Label>
+                            <div className="relative">
+                                <User className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
+                                <Input
+                                    id="contact"
+                                    placeholder="John Doe"
+                                    value={formData.primaryContact}
+                                    onChange={(e) => updateField('primaryContact', e.target.value)}
+                                    className="pl-9 h-9"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <Label htmlFor="email" className="text-xs font-medium text-slate-500 uppercase">Email</Label>
+                            <div className="relative">
+                                <Mail className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
+                                <Input
+                                    id="email"
+                                    placeholder="john@acme.com"
+                                    value={formData.email}
+                                    onChange={(e) => updateField('email', e.target.value)}
+                                    className="pl-9 h-9"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <Label htmlFor="phone" className="text-xs font-medium text-slate-500 uppercase">Phone</Label>
+                            <div className="relative">
+                                <Phone className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
+                                <Input
+                                    id="phone"
+                                    placeholder="+1 (555) 123-4567"
+                                    value={formData.phone}
+                                    onChange={(e) => updateField('phone', e.target.value)}
+                                    className="pl-9 h-9"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <Label htmlFor="size" className="text-xs font-medium text-slate-500 uppercase">Company Size</Label>
+                            <Select 
+                                value={formData.companySize} 
+                                onValueChange={(val: FormData['companySize']) => updateField('companySize', val)}
+                            >
+                                <SelectTrigger className="h-9">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="Startup">Startup (1-50)</SelectItem>
+                                    <SelectItem value="SMB">SMB (51-500)</SelectItem>
+                                    <SelectItem value="Enterprise">Enterprise (500+)</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <Label htmlFor="status" className="text-xs font-medium text-slate-500 uppercase">Status</Label>
+                            <Select 
+                                value={formData.status} 
+                                onValueChange={(val: FormData['status']) => updateField('status', val)}
+                            >
+                                <SelectTrigger className="h-9">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="Prospect">Prospect</SelectItem>
+                                    <SelectItem value="Active">Active</SelectItem>
+                                    <SelectItem value="Inactive">Inactive</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <Label htmlFor="tier" className="text-xs font-medium text-slate-500 uppercase">Service Tier</Label>
+                            <Select 
+                                value={formData.serviceTier} 
+                                onValueChange={(val: FormData['serviceTier']) => updateField('serviceTier', val)}
+                            >
+                                <SelectTrigger className="h-9">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="Standard">Standard</SelectItem>
+                                    <SelectItem value="Priority">Priority</SelectItem>
+                                    <SelectItem value="Strategic">Strategic</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+
+                    {/* Section 3: Tags & Notes */}
+                    <div className="space-y-3">
+                        <div className="space-y-1.5">
+                            <Label className="text-xs font-medium text-slate-500 uppercase flex items-center gap-1.5">
+                                <Tag className="h-3 w-3" />
+                                Tags
+                            </Label>
+                            <div className="flex flex-wrap gap-1.5 p-2 rounded-md border border-slate-200 bg-white focus-within:border-emerald-500 focus-within:ring-1 focus-within:ring-emerald-500">
+                                {formData.tags.map(tag => (
+                                    <span key={tag} className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-medium bg-emerald-100 text-emerald-700">
+                                        {tag}
+                                        <button type="button" onClick={() => removeTag(tag)} className="hover:text-emerald-900"><X className="h-3 w-3" /></button>
+                                    </span>
+                                ))}
+                                <input
+                                    className="flex-1 bg-transparent text-sm outline-none min-w-[60px] placeholder:text-slate-400"
+                                    placeholder={formData.tags.length ? "" : "Add tags..."}
+                                    value={tagInput}
+                                    onChange={e => setTagInput(e.target.value)}
+                                    onKeyDown={handleTagKeyDown}
+                                    onBlur={() => { if (tagInput.trim()) addTag() }}
+                                />
+                            </div>
+                            <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+                                {SUGGESTED_TAGS.filter(t => !formData.tags.includes(t)).slice(0, 5).map(tag => (
+                                    <button
+                                        key={tag}
+                                        type="button"
+                                        onClick={() => addTag(tag)}
+                                        className="text-[10px] px-2 py-0.5 rounded-full border border-slate-200 text-slate-500 hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-600 transition-colors whitespace-nowrap"
+                                    >
+                                        + {tag}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <Label htmlFor="notes" className="text-xs font-medium text-slate-500 uppercase">Notes</Label>
+                            <Textarea
+                                id="notes"
+                                placeholder="Any additional context..."
+                                value={formData.notes}
+                                onChange={(e) => updateField('notes', e.target.value)}
+                                className="h-16 resize-none"
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                <DialogFooter className="px-6 py-4 bg-slate-50 border-t border-slate-100">
+                    <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
+                        Cancel
+                    </Button>
+                    <Button 
+                        onClick={handleSubmit} 
+                        disabled={isSubmitting || !formData.name.trim()}
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white min-w-[100px]"
+                    >
+                        {isSubmitting ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                            <>
+                                <Check className="h-4 w-4 mr-1.5" />
+                                {editingClient ? 'Save Changes' : 'Create Client'}
+                            </>
+                        )}
+                    </Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

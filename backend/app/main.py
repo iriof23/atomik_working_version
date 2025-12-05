@@ -24,7 +24,7 @@ from app.core.security_middleware import (
     RequestContextMiddleware,
 )
 from app.db import db
-from app.api.routes import auth, clients, projects, findings, reports, templates, uploads, billing, webhooks, orgs, ai, imports
+from app.api.routes import auth, clients, projects, findings, reports, templates, uploads, billing, webhooks, orgs, ai, imports, admin
 
 
 @asynccontextmanager
@@ -87,6 +87,7 @@ app.include_router(webhooks.router, prefix="/api/v1/webhooks", tags=["Webhooks"]
 app.include_router(orgs.router, prefix="/api/v1/orgs", tags=["Organizations"])
 app.include_router(ai.router, prefix="/api/v1", tags=["AI"])
 app.include_router(imports.router, prefix="/api/imports", tags=["Imports"])
+app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
 
 # Mount static files for uploads
 uploads_dir = Path(settings.UPLOAD_DIR)

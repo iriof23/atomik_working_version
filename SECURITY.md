@@ -406,6 +406,103 @@ test_log_access_denied           # Access control logging
 
 ---
 
+## Phase 8: Database Security
+
+**Status:** ✅ Complete  
+**Files:** `backend/app/core/encryption.py`, `backend/app/core/backup.py`, `backend/app/api/routes/admin.py`
+
+### Field-Level Encryption
+
+Sensitive database fields can be encrypted using AES-256-GCM.
+
+```python
+from app.core.encryption import encrypt_field, decrypt_field
+
+# Encrypt before storing
+encrypted_email = encrypt_field("user@example.com")
+# Result: "$enc$base64encodeddata..."
+
+# Decrypt when reading
+email = decrypt_field(encrypted_email)
+```
+
+#### Encryption Features
+
+| Feature | Description |
+|---------|-------------|
+| **Algorithm** | AES-256-GCM (authenticated encryption) |
+| **Key Derivation** | PBKDF2 with 100,000 iterations |
+| **Nonce** | Unique random 96-bit nonce per encryption |
+| **Format** | `$enc$` prefix + base64(nonce + ciphertext) |
+
+#### Security Properties
+
+- **Confidentiality:** AES-256 encryption
+- **Integrity:** GCM authentication tag
+- **Semantic Security:** Random nonce prevents pattern analysis
+- **Backward Compatible:** Unencrypted data returned as-is
+
+### Database Backup System
+
+Automated backup with compression, checksums, and retention management.
+
+```bash
+# Create backup via API (admin only)
+POST /api/admin/backup
+
+# List backups
+GET /api/admin/backups
+
+# Cleanup old backups
+DELETE /api/admin/backups/cleanup?retention_days=30
+```
+
+#### Backup Features
+
+| Feature | Description |
+|---------|-------------|
+| **Compression** | GZIP compression |
+| **Integrity** | SHA256 checksum |
+| **Retention** | Configurable cleanup (default 30 days) |
+| **Verification** | Checksum validation before restore |
+
+### Connection Security
+
+Database connection settings for production:
+
+```bash
+# PostgreSQL SSL Mode
+DATABASE_SSL_MODE=require  # Options: disable, prefer, require, verify-ca, verify-full
+
+# Connection Pooling
+DATABASE_POOL_SIZE=10
+DATABASE_MAX_OVERFLOW=20
+DATABASE_POOL_TIMEOUT=30
+```
+
+#### SSL Modes
+
+| Mode | Description | Production |
+|------|-------------|------------|
+| `disable` | No SSL | ❌ |
+| `prefer` | Use SSL if available | ⚠️ |
+| `require` | Require SSL | ✅ |
+| `verify-ca` | Verify server certificate | ✅ |
+| `verify-full` | Verify certificate + hostname | ✅✅ |
+
+### Admin API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/admin/backup` | POST | Create backup |
+| `/api/admin/backups` | GET | List backups |
+| `/api/admin/backups/cleanup` | DELETE | Remove old backups |
+| `/api/admin/audit-logs` | GET | View audit logs |
+| `/api/admin/audit-logs/stats` | GET | Audit statistics |
+| `/api/admin/health/detailed` | GET | System health |
+
+---
+
 ## Configuration Reference
 
 ### Environment Variables
