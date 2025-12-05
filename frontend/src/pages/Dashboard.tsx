@@ -235,33 +235,6 @@ const useDashboardStore = (getToken: () => Promise<string | null>) => {
                 })
             })
             
-            // Add findings from all projects (from localStorage)
-            projects.forEach(p => {
-                const findingsKey = `findings_${p.id}`
-                const storedFindings = localStorage.getItem(findingsKey)
-                if (storedFindings) {
-                    try {
-                        const findings = JSON.parse(storedFindings)
-                        findings.forEach((f: any) => {
-                            activityList.push({
-                                id: `find-${f.id}`,
-                                type: 'finding' as const,
-                                title: f.severity === 'Critical' ? 'Critical Finding Detected' :
-                                       f.severity === 'High' ? 'High Severity Finding' :
-                                       'Finding Added',
-                                description: `${f.title} • ${p.name}`,
-                                timestamp: f.createdAt || new Date().toISOString(),
-                                timestampText: formatRelativeTime(new Date(f.createdAt || new Date())),
-                                icon: f.severity === 'Critical' ? <AlertTriangle className="w-4 h-4 text-red-400" /> :
-                                      f.severity === 'High' ? <AlertTriangle className="w-4 h-4 text-orange-400" /> :
-                                      <Shield className="w-4 h-4 text-yellow-400" />,
-                                severity: f.severity
-                            })
-                        })
-                    } catch (e) { }
-                }
-            })
-            
             // Add client activities
             clients.forEach((c: any) => {
                 activityList.push({
@@ -751,44 +724,27 @@ export default function Dashboard() {
     }
     
     const handleViewDetails = (project: Project) => {
-        const storedProjects = JSON.parse(localStorage.getItem('projects') || '[]')
-        const fullProject = storedProjects.find((p: any) => p.id === project.id)
-        
-        if (fullProject) {
-            setViewingProject({
-                ...fullProject,
-                startDate: new Date(fullProject.startDate),
-                endDate: new Date(fullProject.endDate),
-                lastActivityDate: fullProject.lastActivityDate ? new Date(fullProject.lastActivityDate) : new Date(),
-                createdAt: fullProject.createdAt ? new Date(fullProject.createdAt) : new Date(),
-                updatedAt: fullProject.updatedAt ? new Date(fullProject.updatedAt) : new Date(),
-                scope: fullProject.scope || [],
-                teamMembers: fullProject.teamMembers || [],
-                complianceFrameworks: fullProject.complianceFrameworks || [],
-                findingsBySeverity: fullProject.findingsBySeverity || { critical: 0, high: 0, medium: 0, low: 0 }
-            })
-        } else {
-            setViewingProject({
-                ...project,
-                type: 'External',
-                complianceFrameworks: [],
-                scope: [],
-                methodology: 'OWASP',
-                teamMembers: [],
-                leadTester: '',
-                findingsBySeverity: { critical: 0, high: 0, medium: 0, low: 0 },
-                findingsCount: 0,
-                description: '',
-                lastActivity: '',
-                lastActivityDate: new Date(),
-                createdAt: new Date(),
-                updatedAt: new Date(),
-                startDate: new Date(),
-                endDate: new Date(project.endDate),
-                clientId: '1',
-                clientLogoUrl: ''
-            })
-        }
+        // Use project data directly from API/state
+        setViewingProject({
+            ...project,
+            type: project.type || 'External',
+            complianceFrameworks: project.complianceFrameworks || [],
+            scope: project.scope || [],
+            methodology: project.methodology || 'OWASP',
+            teamMembers: project.teamMembers || [],
+            leadTester: project.leadTester || '',
+            findingsBySeverity: project.findingsBySeverity || { critical: 0, high: 0, medium: 0, low: 0 },
+            findingsCount: project.findingsCount || 0,
+            description: project.description || '',
+            lastActivity: project.lastActivity || '',
+            lastActivityDate: project.lastActivityDate || new Date(),
+            createdAt: project.createdAt || new Date(),
+            updatedAt: project.updatedAt || new Date(),
+            startDate: project.startDate || new Date(),
+            endDate: project.endDate || new Date(),
+            clientId: project.clientId || '',
+            clientLogoUrl: project.clientLogoUrl || ''
+        })
     }
     
     const handleClientAdded = (client: any) => {
@@ -800,20 +756,46 @@ export default function Dashboard() {
         })
     }
     
-    const handleFindingAdded = (finding: any) => {
-        const existingFindings = JSON.parse(localStorage.getItem('customFindings') || '[]')
-        const updatedFindings = [{
-            ...finding,
-            isCustom: true,
-            createdAt: new Date().toISOString()
-        }, ...existingFindings]
-        localStorage.setItem('customFindings', JSON.stringify(updatedFindings))
-        window.dispatchEvent(new Event('custom-findings-updated'))
-        logFindingAdded(finding.title, finding.severity || 'Medium', 'Library', finding.id)
-        toast({
-            title: "✓ Finding Created",
-            description: `${finding.title} has been added.`,
-        })
+    const handleFindingAdded = async (finding: any) => {
+        try {
+            const token = await getToken()
+            if (!token) {
+                toast({
+                    title: "Error",
+                    description: "Authentication required",
+                    variant: "destructive"
+                })
+                return
+            }
+
+            // Save to API as a finding template
+            await api.post('/templates/', {
+                name: finding.title,
+                description: finding.description?.substring(0, 200) || '',
+                type: 'finding',
+                content: JSON.stringify({
+                    ...finding,
+                    isCustom: true,
+                    createdAt: new Date().toISOString()
+                }),
+                is_public: false
+            }, {
+                headers: { Authorization: `Bearer ${token}` }
+            })
+
+            logFindingAdded(finding.title, finding.severity || 'Medium', 'Library', finding.id)
+            toast({
+                title: "✓ Finding Created",
+                description: `${finding.title} has been saved to the database.`,
+            })
+        } catch (error) {
+            console.error('Failed to save finding template:', error)
+            toast({
+                title: "Error",
+                description: "Failed to save finding template.",
+                variant: "destructive"
+            })
+        }
     }
     
     const handleProjectAdded = (project: any) => {

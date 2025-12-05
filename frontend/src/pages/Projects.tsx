@@ -394,20 +394,18 @@ export default function Projects() {
         }
         
         if (editingProject) {
-            // Update existing project
+            // Update existing project in state (API already saved it)
             const updatedProjects = projects.map(p => p.id === editingProject.id ? { ...p, ...mappedProject, id: editingProject.id } : p)
             setProjects(updatedProjects)
-            localStorage.setItem('projects', JSON.stringify(updatedProjects))
             setEditingProject(null)
             // Log update activity
             logProjectUpdated(newProject.name || editingProject.name, editingProject.id)
         } else {
-            // Add new project
+            // Add new project to state (API already saved it)
             const updatedProjects = [...projects, mappedProject]
             setProjects(updatedProjects)
             // Log create activity
             logProjectCreated(newProject.name, newProject.client_name || newProject.clientName || 'Unknown', newProject.id)
-            localStorage.setItem('projects', JSON.stringify(updatedProjects))
         }
     }
 
@@ -532,9 +530,6 @@ export default function Projects() {
             // Remove from local state
             const updatedProjects = projects.filter(p => p.id !== deletingProject.id)
             setProjects(updatedProjects)
-            
-            // Also delete associated findings from localStorage
-            localStorage.removeItem(`findings_${deletingProject.id}`)
             
             toast({
                 title: "Project Deleted",

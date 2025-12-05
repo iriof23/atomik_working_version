@@ -19,7 +19,8 @@ import {
     LayoutGrid,
     List as ListIcon,
     AlertTriangle,
-    CheckCircle2
+    CheckCircle2,
+    Loader2
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -45,6 +46,8 @@ import { EditFindingModal, ProjectFinding } from '@/components/EditFindingModal'
 import { useToast } from "@/components/ui/use-toast"
 import { StatCard } from '@/components/StatCard'
 import { Card } from '@/components/ui/card'
+import { useAuth } from '@clerk/clerk-react'
+import api from '@/lib/api'
 
 export default function Findings() {
     const [activeTab, setActiveTab] = useState<'system' | 'custom'>('system')
@@ -53,37 +56,117 @@ export default function Findings() {
     const [customFindings, setCustomFindings] = useState<any[]>([])
     const [addDialogOpen, setAddDialogOpen] = useState(false)
     const [editingFinding, setEditingFinding] = useState<any>(null)
+    const [isLoading, setIsLoading] = useState(false)
     const { toast } = useToast()
+    const { getToken } = useAuth()
 
     // Pagination State
     const [currentPage, setCurrentPage] = useState(1)
     const itemsPerPage = 10
 
-    // Load custom findings from localStorage
+    // Load custom findings from API
     useEffect(() => {
-        const loadFindings = () => {
-            const saved = localStorage.getItem('customFindings')
-            if (saved) {
-                try {
-                    setCustomFindings(JSON.parse(saved))
-                } catch (e) {
-                    console.error('Failed to parse custom findings', e)
+        const loadFindings = async () => {
+            setIsLoading(true)
+            try {
+                const token = await getToken()
+                if (!token) {
+                    setIsLoading(false)
+                    return
                 }
+
+                const response = await api.get('/templates/?type=finding', {
+                    headers: { Authorization: `Bearer ${token}` }
+                })
+
+                if (response.data && Array.isArray(response.data)) {
+                    // Parse template content back to finding objects
+                    const findings = response.data.map((template: any) => {
+                        try {
+                            const content = JSON.parse(template.content)
+                            return {
+                                ...content,
+                                id: template.id, // Use template ID
+                                _templateId: template.id,
+                            }
+                        } catch {
+                            return null
+                        }
+                    }).filter(Boolean)
+                    setCustomFindings(findings)
+                }
+            } catch (error) {
+                console.error('Failed to load finding templates:', error)
+                toast({
+                    title: "Error",
+                    description: "Failed to load custom templates.",
+                    variant: "destructive"
+                })
+            } finally {
+                setIsLoading(false)
             }
         }
 
         loadFindings()
+    }, [getToken])
 
-        // Listen for updates from Dashboard or other components
-        window.addEventListener('custom-findings-updated', loadFindings)
-        return () => window.removeEventListener('custom-findings-updated', loadFindings)
-    }, [])
+    // Create new finding template via API
+    const createFindingTemplate = async (finding: any) => {
+        try {
+            const token = await getToken()
+            if (!token) return null
 
-    // Save custom findings to localStorage
-    const saveCustomFindings = (findings: any[]) => {
-        setCustomFindings(findings)
-        localStorage.setItem('customFindings', JSON.stringify(findings))
-        window.dispatchEvent(new Event('custom-findings-updated'))
+            const response = await api.post('/templates/', {
+                name: finding.title,
+                description: finding.description?.substring(0, 200) || '',
+                type: 'finding',
+                content: JSON.stringify(finding),
+                is_public: false
+            }, {
+                headers: { Authorization: `Bearer ${token}` }
+            })
+
+            return response.data
+        } catch (error) {
+            console.error('Failed to create template:', error)
+            throw error
+        }
+    }
+
+    // Update finding template via API
+    const updateFindingTemplate = async (id: string, finding: any) => {
+        try {
+            const token = await getToken()
+            if (!token) return null
+
+            const response = await api.put(`/templates/${id}`, {
+                name: finding.title,
+                description: finding.description?.substring(0, 200) || '',
+                content: JSON.stringify(finding)
+            }, {
+                headers: { Authorization: `Bearer ${token}` }
+            })
+
+            return response.data
+        } catch (error) {
+            console.error('Failed to update template:', error)
+            throw error
+        }
+    }
+
+    // Delete finding template via API
+    const deleteFindingTemplate = async (id: string) => {
+        try {
+            const token = await getToken()
+            if (!token) return
+
+            await api.delete(`/templates/${id}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            })
+        } catch (error) {
+            console.error('Failed to delete template:', error)
+            throw error
+        }
     }
 
     // Reset pagination when filters change
@@ -131,39 +214,80 @@ export default function Findings() {
         }
     }
 
-    const handleAddFinding = (newFinding: any) => {
-        const updatedFindings = [newFinding, ...customFindings]
-        saveCustomFindings(updatedFindings)
-        toast({
-            title: "Finding Added",
-            description: "New custom finding has been added to your templates.",
-        })
-        setActiveTab('custom')
+    const handleAddFinding = async (newFinding: any) => {
+        try {
+            const template = await createFindingTemplate(newFinding)
+            if (template) {
+                const findingWithId = {
+                    ...newFinding,
+                    id: template.id,
+                    _templateId: template.id
+                }
+                setCustomFindings(prev => [findingWithId, ...prev])
+                toast({
+                    title: "Finding Added",
+                    description: "New custom finding has been saved to the database.",
+                })
+                setActiveTab('custom')
+            }
+        } catch {
+            toast({
+                title: "Error",
+                description: "Failed to save finding template.",
+                variant: "destructive"
+            })
+        }
     }
 
-    const handleDuplicate = (finding: any) => {
+    const handleDuplicate = async (finding: any) => {
         const duplicatedFinding = {
             ...finding,
-            id: `custom-${Date.now()}`,
             title: `${finding.title} (Copy)`,
             isCustom: true
         }
-        const updatedFindings = [duplicatedFinding, ...customFindings]
-        saveCustomFindings(updatedFindings)
-        toast({
-            title: "Finding Duplicated",
-            description: "Finding has been copied to My Templates.",
-        })
-        setActiveTab('custom')
+        // Remove template ID so it creates a new one
+        delete duplicatedFinding.id
+        delete duplicatedFinding._templateId
+
+        try {
+            const template = await createFindingTemplate(duplicatedFinding)
+            if (template) {
+                const findingWithId = {
+                    ...duplicatedFinding,
+                    id: template.id,
+                    _templateId: template.id
+                }
+                setCustomFindings(prev => [findingWithId, ...prev])
+                toast({
+                    title: "Finding Duplicated",
+                    description: "Finding has been copied to My Templates.",
+                })
+                setActiveTab('custom')
+            }
+        } catch {
+            toast({
+                title: "Error",
+                description: "Failed to duplicate finding.",
+                variant: "destructive"
+            })
+        }
     }
 
-    const handleDelete = (id: string) => {
-        const updatedFindings = customFindings.filter(f => f.id !== id)
-        saveCustomFindings(updatedFindings)
-        toast({
-            title: "Finding Deleted",
-            description: "Template has been removed.",
-        })
+    const handleDelete = async (id: string) => {
+        try {
+            await deleteFindingTemplate(id)
+            setCustomFindings(prev => prev.filter(f => f.id !== id))
+            toast({
+                title: "Finding Deleted",
+                description: "Template has been removed.",
+            })
+        } catch {
+            toast({
+                title: "Error",
+                description: "Failed to delete template.",
+                variant: "destructive"
+            })
+        }
     }
 
     const handleEdit = (finding: any) => {
@@ -186,28 +310,37 @@ export default function Findings() {
         setEditingFinding(mappedFinding)
     }
 
-    const handleUpdateFinding = (updatedFinding: ProjectFinding) => {
-        const updatedCustomFindings = customFindings.map(f => 
-            f.id === updatedFinding.id ? {
-                ...f,
-                title: updatedFinding.title,
-                severity: updatedFinding.severity,
-                description: updatedFinding.description,
-                remediation: updatedFinding.recommendations,
-                evidence: updatedFinding.evidence,
-                references: updatedFinding.references,
-                cvss_score: updatedFinding.cvssScore,
-                cvss_vector: updatedFinding.cvssVector,
-                cvssScore: updatedFinding.cvssScore,
-                cvssVector: updatedFinding.cvssVector
-            } : f
-        )
-        saveCustomFindings(updatedCustomFindings)
-        setEditingFinding(null)
-        toast({
-            title: "Finding Updated",
-            description: "Changes have been saved to your template.",
-        })
+    const handleUpdateFinding = async (updatedFinding: ProjectFinding) => {
+        const updatedData = {
+            title: updatedFinding.title,
+            severity: updatedFinding.severity,
+            description: updatedFinding.description,
+            remediation: updatedFinding.recommendations,
+            evidence: updatedFinding.evidence,
+            references: updatedFinding.references,
+            cvss_score: updatedFinding.cvssScore,
+            cvss_vector: updatedFinding.cvssVector,
+            cvssScore: updatedFinding.cvssScore,
+            cvssVector: updatedFinding.cvssVector
+        }
+
+        try {
+            await updateFindingTemplate(updatedFinding.id, updatedData)
+            setCustomFindings(prev => prev.map(f => 
+                f.id === updatedFinding.id ? { ...f, ...updatedData } : f
+            ))
+            setEditingFinding(null)
+            toast({
+                title: "Finding Updated",
+                description: "Changes have been saved to the database.",
+            })
+        } catch {
+            toast({
+                title: "Error",
+                description: "Failed to update template.",
+                variant: "destructive"
+            })
+        }
     }
 
     return (
@@ -319,7 +452,12 @@ export default function Findings() {
 
                     {/* Table Area */}
                     <div className="min-h-[400px]">
-                        {filteredFindings.length === 0 ? (
+                        {isLoading && activeTab === 'custom' ? (
+                            <div className="flex flex-col items-center justify-center text-center py-20 text-slate-500">
+                                <Loader2 className="w-8 h-8 animate-spin text-emerald-600 mb-4" />
+                                <p className="text-slate-500">Loading templates...</p>
+                            </div>
+                        ) : filteredFindings.length === 0 ? (
                             <div className="flex flex-col items-center justify-center text-center py-20 text-slate-500">
                                 {activeTab === 'custom' ? (
                                     <>
