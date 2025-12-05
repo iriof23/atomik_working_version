@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import {
     Plus,
     Shield,
@@ -9,7 +9,6 @@ import {
     Cpu,
     Smartphone,
     FileText,
-    Upload,
     Pencil,
     Copy,
     Trash2,
@@ -54,7 +53,6 @@ export default function Findings() {
     const [customFindings, setCustomFindings] = useState<any[]>([])
     const [addDialogOpen, setAddDialogOpen] = useState(false)
     const [editingFinding, setEditingFinding] = useState<any>(null)
-    const fileInputRef = useRef<HTMLInputElement>(null)
     const { toast } = useToast()
 
     // Pagination State
@@ -212,38 +210,6 @@ export default function Findings() {
         })
     }
 
-    const handleImportClick = () => {
-        fileInputRef.current?.click()
-    }
-
-    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0]
-        if (!file) return
-
-        setTimeout(() => {
-            const importedFinding = {
-                id: `imported-${Date.now()}`,
-                title: `Imported: ${file.name.split('.')[0]} Vulnerability`,
-                severity: 'High',
-                category: 'Network',
-                description: 'This finding was imported from an external scanner report.',
-                remediation: 'Review the imported data and verify the finding.',
-                owasp_reference: 'N/A'
-            }
-
-            const updatedFindings = [importedFinding, ...customFindings]
-            saveCustomFindings(updatedFindings)
-
-            toast({
-                title: "Import Successful",
-                description: `Successfully imported findings from ${file.name}`,
-            })
-
-            if (fileInputRef.current) fileInputRef.current.value = ''
-            setActiveTab('custom')
-        }, 1000)
-    }
-
     return (
         <div className="space-y-6 pb-20">
             {/* Header Section */}
@@ -253,23 +219,10 @@ export default function Findings() {
                         <h1 className="text-2xl font-semibold text-slate-900">Findings Database</h1>
                         <p className="text-sm text-slate-500 mt-1">Browse standard vulnerabilities and manage your custom templates</p>
                     </div>
-                    <div className="flex gap-3">
-                        <input
-                            type="file"
-                            ref={fileInputRef}
-                            className="hidden"
-                            accept=".xml,.csv,.json"
-                            onChange={handleFileChange}
-                        />
-                        <Button variant="outline" onClick={handleImportClick} className="bg-white border-slate-200 hover:bg-slate-50 text-slate-700 gap-2">
-                            <Upload className="w-4 h-4 shrink-0" />
-                            <span>Import</span>
-                        </Button>
-                        <Button className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2" onClick={() => setAddDialogOpen(true)}>
-                            <Plus className="w-4 h-4 shrink-0" />
-                            <span>New Finding</span>
-                        </Button>
-                    </div>
+                    <Button className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2" onClick={() => setAddDialogOpen(true)}>
+                        <Plus className="w-4 h-4 shrink-0" />
+                        <span>New Finding</span>
+                    </Button>
                 </div>
 
                 {/* Stats Cards */}
